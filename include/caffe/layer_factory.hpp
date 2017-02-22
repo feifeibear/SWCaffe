@@ -45,6 +45,7 @@
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
+//FJR
 #include "caffe/LayerParameter.hpp"
 //#include "caffe/proto/caffe.pb.h"
 
