@@ -16,10 +16,10 @@ class NetStateRule {
   // to meet this rule.
 public:
   //TODO
-  bool has_phase() const { return false; }
+  bool has_phase() const { return has_phase_; }
   Phase phase() const { return phase_; }
-  bool has_min_level() const { return false; }
-  bool has_max_level() const { return false; }
+  bool has_min_level() const { return has_min_level_; }
+  bool has_max_level() const { return has_max_level_; }
   int min_level() const { return min_level_; }
   int max_level() const { return max_level_; }
   int stage_size() const { return stage_.size(); }
@@ -28,11 +28,14 @@ public:
   std::string not_stage( int id ) const { return not_stage_[id]; }
 private:
   Phase phase_;
+  bool has_phase_;
 
   // Set the minimum and/or maximum levels in which the layer should be used.
   // Leave undefined to meet the rule regardless of level.
   int min_level_;
+  bool has_min_level_;
   int max_level_;
+  bool has_max_level_;
 
   // Customizable sets of stages to include or exclude.
   // The net must have ALL of the specified stages and NONE of the specified
@@ -90,6 +93,7 @@ class LayerParameter {
 
     inline int loss_weight_size() const {return loss_weight_.size();}
     inline float loss_weight(int id) const { return loss_weight_[id]; }
+    inline std::vector<float> get_loss_weight_vec() const { return loss_weight_; }
 
     inline Phase phase() const {return phase_;}
 
@@ -101,20 +105,33 @@ class LayerParameter {
     inline int bottom_size() const { return bottom_.size(); }
     void add_bottom(std::string bottom_name) { bottom_.push_back(bottom_name); }
 
-    std::string top( int id ) const { return top_[id]; }
+    inline const std::vector<std::string>& get_top_vec() const { return top_; }
+    inline std::string top( int id ) const { return top_[id]; }
     inline int top_size() const { return top_.size(); }
     void add_top(std::string top_name) { top_.push_back(top_name); }
 
+    inline const std::vector<bool> get_propagate_down_vec() const 
+    { return propagate_down_; } 
     inline int propagate_down_size() const { return propagate_down_.size(); }
 
+    inline const std::vector<ParamSpec> get_param_vec() const {
+      return param_;
+    }
     inline int param_size() const { return param_.size(); }
 
+    NetStateRule include( int id ) const { return include_[id]; }
+    inline const std::vector<NetStateRule> get_include_vec() const {
+      return include_;
+    }
     inline int include_size() const { return include_.size(); }
+
+    inline const std::vector<NetStateRule> get_exclude_vec() const {
+      return exclude_;
+    }
     inline int exclude_size() const { return exclude_.size(); }
 
     NetStateRule exclude( int id ) const { return exclude_[id]; }
 
-    NetStateRule include( int id ) const { return include_[id]; }
 
     //TODO
     inline const ParamSpec& param( int id ) const { return param_[id]; }
@@ -135,6 +152,11 @@ class LayerParameter {
     void set_phase( const Phase& newphase ) { phase_ = newphase; }
     bool propagate_down( int id ) const { return propagate_down_[id]; }
 
+    //TODO type only support float
+    inline const std::vector<shared_ptr<Blob<float> > > get_blobs_vec() const {
+      return blobs_;
+    }
+
 
 #define COPY_VEC(name)\
     name##_.assign(other.get_##name##_vec().begin(), other.get_##name##_vec().end()) 
@@ -144,14 +166,14 @@ class LayerParameter {
       set_type(other.type());
       set_phase(other.phase());
 
-      //COPY_VEC(bottom);
-      //COPY_VEC(top);
-      //COPY_VEC(loss_weight);
-      //COPY_VEC(param);
-      //COPY_VEC(blobs);
-      //COPY_VEC(propagate_down);
-      //COPY_VEC(include);
-      //COPY_VEC(exclude);
+      COPY_VEC(bottom);
+      COPY_VEC(top);
+      COPY_VEC(loss_weight);
+      COPY_VEC(param);
+      COPY_VEC(blobs);
+      COPY_VEC(propagate_down);
+      COPY_VEC(include);
+      COPY_VEC(exclude);
     }
 
     //TODO
@@ -167,9 +189,6 @@ class LayerParameter {
       exclude_.resize(0);
     }
     ~LayerParameter() {}
-
-
-
 
   private:
     std::string name_;
