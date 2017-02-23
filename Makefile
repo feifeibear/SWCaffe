@@ -7,6 +7,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o\
 		./build/util/math_function.o \
 		./build/util/insert_splits.o \
 		./build/layers/inner_product_layer.o \
+		./build/layers/input_layer.o \
 		./build/net.o
 
 

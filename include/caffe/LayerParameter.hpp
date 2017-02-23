@@ -16,6 +16,10 @@ class NetStateRule {
   // to meet this rule.
 public:
   //TODO
+  NetStateRule(){
+   has_phase_ = false; 
+  }
+  ~NetStateRule() {}
   bool has_phase() const { return has_phase_; }
   Phase phase() const { return phase_; }
   bool has_min_level() const { return has_min_level_; }
@@ -47,7 +51,7 @@ private:
 
 class ParamSpec {
 
-public:
+  public:
 
   // Whether to require shared weights to have the same shape, or just the same
   // count -- defaults to STRICT if unspecified.
@@ -57,13 +61,25 @@ public:
     // PERMISSIVE requires only the count (num*channels*height*width) to match.
     PERMISSIVE = 1
   };
+
+  ParamSpec():has_lr_mult_(false), decay_mult_(false) {}
+  explicit ParamSpec(std::string name, enum DimCheckMode share_mode,
+      float lr_mult, float decay_mult,
+      bool has_lr_mult, bool has_decay_mult):
+    name_(name), share_mode_(share_mode), lr_mult_(lr_mult), 
+    decay_mult_(decay_mult),
+    has_lr_mult_(has_lr_mult),
+    has_decay_mult_(has_decay_mult)
+    {}
+
   float lr_mult() const { return lr_mult_; }
-  //TODO
   float decay_mult() const { return decay_mult_; }
-  bool has_lr_mult() const { return false; }
-  bool has_decay_mult() const { return false; }
+  bool has_lr_mult() const { return has_lr_mult_; }
+  bool has_decay_mult() const { return has_decay_mult_; }
+
   DimCheckMode share_mode() const { return share_mode_; }
   std::string name() const { return name_; }
+
 private:
   // The names of the parameter blobs -- useful for sharing parameters among
   // layers, but never required otherwise.  To share a parameter between two
@@ -74,9 +90,11 @@ private:
 
   // The multiplier on the global learning rate for this parameter.
   float lr_mult_; // = 1.0;
+  bool has_lr_mult_;
 
   // The multiplier on the global weight decay for this parameter.
   float decay_mult_; // = 1.0;
+  bool has_decay_mult_;
 };
 
 
@@ -97,7 +115,8 @@ class LayerParameter {
 
     inline Phase phase() const {return phase_;}
 
-    inline int blobs_size() const { return blobs_.size(); }
+    inline int blobs_size() const { return blob_size_; }
+    inline void set_blob_size( int blob_size ) { blob_size_ = blob_size; }
 
     inline const std::vector<std::string>& get_bottom_vec() const { return bottom_; }
     inline std::string bottom( int id ) const { return bottom_[id]; }
@@ -142,24 +161,23 @@ class LayerParameter {
       top_.clear();
       loss_weight_.clear();
       param_.clear();
-      blobs_.clear();
       propagate_down_.clear();
       include_.clear();
       exclude_.clear();
+      blob_size_ = 0;
     }
     //TODO
-    bool has_phase() const { return false; }
+    bool has_phase() const { return has_phase_; }
     void set_phase( const Phase& newphase ) { phase_ = newphase; }
     bool propagate_down( int id ) const { return propagate_down_[id]; }
 
-    //TODO type only support float
-    inline const std::vector<shared_ptr<Blob<float> > > get_blobs_vec() const {
-      return blobs_;
-    }
-
 
 #define COPY_VEC(name)\
-    name##_.assign(other.get_##name##_vec().begin(), other.get_##name##_vec().end()) 
+    int name##_size = other.get_##name##_vec().size(); \
+    name##_.clear(); \
+    for( int i = 0; i < name##_size; ++i ){ \
+      name##_.push_back(other.get_##name##_vec()[i]); \
+    }
 
     void CopyFrom(const LayerParameter& other) {
       set_name(other.name());
@@ -170,38 +188,43 @@ class LayerParameter {
       COPY_VEC(top);
       COPY_VEC(loss_weight);
       COPY_VEC(param);
-      COPY_VEC(blobs);
       COPY_VEC(propagate_down);
       COPY_VEC(include);
       COPY_VEC(exclude);
     }
 
     //TODO
-    LayerParameter() {
-      set_name("NO_NAME");
-      set_type("NO_TYPE");
-      phase_ = TEST;
-      bottom_.resize(0);
-      top_.resize(0);
-      blobs_.resize(0);
+    explicit LayerParameter(std::string name,
+        std::string type,
+        std::vector<std::string> bottom,
+        std::vector<std::string> top,
+        int blob_size):
+      name_(name), type_(type), bottom_(bottom), top_(top),
+      blob_size_(blob_size)
+    {
+      phase_ = TRAIN;
+      has_phase_ = false;
       propagate_down_.resize(0);
       include_.resize(0);
       exclude_.resize(0);
     }
+    LayerParameter() {}
     ~LayerParameter() {}
 
   private:
     std::string name_;
     std::string type_;
     Phase phase_;
+    bool has_phase_;
 
     vector<std::string> bottom_;
     vector<std::string> top_;
 
     std::vector<float> loss_weight_;
     std::vector<ParamSpec> param_;
-    //TODO why no template
-    std::vector<shared_ptr<Blob<float> > > blobs_;
+    //real data should be stored in class layer
+    //std::vector<shared_ptr<Blob<float> > > blobs_;
+    int blob_size_;
     std::vector<bool> propagate_down_;
     std::vector<NetStateRule> include_;
     std::vector<NetStateRule> exclude_;

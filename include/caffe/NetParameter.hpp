@@ -14,9 +14,16 @@ namespace caffe {
 class NetState
 {
 public:
-  NetState(){}
-  virtual ~NetState(){}
-  NetState(const NetState& from) {}
+  NetState(){
+    stage_.resize(0);
+    level_ = 0;
+  }
+  virtual ~NetState(){
+    phase_ = TRAIN;
+  }
+  NetState(const NetState& from) {
+    CopyFrom(from);
+  }
 
   int stage_size() const { return stage_.size(); }
   std::string stage( int id ) const { return stage_[id]; }
@@ -32,7 +39,10 @@ public:
     name_ = other.name();
     phase_ = other.phase();
     level_ = other.level();
-    stage_.assign( other.get_stage().begin(), other.get_stage().end() );
+    int stage_size = other.get_stage().size();
+    for( int i = 0; i < stage_size; ++i ){
+      stage_.push_back(other.get_stage()[i]);
+    }
   }
 
 private:
@@ -44,7 +54,10 @@ private:
 
 class NetParameter {
   public:
-    NetParameter() {}
+    explicit NetParameter(std::string name, std::vector<LayerParameter> layerparams):
+      name_(name), layer_(layerparams), force_backward_(false), debug_info_(false) {}
+    NetParameter(){}
+
     ~NetParameter() {}
     inline std::string name() const { return name_; }
     inline NetState state() const { return state_; }
@@ -64,7 +77,9 @@ class NetParameter {
       force_backward_ = other.force_backward();
       debug_info_ = other.debug_info();
       state_.CopyFrom(other.state());
-      layer_.assign(other.get_layer().begin(), other.get_layer().end());
+      int layer_size = other.get_layer().size();
+      for( int i = 0; i < layer_size; ++i )
+        layer_.push_back(other.get_layer()[i]);
     }
 
     void clear_layer() {
