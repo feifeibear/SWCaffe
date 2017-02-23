@@ -24,6 +24,7 @@ int main () {
   NetParameter net_param("mynet", layerparams);
 
   Net<float> net(net_param);
+  net.visit_for_check();
 
   return 0;
 }

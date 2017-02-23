@@ -183,6 +183,8 @@ class LayerParameter {
       set_name(other.name());
       set_type(other.type());
       set_phase(other.phase());
+      has_phase_ = true;
+      blob_size_ = other.blobs_size();
 
       COPY_VEC(bottom);
       COPY_VEC(top);

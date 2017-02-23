@@ -52,13 +52,13 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   phase_ = in_param.state().phase();
   // Filter layers based on their include/exclude rules and
   // the current NetState.
-  /*
   NetParameter filtered_param;
 
   FilterNet(in_param, &filtered_param);
   LOG_IF(INFO, Caffe::root_solver())
       << "Initializing net from parameters: " << std::endl
       << filtered_param.DebugString();
+  /*
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
   InsertSplits(filtered_param, &param);
@@ -66,7 +66,8 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   NetParameter param;
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
-  param.CopyFrom(in_param);
+  //param.CopyFrom(in_param);
+  param.CopyFrom(filtered_param);
 
   // Basically, build all the layers and set up their connections.
   name_ = param.name();
@@ -293,6 +294,8 @@ void Net<Dtype>::FilterNet(const NetParameter& param,
         layer_included = true;
       }
     }
+    //FJR
+    layer_included= true;
     if (layer_included) {
       param_filtered->add_layer()->CopyFrom(layer_param);
     }

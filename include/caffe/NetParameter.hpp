@@ -39,6 +39,7 @@ public:
     name_ = other.name();
     phase_ = other.phase();
     level_ = other.level();
+    stage_.clear();
     int stage_size = other.get_stage().size();
     for( int i = 0; i < stage_size; ++i ){
       stage_.push_back(other.get_stage()[i]);
@@ -55,7 +56,7 @@ private:
 class NetParameter {
   public:
     explicit NetParameter(std::string name, std::vector<LayerParameter> layerparams):
-      name_(name), layer_(layerparams), force_backward_(false), debug_info_(false) {}
+      name_(name), layer_(layerparams), force_backward_(true), debug_info_(false) {}
     NetParameter(){}
 
     ~NetParameter() {}
@@ -87,9 +88,11 @@ class NetParameter {
     }
     //TODO
     LayerParameter* add_layer() {
-      LayerParameter* new_layer = new LayerParameter();
-      layer_.push_back(*new_layer);
-      return new_layer;
+      layer_.resize(layer_.size()+1);
+      //LayerParameter* new_layer = new LayerParameter();
+      //layer_.push_back(*new_layer);
+      //return new_layer;
+      return &layer_[layer_.size()-1];
     }
 
   private:
