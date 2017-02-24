@@ -13,6 +13,8 @@
 
 //FJR
 #define CBLAS_TRANSPOSE bool
+#define CblasNoTrans false
+#define CblasTrans true
 
 namespace caffe {
 

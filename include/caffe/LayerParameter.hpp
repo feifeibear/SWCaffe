@@ -2,6 +2,8 @@
 #define _LAYERPARAMETER_H_
 #include <string>
 #include <caffe/blob.hpp>
+#include <caffe/protohpp/InnerProductParameter.hpp>
+#include <caffe/protohpp/InputParameter.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -10,7 +12,6 @@ enum Phase {
   TRAIN = 0,
   TEST = 1
 };
-
 class NetStateRule {
   // Set phase to require the NetState have a particular phase (TRAIN or TEST)
   // to meet this rule.
@@ -96,9 +97,6 @@ private:
   float decay_mult_; // = 1.0;
   bool has_decay_mult_;
 };
-
-
-
 
 //template <typename DType>
 class LayerParameter {
@@ -193,6 +191,10 @@ class LayerParameter {
       COPY_VEC(propagate_down);
       COPY_VEC(include);
       COPY_VEC(exclude);
+      if(has_input_parameter_)
+        input_param_.CopyFrom(other.input_param());
+      if(has_inner_product_param_)
+        inner_product_param_.CopyFrom(other.inner_product_param());
     }
 
     //TODO
@@ -209,9 +211,33 @@ class LayerParameter {
       propagate_down_.resize(0);
       include_.resize(0);
       exclude_.resize(0);
+      has_input_parameter_ = false;
+      has_inner_product_param_ = false;
     }
     LayerParameter() {}
     ~LayerParameter() {}
+
+    //for specified layers
+    //Input
+    void setup_input_param(const InputParameter& other) {
+      input_param_.CopyFrom(other);
+      has_input_parameter_ = true;
+    }
+    const InputParameter& input_param() const { 
+      return input_param_; 
+    }
+    inline bool has_input_parameter() const { return has_input_parameter_; }
+
+    //inner_product
+    void setup_inner_product_param(const InnerProductParameter& other) {
+      inner_product_param_.CopyFrom(other);
+      has_inner_product_param_ = true;
+    }
+    inline const InnerProductParameter& inner_product_param() const { 
+      return inner_product_param_;
+    }
+    inline bool has_inner_product_param() const { return has_inner_product_param_; }
+    
 
   private:
     std::string name_;
@@ -231,6 +257,11 @@ class LayerParameter {
     std::vector<NetStateRule> include_;
     std::vector<NetStateRule> exclude_;
 
+  //for specified layers
+    InputParameter input_param_;
+    bool has_input_parameter_;
+    InnerProductParameter inner_product_param_;
+    bool has_inner_product_param_;
 };
 
 }//end caffe
