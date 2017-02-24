@@ -12,7 +12,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o\
 
 
 test: test.o $(OBJ)
-	g++ $^ ./glog_install/lib/libglog.a -o $@
+	g++ $^ -L ./glog_install/lib/ -lglog -o $@
 test.o: test.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/%.o: ./src/%.cpp
