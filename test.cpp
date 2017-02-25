@@ -21,21 +21,22 @@ int main () {
 
   InnerProductParameter innerparam1(10);
   std::vector<std::string> bottom2, top2;
-  bottom2.push_back("data"); top2.push_back("conv1");
-  LayerParameter l2("conv1","InnerProduct",bottom2, top2, 2);
+  bottom2.push_back("data"); top2.push_back("ip1");
+  LayerParameter l2("ip1","InnerProduct",bottom2, top2, 2);
   l2.setup_inner_product_param(innerparam1);
 
 
   InnerProductParameter innerparam2(20);
   std::vector<std::string> bottom3, top3;
-  bottom3.push_back("conv1"); top3.push_back("conv3");
-  LayerParameter l3("conv2","InnerProduct", bottom3, top3,2);
+  bottom3.push_back("ip1"); top3.push_back("ip3");
+  LayerParameter l3("ip2","InnerProduct", bottom3, top3,2);
   l3.setup_inner_product_param(innerparam2);
   //LayerParameter l4("conv2","Convolution",{"pool1"},{"conv2"},2);
 
   layerparams.push_back(l1);
   layerparams.push_back(l2);
   layerparams.push_back(l3);
+  DLOG(INFO) <<  "paramter Initialization is OK!";
 
   NetParameter net_param("mynet", layerparams);
 

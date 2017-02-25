@@ -55,12 +55,17 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   NetParameter filtered_param;
 
   FilterNet(in_param, &filtered_param);
+  //filtered_param.CopyFrom(in_param);
+  DLOG(INFO) << "FilterNet is OK";
   LOG_IF(INFO, Caffe::root_solver())
       << "Initializing net from parameters: " << std::endl
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
+  //TODO
   InsertSplits(filtered_param, &param);
+  //param.CopyFrom(filtered_param);
+  DLOG(INFO) << "InsertSplits is OK";
   //NetParameter param;
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;

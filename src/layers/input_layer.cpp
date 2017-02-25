@@ -10,6 +10,7 @@ void InputLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   const int num_top = top.size();
   const InputParameter& param = this->layer_param_.input_param();
   const int num_shape = param.shape_size();
+  DLOG(INFO) << "[FJR] num_shape is " << num_shape;
   CHECK(num_shape == 0 || num_shape == 1 || num_shape == num_top)
       << "Must specify 'shape' once, once per top blob, or not at all: "
       << num_top << " tops vs. " << num_shape << " shapes.";
