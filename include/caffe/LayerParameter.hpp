@@ -4,6 +4,7 @@
 #include <caffe/blob.hpp>
 #include <caffe/protohpp/InnerProductParameter.hpp>
 #include <caffe/protohpp/InputParameter.hpp>
+#include <caffe/protohpp/BlobProto.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -198,6 +199,8 @@ class LayerParameter {
       COPY_VEC(propagate_down);
       COPY_VEC(include);
       COPY_VEC(exclude);
+      for(int i = 0; i < blobprotos_.size(); ++i)
+        blobprotos_[i].CopyFrom(other.blobs(i));
 
       has_input_parameter_ = other.has_input_parameter();
       has_inner_product_param_ = other.has_inner_product_param();
@@ -239,6 +242,9 @@ class LayerParameter {
     }
     ~LayerParameter() {}
 
+    //ProtoBlob
+    const BlobProto& blobs(int i) const { return blobprotos_[i]; }
+
     //for specified layers
     //Input
     void setup_input_param(const InputParameter& other) {
@@ -271,13 +277,15 @@ class LayerParameter {
 
     std::vector<float> loss_weight_;
     std::vector<ParamSpec> param_;
-    //real data should be stored in class layer
-    //std::vector<shared_ptr<Blob<float> > > blobs_;
+    //size of learnable parameters
     int blob_size_;
+    std::vector<BlobProto> blobprotos_;
+
     std::vector<bool> propagate_down_;
     std::vector<NetStateRule> include_;
     std::vector<NetStateRule> exclude_;
 
+  //for BlobProto
   //for specified layers
     InputParameter input_param_;
     bool has_input_parameter_;

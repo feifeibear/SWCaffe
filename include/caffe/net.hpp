@@ -32,32 +32,18 @@ class Net {
 
   /// @brief Initialize a network with a NetParameter.
   void Init(const NetParameter& param);
-/*
+  void ShareWeights();
   const vector<Blob<Dtype>*>& Forward(Dtype* loss = NULL);
-  /// @brief DEPRECATED; use Forward() instead.
-  const vector<Blob<Dtype>*>& ForwardPrefilled(Dtype* loss = NULL) {
-    LOG_EVERY_N(WARNING, 1000) << "DEPRECATED: ForwardPrefilled() "
-        << "will be removed in a future version. Use Forward().";
-    return Forward(loss);
-  }
-
-
   Dtype ForwardFromTo(int start, int end);
-  Dtype ForwardFrom(int start);
-  Dtype ForwardTo(int end);
-  /// @brief DEPRECATED; set input blobs then use Forward() instead.
-  const vector<Blob<Dtype>*>& Forward(const vector<Blob<Dtype>* > & bottom,
-      Dtype* loss = NULL);
-
-  void ClearParamDiffs();
-
 
   void Backward();
   void BackwardFromTo(int start, int end);
+
+  Dtype ForwardFrom(int start);
+  Dtype ForwardTo(int end);
+
   void BackwardFrom(int start);
   void BackwardTo(int end);
-
-
   void Reshape();
 
   Dtype ForwardBackward() {
@@ -67,9 +53,23 @@ class Net {
     return loss;
   }
 
+/*
+  /// @brief DEPRECATED; use Forward() instead.
+  const vector<Blob<Dtype>*>& ForwardPrefilled(Dtype* loss = NULL) {
+    LOG_EVERY_N(WARNING, 1000) << "DEPRECATED: ForwardPrefilled() "
+        << "will be removed in a future version. Use Forward().";
+    return Forward(loss);
+  }
+  /// @brief DEPRECATED; set input blobs then use Forward() instead.
+  const vector<Blob<Dtype>*>& Forward(const vector<Blob<Dtype>* > & bottom,
+      Dtype* loss = NULL);
+*/
+
+  /*
+  void ClearParamDiffs();
+
   void Update();
   */
-  void ShareWeights();
 /*
   void ShareTrainedLayersWith(const Net* other);
   void CopyTrainedLayersFrom(const NetParameter& param);

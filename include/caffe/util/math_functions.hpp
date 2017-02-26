@@ -9,12 +9,12 @@
 #include "caffe/common.hpp"
 //FJR
 //#include "caffe/util/device_alternate.hpp"
-//#include "caffe/util/mkl_alternate.hpp"
+#include "caffe/util/mkl_alternate.hpp"
 
 //FJR
-#define CBLAS_TRANSPOSE bool
-#define CblasNoTrans false
-#define CblasTrans true
+//#define CBLAS_TRANSPOSE bool
+//#define CblasNoTrans false
+//#define CblasTrans true
 
 namespace caffe {
 
