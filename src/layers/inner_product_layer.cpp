@@ -10,7 +10,6 @@ namespace caffe {
 template <typename Dtype>
 void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  LOG(INFO) << " Begin InnerProductLayer Setup! ";
   const int num_output = this->layer_param_.inner_product_param().num_output();
   bias_term_ = this->layer_param_.inner_product_param().bias_term();
   transpose_ = this->layer_param_.inner_product_param().transpose();
@@ -22,6 +21,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // length K_ vector. For example, if bottom[0]'s shape is (N, C, H, W),
   // and axis == 1, N inner products with dimension CHW are performed.
   K_ = bottom[0]->count(axis);
+  LOG(INFO) << "fjrdebug blobs_.size is " << this->blobs_.size();
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Skipping parameter initialization";
@@ -33,6 +33,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     }
     // Initialize the weights
     vector<int> weight_shape(2);
+    DLOG(INFO) << "fjrdebug K_ " << K_ << " N_ " << N_;
     if (transpose_) {
       weight_shape[0] = K_;
       weight_shape[1] = N_;
@@ -98,6 +99,7 @@ void InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.cpu_data(),
         this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
   }
+  LOG(INFO) << "fjrdebug InnerProductLayer end";
 }
 
 template <typename Dtype>

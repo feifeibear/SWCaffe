@@ -13,12 +13,13 @@ enum VarianceNorm {
 class FillerParameter {
   public: 
   FillerParameter(): 
+    type_("constant"),
     value_(0.0),
     min_(0.0),
     max_ (1.0),
     mean_ (0.0),
     std_ (0.0),
-    sparse_(1),
+    sparse_(-1.0),
     variance_norm_(FAN_IN)
     {}
   std::string type() const { return type_; }
@@ -51,7 +52,8 @@ private:
 class InnerProductParameter {
   public:
     InnerProductParameter() {}
-    explicit InnerProductParameter(int num_output):num_output_(num_output),
+    InnerProductParameter(int N):
+      num_output_(N),
       bias_term_(true),
       transpose_(false),
       axis_(1)
@@ -66,6 +68,7 @@ class InnerProductParameter {
     }
     inline int axis() const { return axis_; }
     inline int num_output() const { return num_output_; }
+    void set_num_output(int N) { num_output_ = N; }
     inline const FillerParameter& bias_filler() const { return bias_filler_; }
     inline const FillerParameter& weight_filler() const { return weight_filler_; }
     inline bool bias_term() const { return bias_term_; }

@@ -4,6 +4,7 @@
 #include <caffe/blob.hpp>
 #include <caffe/protohpp/InnerProductParameter.hpp>
 #include <caffe/protohpp/InputParameter.hpp>
+#include <caffe/protohpp/BlobProto.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -163,6 +164,8 @@ class LayerParameter {
       include_.clear();
       exclude_.clear();
       blob_size_ = 0;
+      has_input_parameter_ = false;
+      has_inner_product_param_ = false;
     }
     //TODO
     bool has_phase() const { return has_phase_; }
@@ -175,6 +178,11 @@ class LayerParameter {
     name##_.clear(); \
     for( int i = 0; i < name##_size; ++i ){ \
       name##_.push_back(other.get_##name##_vec()[i]); \
+    }
+
+    LayerParameter& operator=(const LayerParameter& other){
+      this->CopyFrom(other);
+      return *this;
     }
 
     void CopyFrom(const LayerParameter& other) {
@@ -191,11 +199,20 @@ class LayerParameter {
       COPY_VEC(propagate_down);
       COPY_VEC(include);
       COPY_VEC(exclude);
-      if(has_input_parameter_)
+      for(int i = 0; i < blobprotos_.size(); ++i)
+        blobprotos_[i].CopyFrom(other.blobs(i));
+
+      has_input_parameter_ = other.has_input_parameter();
+      has_inner_product_param_ = other.has_inner_product_param();
+
+      if(has_input_parameter_) {
         input_param_.CopyFrom(other.input_param());
-      if(has_inner_product_param_)
+      }
+      if(has_inner_product_param_) {
         inner_product_param_.CopyFrom(other.inner_product_param());
+      }
     }
+
 
     //TODO
     explicit LayerParameter(std::string name,
@@ -214,8 +231,19 @@ class LayerParameter {
       has_input_parameter_ = false;
       has_inner_product_param_ = false;
     }
-    LayerParameter() {}
+    LayerParameter() {
+      phase_ = TRAIN;
+      has_phase_ = false;
+      propagate_down_.resize(0);
+      include_.resize(0);
+      exclude_.resize(0);
+      has_input_parameter_ = false;
+      has_inner_product_param_ = false;
+    }
     ~LayerParameter() {}
+
+    //ProtoBlob
+    const BlobProto& blobs(int i) const { return blobprotos_[i]; }
 
     //for specified layers
     //Input
@@ -237,7 +265,6 @@ class LayerParameter {
       return inner_product_param_;
     }
     inline bool has_inner_product_param() const { return has_inner_product_param_; }
-    
 
   private:
     std::string name_;
@@ -250,13 +277,15 @@ class LayerParameter {
 
     std::vector<float> loss_weight_;
     std::vector<ParamSpec> param_;
-    //real data should be stored in class layer
-    //std::vector<shared_ptr<Blob<float> > > blobs_;
+    //size of learnable parameters
     int blob_size_;
+    std::vector<BlobProto> blobprotos_;
+
     std::vector<bool> propagate_down_;
     std::vector<NetStateRule> include_;
     std::vector<NetStateRule> exclude_;
 
+  //for BlobProto
   //for specified layers
     InputParameter input_param_;
     bool has_input_parameter_;

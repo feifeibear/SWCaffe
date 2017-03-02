@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <caffe/protohpp/BlobProto.hpp>
 
 #include "caffe/common.hpp"
 //FJR
@@ -231,7 +232,7 @@ class Blob {
   Dtype* mutable_gpu_diff();
   void Update();
   //FJR
-  //void FromProto(const BlobProto& proto, bool reshape = true);
+  void FromProto(const BlobProto& proto, bool reshape = true);
   //void ToProto(BlobProto* proto, bool write_diff = false) const;
 
   /// @brief Compute the sum of absolute values (L1 norm) of the data.

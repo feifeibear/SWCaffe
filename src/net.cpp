@@ -55,12 +55,17 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   NetParameter filtered_param;
 
   FilterNet(in_param, &filtered_param);
+  //filtered_param.CopyFrom(in_param);
+  DLOG(INFO) << "FilterNet is OK";
   LOG_IF(INFO, Caffe::root_solver())
       << "Initializing net from parameters: " << std::endl
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
+  //TODO
   InsertSplits(filtered_param, &param);
+  //param.CopyFrom(filtered_param);
+  DLOG(INFO) << "InsertSplits is OK";
   //NetParameter param;
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
@@ -525,7 +530,6 @@ void Net<Dtype>::AppendParam(const NetParameter& param, const int layer_id,
   }
 }
 
-/*
 template <typename Dtype>
 Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
   CHECK_GE(start, 0);
@@ -566,15 +570,22 @@ const vector<Blob<Dtype>*>& Net<Dtype>::Forward(Dtype* loss) {
 }
 
 template <typename Dtype>
-const vector<Blob<Dtype>*>& Net<Dtype>::Forward(
-    const vector<Blob<Dtype>*> & bottom, Dtype* loss) {
-  LOG_EVERY_N(WARNING, 1000) << "DEPRECATED: Forward(bottom, loss) "
-      << "will be removed in a future version. Use Forward(loss).";
-  // Copy bottom to net bottoms
-  for (int i = 0; i < bottom.size(); ++i) {
-    net_input_blobs_[i]->CopyFrom(*bottom[i]);
+void Net<Dtype>::Backward() {
+  BackwardFromTo(layers_.size() - 1, 0);
+  if (debug_info_) {
+    Dtype asum_data = 0, asum_diff = 0, sumsq_data = 0, sumsq_diff = 0;
+    for (int i = 0; i < learnable_params_.size(); ++i) {
+      asum_data += learnable_params_[i]->asum_data();
+      asum_diff += learnable_params_[i]->asum_diff();
+      sumsq_data += learnable_params_[i]->sumsq_data();
+      sumsq_diff += learnable_params_[i]->sumsq_diff();
+    }
+    const Dtype l2norm_data = std::sqrt(sumsq_data);
+    const Dtype l2norm_diff = std::sqrt(sumsq_diff);
+    LOG(ERROR) << "    [Backward] All net params (data, diff): "
+               << "L1 norm = (" << asum_data << ", " << asum_diff << "); "
+               << "L2 norm = (" << l2norm_data << ", " << l2norm_diff << ")";
   }
-  return Forward(loss);
 }
 
 template <typename Dtype>
@@ -597,28 +608,19 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
 }
 
 template <typename Dtype>
-void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
-  for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
-    const Blob<Dtype>& blob = *top_vecs_[layer_id][top_id];
-    const string& blob_name = blob_names_[top_id_vecs_[layer_id][top_id]];
-    const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
-    LOG_IF(INFO, Caffe::root_solver())
-        << "    [Forward] "
-        << "Layer " << layer_names_[layer_id]
-        << ", top blob " << blob_name
-        << " data: " << data_abs_val_mean;
-  }
-  for (int param_id = 0; param_id < layers_[layer_id]->blobs().size();
-       ++param_id) {
-    const Blob<Dtype>& blob = *layers_[layer_id]->blobs()[param_id];
-    const int net_param_id = param_id_vecs_[layer_id][param_id];
-    const string& blob_name = param_display_names_[net_param_id];
-    const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
-    LOG_IF(INFO, Caffe::root_solver())
-        << "    [Forward] "
-        << "Layer " << layer_names_[layer_id]
-        << ", param blob " << blob_name
-        << " data: " << data_abs_val_mean;
+void Net<Dtype>::BackwardFrom(int start) {
+  BackwardFromTo(start, 0);
+}
+
+template <typename Dtype>
+void Net<Dtype>::BackwardTo(int end) {
+  BackwardFromTo(layers_.size() - 1, end);
+}
+
+template <typename Dtype>
+void Net<Dtype>::Reshape() {
+  for (int i = 0; i < layers_.size(); ++i) {
+    layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
   }
 }
 
@@ -648,6 +650,48 @@ void Net<Dtype>::BackwardDebugInfo(const int layer_id) {
         << " diff: " << diff_abs_val_mean;
   }
 }
+
+/*
+template <typename Dtype>
+const vector<Blob<Dtype>*>& Net<Dtype>::Forward(
+    const vector<Blob<Dtype>*> & bottom, Dtype* loss) {
+  LOG_EVERY_N(WARNING, 1000) << "DEPRECATED: Forward(bottom, loss) "
+      << "will be removed in a future version. Use Forward(loss).";
+  // Copy bottom to net bottoms
+  for (int i = 0; i < bottom.size(); ++i) {
+    net_input_blobs_[i]->CopyFrom(*bottom[i]);
+  }
+  return Forward(loss);
+}
+
+*/
+template <typename Dtype>
+void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
+  for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
+    const Blob<Dtype>& blob = *top_vecs_[layer_id][top_id];
+    const string& blob_name = blob_names_[top_id_vecs_[layer_id][top_id]];
+    const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
+    LOG_IF(INFO, Caffe::root_solver())
+        << "    [Forward] "
+        << "Layer " << layer_names_[layer_id]
+        << ", top blob " << blob_name
+        << " data: " << data_abs_val_mean;
+  }
+  for (int param_id = 0; param_id < layers_[layer_id]->blobs().size();
+       ++param_id) {
+    const Blob<Dtype>& blob = *layers_[layer_id]->blobs()[param_id];
+    const int net_param_id = param_id_vecs_[layer_id][param_id];
+    const string& blob_name = param_display_names_[net_param_id];
+    const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
+    LOG_IF(INFO, Caffe::root_solver())
+        << "    [Forward] "
+        << "Layer " << layer_names_[layer_id]
+        << ", param blob " << blob_name
+        << " data: " << data_abs_val_mean;
+  }
+}
+/*
+
 
 template <typename Dtype>
 void Net<Dtype>::UpdateDebugInfo(const int param_id) {
@@ -704,42 +748,6 @@ void Net<Dtype>::ShareTrainedLayersWith(const Net* other) {
           << target_blobs[j]->shape_string();
       target_blobs[j]->ShareData(*source_blob);
     }
-  }
-}
-
-template <typename Dtype>
-void Net<Dtype>::BackwardFrom(int start) {
-  BackwardFromTo(start, 0);
-}
-
-template <typename Dtype>
-void Net<Dtype>::BackwardTo(int end) {
-  BackwardFromTo(layers_.size() - 1, end);
-}
-
-template <typename Dtype>
-void Net<Dtype>::Backward() {
-  BackwardFromTo(layers_.size() - 1, 0);
-  if (debug_info_) {
-    Dtype asum_data = 0, asum_diff = 0, sumsq_data = 0, sumsq_diff = 0;
-    for (int i = 0; i < learnable_params_.size(); ++i) {
-      asum_data += learnable_params_[i]->asum_data();
-      asum_diff += learnable_params_[i]->asum_diff();
-      sumsq_data += learnable_params_[i]->sumsq_data();
-      sumsq_diff += learnable_params_[i]->sumsq_diff();
-    }
-    const Dtype l2norm_data = std::sqrt(sumsq_data);
-    const Dtype l2norm_diff = std::sqrt(sumsq_diff);
-    LOG(ERROR) << "    [Backward] All net params (data, diff): "
-               << "L1 norm = (" << asum_data << ", " << asum_diff << "); "
-               << "L2 norm = (" << l2norm_data << ", " << l2norm_diff << ")";
-  }
-}
-
-template <typename Dtype>
-void Net<Dtype>::Reshape() {
-  for (int i = 0; i < layers_.size(); ++i) {
-    layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
   }
 }
 
