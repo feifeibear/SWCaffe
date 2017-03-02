@@ -15,6 +15,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   bias_term_ = this->layer_param_.inner_product_param().bias_term();
   transpose_ = this->layer_param_.inner_product_param().transpose();
   N_ = num_output;
+  LOG(INFO) << bottom[0];
   const int axis = bottom[0]->CanonicalAxisIndex(
       this->layer_param_.inner_product_param().axis());
   // Dimensions starting from "axis" are "flattened" into a single

@@ -35,11 +35,12 @@ int main () {
 
   layerparams.push_back(l1);
   layerparams.push_back(l2);
-  layerparams.push_back(l3);
+  //layerparams.push_back(l3);
 
   NetParameter net_param("mynet", layerparams);
 
   Net<float> net(net_param);
+  DLOG(INFO) << "haha";
   net.visit_for_check();
 
   return 0;
