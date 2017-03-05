@@ -5,6 +5,8 @@
 #include <caffe/protohpp/InnerProductParameter.hpp>
 #include <caffe/protohpp/InputParameter.hpp>
 #include <caffe/protohpp/BlobProto.hpp>
+#include <caffe/protohpp/ConvolutionParameter.hpp>
+#include <caffe/protohpp/PoolingParameter.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -166,6 +168,8 @@ class LayerParameter {
       blob_size_ = 0;
       has_input_parameter_ = false;
       has_inner_product_param_ = false;
+      has_convolution_parameter_ = false;
+      has_pooling_parameter_ = false;
     }
     //TODO
     bool has_phase() const { return has_phase_; }
@@ -210,6 +214,12 @@ class LayerParameter {
       }
       if(has_inner_product_param_) {
         inner_product_param_.CopyFrom(other.inner_product_param());
+      }
+      if(has_convolution_parameter_) {
+        convolution_param_.CopyFrom(other.input_param());
+      }
+      if(has_pooling_parameter_) {
+        pooling_param_.CopyFrom(other.input_param());
       }
     }
 
@@ -266,6 +276,27 @@ class LayerParameter {
     }
     inline bool has_inner_product_param() const { return has_inner_product_param_; }
 
+    //convolution
+    void setup_convolution_param(const ConvolutionParameter& other) {
+      convolution_param_.CopyFrom(other);
+      has_convolution_param_ = true;
+    }
+    inline const ConvolutionParameter& convolution_param() const { 
+      return convolution_param_;
+    }
+    inline bool has_convolution_param() const { return has_convolution_param_; }
+
+    //pooling
+    void setup_pooling_param(const PoolingParameter& other) {
+      pooling_param_.CopyFrom(other);
+      has_pooling_param_ = true;
+    }
+    inline const PoolingParameter& pooling_param() const { 
+      return pooling_param_;
+    }
+    inline bool has_pooling_param() const { return has_pooling_param_; }
+
+
   private:
     std::string name_;
     std::string type_;
@@ -291,6 +322,12 @@ class LayerParameter {
     bool has_input_parameter_;
     InnerProductParameter inner_product_param_;
     bool has_inner_product_param_;
+
+    ConvolutionParameter convolution_param_;
+    bool has_convolution_parameter_;
+    PoolingParameter pooling_param_;
+    bool has_pooling_parameter_;
+
 };
 
 }//end caffe
