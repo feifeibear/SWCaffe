@@ -42,7 +42,6 @@ int main () {
   NetParameter net_param("mynet", layerparams);
 
   Net<float> net(net_param);
-  DLOG(INFO) << "haha";
   net.visit_for_check();
 
   DLOG(INFO) << "begin forward pass of this net";

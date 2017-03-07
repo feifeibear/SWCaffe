@@ -1,6 +1,8 @@
 #ifndef _INNERPRODUCTPARAMETER_
 #define _INNERPRODUCTPARAMETER_
 
+#include "FillerParameter.hpp"
+
 namespace caffe {
 
 

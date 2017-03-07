@@ -4,17 +4,16 @@
 namespace caffe {
 
 enum PoolMethod {
-    MAX = 0;
-    AVE = 1;
-    STOCHASTIC = 2;
-}
+    MAX = 0,
+    AVE = 1,
+    STOCHASTIC = 2
+};
 
 class PoolingParameter {
   public:
-    PoolingParameter() {}
     PoolingParameter(int pad=0, int pad_h=0, int pad_w=0,
                      int kernel_size=2, int kernel_h=2, int kernel_w=2,
-                     int stride=1, int stride_h=1, int stride_w=1
+                     int stride=1, int stride_h=1, int stride_w=1,
                      PoolMethod pool=MAX):
       pad_(pad), pad_h_(pad_h), pad_w_(pad_w),
       kernel_size_(kernel_size), kernel_h_(kernel_h), kernel_w_(kernel_w),
@@ -22,12 +21,12 @@ class PoolingParameter {
       pool_(pool)
     {}
     
-    void CopyFrom( const InnerProductParameter& other ) {
+    void CopyFrom( const PoolingParameter& other ) {
       pool_ = other.pool();
       pad_ = other.pad();
       pad_h_ = other.pad_h();
       pad_w_ = other.pad_w();
-      kernel_ = other.kernel();
+      kernel_size_ = other.kernel_size();
       kernel_h_ = other.kernel_h();
       kernel_w_ = other.kernel_w();
       stride_ = other.stride();

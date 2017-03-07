@@ -50,4 +50,5 @@ private:
   VarianceNorm variance_norm_;
 };
 
+}
 #endif
