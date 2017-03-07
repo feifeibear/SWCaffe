@@ -8,7 +8,7 @@ int main () {
   top1.push_back("data");
   std::vector<std::vector<int> >input_size;
   input_size.resize(1);
-  input_size[0].push_back(10);
+  input_size[0].push_back(2);
   input_size[0].push_back(1);
   input_size[0].push_back(8);
   input_size[0].push_back(8);
@@ -61,12 +61,16 @@ int main () {
   Net<float> net(net_param);
   net.visit_for_check();
 
-  DLOG(INFO) << "begin forward pass of this net";
-  float loss = 0;
-  net.Forward(&loss);
+  //DLOG(INFO) << "begin forward pass of this net";
+  //float loss = 0;
+  //net.Forward(&loss);
 
-  DLOG(INFO) << "begin backward pass of this net";
-  net.Backward();
+  //DLOG(INFO) << "begin backward pass of this net";
+  //net.Backward();
+
+  net.set_debug_info( true  );
+  net.fjr_rand_init_input_blobs();
+  net.fjr_rand_init_output_blobs();
 
   DLOG(INFO) << "begin backward pass of this net";
   net.ForwardBackward();

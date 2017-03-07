@@ -688,6 +688,15 @@ void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
         << "Layer " << layer_names_[layer_id]
         << ", param blob " << blob_name
         << " data: " << data_abs_val_mean;
+
+    //fjrdebug
+    DLOG(INFO) << "fjrdebug print cpu_data()";
+    int myblob_size = blob.count();
+    for( int i = 0; i < myblob_size; ++i )
+      std::cout << blob.cpu_data()[i] << "\t";
+    std::cout << "forward data" << std::endl;
+
+
   }
 }
 /*
