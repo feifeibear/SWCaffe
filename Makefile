@@ -3,18 +3,28 @@ FLAGS+=-DCPU_ONLY
 
 INC_FLAGS=-I./glog_install/include -I./openblas_install/include -I./include
 
-OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o\
+OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_function.o \
 		./build/util/insert_splits.o \
+		./build/util/im2col.o \
 		./build/layers/inner_product_layer.o \
 		./build/layers/input_layer.o \
+		./build/layers/base_conv_layer.o \
+		./build/layers/conv_layer.o \
+		./build/layers/pooling_layer.o \
 		./build/net.o
 
 
 test: test.o $(OBJ)
-	g++ $^ -L ./glog_install/lib -lglog -L ./openblas_install/lib -lopenblas -o $@
+	g++ $^ -L ./glog_install -L ./openblas_install/lib -lglog -lopenblas -o $@
 test.o: test.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+testcp: testcp.o $(OBJ)
+	g++ $^ -L ./glog_install -L ./openblas_install/lib -lglog -lopenblas -o $@
+testcp.o: test_conv_pool.cpp
+	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
 ./build/%.o: ./src/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/layers/%.o: ./src/layers/%.cpp

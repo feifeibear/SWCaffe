@@ -9,9 +9,9 @@
 #include "caffe/layer_factory.hpp"
 //FJR
 #include "caffe/LayerParameter.hpp"
-//#include "caffe/layers/conv_layer.hpp"
+#include "caffe/layers/conv_layer.hpp"
 //#include "caffe/layers/lrn_layer.hpp"
-//#include "caffe/layers/pooling_layer.hpp"
+#include "caffe/layers/pooling_layer.hpp"
 //#include "caffe/layers/relu_layer.hpp"
 //#include "caffe/layers/sigmoid_layer.hpp"
 //#include "caffe/layers/softmax_layer.hpp"
@@ -39,7 +39,7 @@ namespace caffe {
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetConvolutionLayer(
     const LayerParameter& param) {
-  /*
+  
   ConvolutionParameter conv_param = param.convolution_param();
   ConvolutionParameter_Engine engine = conv_param.engine();
 #ifdef USE_CUDNN
@@ -72,13 +72,13 @@ shared_ptr<Layer<Dtype> > GetConvolutionLayer(
     LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
     throw;  // Avoids missing return warning
   }
-  */
+  
   return shared_ptr<Layer<Dtype> >(new ConvolutionLayer<Dtype>(param));
 }
 
 REGISTER_LAYER_CREATOR(Convolution, GetConvolutionLayer);
 
-/*
+
 // Get pooling layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
@@ -117,6 +117,7 @@ shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
 
 REGISTER_LAYER_CREATOR(Pooling, GetPoolingLayer);
 
+/*
 // Get LRN layer according to engine
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
@@ -264,11 +265,11 @@ shared_ptr<Layer<Dtype> > GetPythonLayer(const LayerParameter& param) {
     throw;
   }
 }
-*/
+
 
 REGISTER_LAYER_CREATOR(Python, GetPythonLayer);
 #endif
-
+*/
 // Layers that use their constructor as their default creator should be
 // registered in their corresponding cpp files. Do not register them here.
 }  // namespace caffe
