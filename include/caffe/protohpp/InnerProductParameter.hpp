@@ -13,12 +13,12 @@ enum VarianceNorm {
 class FillerParameter {
   public: 
   FillerParameter(): 
-    type_("constant"),
+    type_("gaussian"),
     value_(0.0),
     min_(0.0),
     max_ (1.0),
     mean_ (0.0),
-    std_ (0.0),
+    std_ (1.0),
     sparse_(-1.0),
     variance_norm_(FAN_IN)
     {}

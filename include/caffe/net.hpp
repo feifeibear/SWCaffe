@@ -143,6 +143,14 @@ class Net {
   inline const vector<Blob<Dtype>*>& output_blobs() const {
     return net_output_blobs_;
   }
+  //FJRdebug
+  inline void fjr_rand_init_output_blobs() {
+    for(int i = 0; i < num_outputs(); ++i) {
+      int blob_size = net_output_blobs_[i]->count();
+      for( int j = 0; j < blob_size; j++)
+        net_output_blobs_[i]->mutable_cpu_diff()[j] = 0.02;
+    }
+  }
   inline const vector<int>& input_blob_indices() const {
     return net_input_blob_indices_;
   }

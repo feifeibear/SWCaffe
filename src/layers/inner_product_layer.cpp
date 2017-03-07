@@ -98,7 +98,21 @@ void InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.cpu_data(),
         this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
   }
-  LOG(INFO) << "fjrdebug InnerProductLayer end";
+  LOG(INFO) << "fjrdebug InnerProductLayer end & print top[0]";
+
+  //FJR DEBUG
+    int top_size = top[0]->count();
+    DLOG(INFO) << " fjrdebug InnerProductLayer top data[0] size is " << top_size; 
+    for( int i = 0; i < top_size; ++i )
+      std::cout << (top[0]->cpu_data())[i] << "\t";
+    std::cout << "forward end" << std::endl;
+
+    int weight_size = this->blobs_[0]->count();
+    DLOG(INFO) << " fjrdebug InnerProductLayer weight size is " << weight_size; 
+    for(int i = 0; i < weight_size; ++i )
+      std::cout << weight[i] << "\t";
+    std::cout << "InnerProductLayer weight end" << std::endl;
+
 }
 
 template <typename Dtype>
@@ -120,6 +134,7 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
           (Dtype)1., top_diff, bottom_data,
           (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
     }
+    DLOG(INFO) << " fjrdebug inside propagate_down if statement";
   }
   if (bias_term_ && this->param_propagate_down_[1]) {
     const Dtype* top_diff = top[0]->cpu_diff();
@@ -143,6 +158,22 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
           (Dtype)0., bottom[0]->mutable_cpu_diff());
     }
   }
+
+  //FJRDEBUG
+    int top_size = top[0]->count();
+    DLOG(INFO) << " fjrdebug backward InnerProduct top diff size is " << top_size;
+    for( int i = 0; i < top_size; ++i )
+      std::cout <<(top[0]->cpu_diff())[i] << "\t";
+    std::cout << std::endl << "backward diff" << std::endl;
+
+    DLOG(INFO) << " fjrdebug backward InnerProduct top data size is " << top_size;
+    for( int i = 0; i < top_size; ++i )
+      std::cout <<(top[0]->cpu_data())[i] << "\t";
+    std::cout << std::endl << "backward data" << std::endl;
+
+
+
+
 }
 
 #ifdef CPU_ONLY

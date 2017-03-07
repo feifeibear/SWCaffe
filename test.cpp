@@ -9,9 +9,9 @@ int main () {
   std::vector<std::vector<int> >input_size;
   input_size.resize(1);
   input_size[0].push_back(2);
-  input_size[0].push_back(3);
-  input_size[0].push_back(4);
-  input_size[0].push_back(5);
+  input_size[0].push_back(2);
+  input_size[0].push_back(2);
+  input_size[0].push_back(2);
   DLOG(INFO) <<  "InputParameter Initialization is OK!";
 
   InputParameter input_param(input_size);
@@ -19,17 +19,17 @@ int main () {
   l1.setup_input_param(input_param);
   DLOG(INFO) <<  "input layer paramter is OK!";
 
-  BlobProto w1(10,20,1,1);
-  InnerProductParameter innerparam1(10);
+  //BlobProto w1(10,20,1,1);
+  InnerProductParameter innerparam1(3);
   std::vector<std::string> bottom2, top2;
   bottom2.push_back("data"); top2.push_back("ip1");
   LayerParameter l2("ip1","InnerProduct",bottom2, top2, 0);
   l2.setup_inner_product_param(innerparam1);
 
 
-  InnerProductParameter innerparam2(20);
+  InnerProductParameter innerparam2(4);
   std::vector<std::string> bottom3, top3;
-  bottom3.push_back("ip1"); top3.push_back("ip3");
+  bottom3.push_back("ip1"); top3.push_back("ip2");
   LayerParameter l3("ip2","InnerProduct", bottom3, top3, 0);
   l3.setup_inner_product_param(innerparam2);
   //LayerParameter l4("conv2","Convolution",{"pool1"},{"conv2"},2);
@@ -46,12 +46,15 @@ int main () {
 
   DLOG(INFO) << "begin forward pass of this net";
   float loss = 0;
-  net.Forward(&loss);
+  //net.Forward(&loss);
 
   DLOG(INFO) << "begin backward pass of this net";
-  net.Backward();
+  //net.Backward();
+
+  //set backward
 
   DLOG(INFO) << "begin backward pass of this net";
+  net.fjr_rand_init_output_blobs();
   net.ForwardBackward();
 
   DLOG(INFO) << "test end";

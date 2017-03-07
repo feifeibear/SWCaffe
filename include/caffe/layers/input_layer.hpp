@@ -34,9 +34,31 @@ class InputLayer : public Layer<Dtype> {
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {}
+      const vector<Blob<Dtype>*>& top) {
+
+    //FJR random initialize bottom
+    int top_size = top[0]->count();
+    DLOG(INFO) << " fjrdebug InputLayer top[0] size is " << top_size; 
+    for( int i = 0; i < top_size; ++i )
+      top[0]->mutable_cpu_data()[i] = 0.01;
+
+    for( int i = 0; i < top_size; ++i )
+      std::cout << top[0]->cpu_data()[i] << "\t";
+    std::cout << "forward data" << std::endl;
+
+    
+  }
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {}
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+
+    //FJR debug
+    int top_size = top[0]->count();
+    DLOG(INFO) << " fjrdebug InputLayer bottom[0] size is " << top_size; 
+    for( int i = 0; i < top_size; ++i )
+      std::cout << (top[0]->cpu_diff())[i] << "\t";
+    std::cout << "backward diff" << std::endl;
+    
+  }
 };
 
 }  // namespace caffe
