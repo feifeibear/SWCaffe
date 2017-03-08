@@ -151,6 +151,15 @@ class Net {
         net_output_blobs_[i]->mutable_cpu_diff()[j] = 0.02;
     }
   }
+  inline void fjr_rand_init_input_blobs() {
+    for( int i = 0; i < num_inputs(); ++i ) {
+      int blob_size = net_input_blobs_[i]->count();
+      DLOG(INFO) << " rand init input " << i << blob_size;
+      for( int j = 0; j < blob_size; j++ )
+        net_input_blobs_[i]->mutable_cpu_data()[j] = 0.015;
+    }
+  }
+
   inline const vector<int>& input_blob_indices() const {
     return net_input_blob_indices_;
   }
