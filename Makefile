@@ -1,7 +1,7 @@
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
 
-INC_FLAGS=-I./glog_install/include -I./openblas_install/include -I./include
+INC_FLAGS=-I../thirdparty/glog_install/include -I../thirdparty/openblas_install/include -I./include
 
 OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_function.o \
@@ -16,12 +16,12 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 
 
 test: test.o $(OBJ)
-	g++ $^ -L ./glog_install -L ./openblas_install/lib -lglog -lopenblas -o $@
+	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -lglog -lopenblas -o $@
 test.o: test.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 testcp: testcp.o $(OBJ)
-	g++ $^ -L ./glog_install -L ./openblas_install/lib -lglog -lopenblas -o $@
+	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -lglog -lopenblas -o $@
 testcp.o: test_conv_pool.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
