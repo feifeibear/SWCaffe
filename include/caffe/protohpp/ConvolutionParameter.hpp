@@ -21,7 +21,7 @@ class ConvolutionParameter {
       num_output_(num_output), bias_term_(bias_term),
       dilation_(dilation), group_(group), axis_(axis), 
       force_nd_im2col_(force_nd_im2col), engine_(engine)
-    {}
+    { dilation_.resize(2); dilation_[0] = dilation_[1] = dilation; }    // Note that dilation is restricted to 2d. Might need revise.
 
     /** Calling these set_functions are required !
         But should only call either one of set_xxx & set_xxx_2d !

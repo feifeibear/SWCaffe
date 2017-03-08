@@ -38,7 +38,7 @@ int main () {
   PoolingParameter pool_param;
   pool_param.set_pad_2d();
   pool_param.set_kernel_2d(2,2);
-  pool_param.set_stride_2d();
+  pool_param.set_stride_2d(2,2);
   std::vector<std::string> bottom3, top3;
   bottom3.push_back("conv1"); top3.push_back("pool1");
   LayerParameter l3("pool1", "Pooling", bottom3, top3, 0);

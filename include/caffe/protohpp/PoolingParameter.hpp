@@ -50,12 +50,12 @@ class PoolingParameter {
       has_kernel_size_ = false;
       has_kernel_h_ = has_kernel_w_ = true;
     }
-    void set_stride(int stride=1) {
+    void set_stride(int stride) {
       stride_ = stride;
       has_stride_ = true;
       has_stride_h_ = has_stride_w_ = false;
     }
-    void set_stride_2d(int stride_h=1, int stride_w=1) {
+    void set_stride_2d(int stride_h, int stride_w) {
       stride_h_ = stride_h;
       stride_w_ = stride_w;
       has_stride_ = false;
