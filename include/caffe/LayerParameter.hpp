@@ -9,6 +9,7 @@
 #include <caffe/protohpp/PoolingParameter.hpp>
 #include <caffe/protohpp/DataParameter.hpp>
 #include <caffe/protohpp/ReLUParameter.hpp>
+#include <caffe/protohpp/SoftmaxParameter.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -227,6 +228,9 @@ class LayerParameter {
       if(has_data_param_) {
         data_param_.CopyFrom(other.data_param());
       }
+      if( has_softmax_param_ ) {
+        softmax_param_.CopyFrom(other.softmax_param());
+      }
     }
 
 
@@ -250,6 +254,7 @@ class LayerParameter {
       has_pooling_param_ = false;
       has_data_param_ = false;
       has_relu_param_ = false;
+      has_softmax_param_ = false;
     }
 
     LayerParameter() {
@@ -264,6 +269,7 @@ class LayerParameter {
       has_pooling_param_ = false;
       has_data_param_ = false;
       has_relu_param_ = false;
+      has_softmax_param_ = false;
     }
     ~LayerParameter() {}
 
@@ -331,6 +337,16 @@ class LayerParameter {
       has_relu_param_ = true;
     }
 
+    //Softmax
+    inline const SoftmaxParameter& softmax_param() const {
+      return softmax_param_;
+    }
+    inline bool has_softmax_param() const { return has_softmax_param_; }
+    inline void setup_softmax_param( const SoftmaxParameter& other ) {
+      softmax_param_.CopyFrom(other);
+      has_softmax_param_ = true;
+    } 
+
   private:
     std::string name_;
     std::string type_;
@@ -365,6 +381,8 @@ class LayerParameter {
     bool has_data_param_;
     ReLUParameter relu_param_;
     bool has_relu_param_;
+    SoftmaxParameter softmax_param_;
+    bool has_softmax_param_;
 
 };
 

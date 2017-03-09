@@ -104,7 +104,14 @@ int main () {
   bottom8.push_back("relu1"); top8.push_back("ip2");
   LayerParameter l8("ip2", "InnerProduct", bottom8, top8, 0);
   l8.setup_inner_product_param(innerparam2);
-  //LayerParameter l4("conv2","Convolution",{"pool1"},{"conv2"},2);
+
+
+  SoftmaxParameter softmaxparam;
+  std::vector<std::string> bottom9, top9;
+  bottom9.push_back("ip2"); top9.push_back("prob");
+  LayerParameter l9("prob", "Softmax", bottom9, top9, 0);
+  l9.setup_softmax_param(softmaxparam);
+
 
   std::vector<LayerParameter> layerparams;
   layerparams.push_back(l1);
@@ -114,6 +121,8 @@ int main () {
   layerparams.push_back(l5);
   layerparams.push_back(l6);
   layerparams.push_back(l7);
+  layerparams.push_back(l8);
+  layerparams.push_back(l9);
   DLOG(INFO) <<  "paramter Initialization is OK!";
 
   NetParameter net_param("mynet", layerparams);

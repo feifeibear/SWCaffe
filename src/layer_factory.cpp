@@ -14,7 +14,7 @@
 #include "caffe/layers/pooling_layer.hpp"
 #include "caffe/layers/relu_layer.hpp"
 //#include "caffe/layers/sigmoid_layer.hpp"
-//#include "caffe/layers/softmax_layer.hpp"
+#include "caffe/layers/softmax_layer.hpp"
 //#include "caffe/layers/tanh_layer.hpp"
 //#include "caffe/proto/caffe.pb.h"
 
@@ -204,6 +204,7 @@ shared_ptr<Layer<Dtype> > GetSigmoidLayer(const LayerParameter& param) {
 }
 
 REGISTER_LAYER_CREATOR(Sigmoid, GetSigmoidLayer);
+*/
 
 // Get softmax layer according to engine.
 template <typename Dtype>
@@ -228,6 +229,7 @@ shared_ptr<Layer<Dtype> > GetSoftmaxLayer(const LayerParameter& param) {
 }
 
 REGISTER_LAYER_CREATOR(Softmax, GetSoftmaxLayer);
+/*
 // Get tanh layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetTanHLayer(const LayerParameter& param) {
