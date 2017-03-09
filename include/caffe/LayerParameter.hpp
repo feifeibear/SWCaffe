@@ -7,6 +7,8 @@
 #include <caffe/protohpp/BlobProto.hpp>
 #include <caffe/protohpp/ConvolutionParameter.hpp>
 #include <caffe/protohpp/PoolingParameter.hpp>
+#include <caffe/protohpp/DataParameter.hpp>
+#include <caffe/protohpp/ReLUParameter.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -170,6 +172,7 @@ class LayerParameter {
       has_inner_product_param_ = false;
       has_convolution_param_ = false;
       has_pooling_param_ = false;
+      has_data_param_ = false;
     }
     //TODO
     bool has_phase() const { return has_phase_; }
@@ -221,6 +224,9 @@ class LayerParameter {
       if(has_pooling_param_) {
         pooling_param_.CopyFrom(other.pooling_param());
       }
+      if(has_data_param_) {
+        data_param_.CopyFrom(other.data_param());
+      }
     }
 
 
@@ -240,7 +246,12 @@ class LayerParameter {
       exclude_.resize(0);
       has_input_param_ = false;
       has_inner_product_param_ = false;
+      has_convolution_param_ = false;
+      has_pooling_param_ = false;
+      has_data_param_ = false;
+      has_relu_param_ = false;
     }
+
     LayerParameter() {
       phase_ = TRAIN;
       has_phase_ = false;
@@ -249,6 +260,10 @@ class LayerParameter {
       exclude_.resize(0);
       has_input_param_ = false;
       has_inner_product_param_ = false;
+      has_convolution_param_ = false;
+      has_pooling_param_ = false;
+      has_data_param_ = false;
+      has_relu_param_ = false;
     }
     ~LayerParameter() {}
 
@@ -296,6 +311,25 @@ class LayerParameter {
     }
     inline bool has_pooling_param() const { return has_pooling_param_; }
 
+    //data
+    inline const DataParameter& data_param() const {
+      return data_param_;
+    }
+    inline bool has_data_param() const { return has_data_param_; }
+    inline void setup_data_param( const DataParameter& other ) {
+     data_param_.CopyFrom(other);
+     has_data_param_ = true;
+    }
+
+    //relu
+    inline const ReLUParameter& relu_param() const {
+      return relu_param_;
+    }
+    inline bool has_relu_param() const { return has_relu_param_; }
+    inline void setup_relu_param( const ReLUParameter& other ) {
+      relu_param_.CopyFrom(other);
+      has_relu_param_ = true;
+    }
 
   private:
     std::string name_;
@@ -327,6 +361,10 @@ class LayerParameter {
     bool has_convolution_param_;
     PoolingParameter pooling_param_;
     bool has_pooling_param_;
+    DataParameter data_param_;
+    bool has_data_param_;
+    ReLUParameter relu_param_;
+    bool has_relu_param_;
 
 };
 

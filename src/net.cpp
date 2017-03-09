@@ -54,6 +54,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   // the current NetState.
   NetParameter filtered_param;
 
+  DLOG(INFO) << "before FilterNet";
   FilterNet(in_param, &filtered_param);
   //filtered_param.CopyFrom(in_param);
   DLOG(INFO) << "FilterNet is OK";
@@ -275,7 +276,9 @@ template <typename Dtype>
 void Net<Dtype>::FilterNet(const NetParameter& param,
     NetParameter* param_filtered) {
   NetState net_state(param.state());
+  DLOG(INFO) << "fjrdebug before FilterNet CopyFrom";
   param_filtered->CopyFrom(param);
+  DLOG(INFO) << "fjrdebug after FilterNet CopyFrom";
   param_filtered->clear_layer();
   for (int i = 0; i < param.layer_size(); ++i) {
     const LayerParameter& layer_param = param.layer(i);
@@ -690,11 +693,11 @@ void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
         << " data: " << data_abs_val_mean;
 
     //fjrdebug
-    DLOG(INFO) << "fjrdebug print cpu_data()";
-    int myblob_size = blob.count();
-    for( int i = 0; i < myblob_size; ++i )
-      std::cout << blob.cpu_data()[i] << "\t";
-    std::cout << "forward data" << std::endl;
+    //DLOG(INFO) << "fjrdebug print cpu_data()";
+    //int myblob_size = blob.count();
+    //for( int i = 0; i < myblob_size; ++i )
+    //  std::cout << blob.cpu_data()[i] << "\t";
+    //std::cout << "forward data" << std::endl;
 
 
   }

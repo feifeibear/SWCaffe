@@ -12,7 +12,7 @@
 #include "caffe/layers/conv_layer.hpp"
 //#include "caffe/layers/lrn_layer.hpp"
 #include "caffe/layers/pooling_layer.hpp"
-//#include "caffe/layers/relu_layer.hpp"
+#include "caffe/layers/relu_layer.hpp"
 //#include "caffe/layers/sigmoid_layer.hpp"
 //#include "caffe/layers/softmax_layer.hpp"
 //#include "caffe/layers/tanh_layer.hpp"
@@ -155,6 +155,7 @@ shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
 }
 
 REGISTER_LAYER_CREATOR(LRN, GetLRNLayer);
+*/
 
 // Get relu layer according to engine.
 template <typename Dtype>
@@ -179,7 +180,7 @@ shared_ptr<Layer<Dtype> > GetReLULayer(const LayerParameter& param) {
 }
 
 REGISTER_LAYER_CREATOR(ReLU, GetReLULayer);
-
+/*
 // Get sigmoid layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetSigmoidLayer(const LayerParameter& param) {
@@ -227,7 +228,6 @@ shared_ptr<Layer<Dtype> > GetSoftmaxLayer(const LayerParameter& param) {
 }
 
 REGISTER_LAYER_CREATOR(Softmax, GetSoftmaxLayer);
-
 // Get tanh layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetTanHLayer(const LayerParameter& param) {

@@ -41,8 +41,9 @@ public:
     level_ = other.level();
     stage_.clear();
     int stage_size = other.get_stage().size();
+    stage_.resize(stage_size);
     for( int i = 0; i < stage_size; ++i ){
-      stage_.push_back(other.get_stage()[i]);
+      stage_[i] = other.get_stage()[i];
     }
   }
 
@@ -79,8 +80,9 @@ class NetParameter {
       debug_info_ = other.debug_info();
       state_.CopyFrom(other.state());
       int layer_size = other.get_layer().size();
+      layer_.resize(layer_size);
       for( int i = 0; i < layer_size; ++i )
-        layer_.push_back(other.get_layer()[i]);
+        layer_[i] = other.get_layer()[i];
     }
 
     void clear_layer() {

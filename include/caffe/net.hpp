@@ -228,13 +228,15 @@ class Net {
 
     std::cout << "* input blobs" <<std::endl;
     for(int i = 0; i < net_input_blobs_.size(); ++i){
-      std::cout << net_input_blobs_[i]->count() << " ";
+      std::cout << net_input_blobs_[i]->name() << 
+        net_input_blobs_[i]->count() << " ";
     }
     std::cout << std::endl;
 
     std::cout << "* output blobs" <<std::endl;
     for(int i = 0; i < net_output_blobs_.size(); ++i){
-      std::cout << net_output_blobs_[i]->count() << " ";
+      std::cout << net_output_blobs_[i]->name() << 
+      net_output_blobs_[i]->count() << " ";
     }
     std::cout << std::endl;
 
