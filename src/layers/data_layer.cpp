@@ -2,7 +2,7 @@
 #include <opencv2/core/core.hpp>
 #endif  // USE_OPENCV
 #include <stdint.h>
-#include <assert.h>
+//#include <assert.h>
 
 #include <vector>
 
@@ -29,7 +29,7 @@ DataLayer<Dtype>::DataLayer(const LayerParameter& param):offset_(0),
 	n_rows(0), n_cols(0), number_of_images(0),
 	Layer<Dtype>(param)
 {
-  file.open("./data/train-images-idx3-ubyte",std::ios::binary);
+  file.open("../data/train-images-idx3-ubyte",std::ios::binary);
 	if(!file.is_open()) DLOG(FATAL) << "MNIST Read failed";
 	DLOG(INFO) << "fjrdebug read mnist data OK";
 }
@@ -63,7 +63,7 @@ void DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   batch_size = this->layer_param_.data_param().batch_size();
 	DLOG(INFO) << "number_of_images is " << number_of_images << " batch_size is " <<
 		batch_size;
-	assert(number_of_images%batch_size == 0);
+	//assert(number_of_images%batch_size == 0);
 
 	vector<int> top_shape;
 	top_shape.push_back(batch_size);

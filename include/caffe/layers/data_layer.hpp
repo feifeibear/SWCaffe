@@ -47,8 +47,8 @@ class DataLayer : public Layer<Dtype> {
 
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top){
-    if(offset_ > number_of_images)
-      offset_ = 0;
+    //if(offset_ > number_of_images)
+    //  offset_ = 0;
     for( int img = 0; img < batch_size; ++img ){
       for( int r = 0; r < n_rows; ++r )
         for( int c = 0; c < n_cols; ++c ){
@@ -56,9 +56,10 @@ class DataLayer : public Layer<Dtype> {
           file.read((char*) &temp, sizeof(temp));
           //top[0]->mutable_cpu_data()[img][0][r][c] = static_cast<Dtype>(temp);
         }
-
+      offset_++;
+      if( offset_ > number_of_images ) offset_ = 0;
     }
-    offset_+=batch_size;
+    //offset_+=batch_size;
 
   }
 
