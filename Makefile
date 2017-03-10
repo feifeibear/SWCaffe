@@ -25,6 +25,11 @@ testcp: testcp.o $(OBJ)
 testcp.o: test_conv_pool.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
+test_solver: test_solver.o $(OBJ)
+	g++ $^ -L ./glog_install -L ./openblas_install/lib -lglog -lopenblas -o $@
+test_solver.o: test_solver.cpp
+	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
 ./build/%.o: ./src/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/layers/%.o: ./src/layers/%.cpp
