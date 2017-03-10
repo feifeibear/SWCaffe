@@ -212,6 +212,11 @@ class LayerParameter {
 
       has_input_param_ = other.has_input_parameter();
       has_inner_product_param_ = other.has_inner_product_param();
+      has_convolution_param_ = other. has_convolution_param();
+      has_pooling_param_ = other.has_pooling_param();
+      has_data_param_ = other.has_data_param();
+      has_softmax_param_ = other.has_softmax_param();
+      
 
       if(has_input_param_) {
         input_param_.CopyFrom(other.input_param());

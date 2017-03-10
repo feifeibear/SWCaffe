@@ -108,7 +108,8 @@ class ConvolutionParameter {
     inline int dilation_size() const { return dilation_.size(); }
     inline int group() const { return group_; }
     inline bool force_nd_im2col() const { return force_nd_im2col_; }
-    ConvolutionParameter_Engine engine() const { LOG(INFO)<<engine_<<"!!!"; return engine_; }
+    ConvolutionParameter_Engine engine() const { return engine_; }
+	  void set_engine( ConvolutionParameter_Engine e) { engine_ = e;}
 
     inline bool has_pad_h() const { return has_pad_h_; }
     inline bool has_pad_w() const { return has_pad_w_; }
