@@ -13,15 +13,15 @@ enum ConvolutionParameter_Engine {
 
 class ConvolutionParameter {
   public:
-    ConvolutionParameter() {}
-    ConvolutionParameter(int num_output, bool bias_term=true,
+    //ConvolutionParameter() {}
+    ConvolutionParameter(int num_output=3, bool bias_term=true,
                          int dilation=1, int group=1, int axis=1, 
                          bool force_nd_im2col=false,
                          ConvolutionParameter_Engine engine=ConvolutionParameter_Engine_DEFAULT):
       num_output_(num_output), bias_term_(bias_term),
       dilation_(dilation), group_(group), axis_(axis), 
       force_nd_im2col_(force_nd_im2col), engine_(engine)
-    { dilation_.resize(2); dilation_[0] = dilation_[1] = dilation; }    // Note that dilation is restricted to 2d. Might need revise.
+    { LOG(INFO)<<engine_<<"!!!"; dilation_.resize(2); dilation_[0] = dilation_[1] = dilation; }    // Note that dilation is restricted to 2d. Might need revise.
 
     /** Calling these set_functions are required !
         But should only call either one of set_xxx & set_xxx_2d !
@@ -80,6 +80,7 @@ class ConvolutionParameter {
       has_stride_h_ = other.has_stride_h();
       has_stride_w_ = other.has_stride_w();
       engine_ = other.engine();
+      LOG(INFO)<<engine_<<"!!!";
     }
 
     inline int axis() const { return axis_; }
@@ -107,7 +108,7 @@ class ConvolutionParameter {
     inline int dilation_size() const { return dilation_.size(); }
     inline int group() const { return group_; }
     inline bool force_nd_im2col() const { return force_nd_im2col_; }
-    ConvolutionParameter_Engine engine() const { return engine_; }
+    ConvolutionParameter_Engine engine() const { LOG(INFO)<<engine_<<"!!!"; return engine_; }
 
     inline bool has_pad_h() const { return has_pad_h_; }
     inline bool has_pad_w() const { return has_pad_w_; }
