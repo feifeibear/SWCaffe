@@ -89,6 +89,8 @@ int main () {
    * define InnerProduct layer (50*4*4) -> (500) 
    * ****/
   InnerProductParameter innerparam1(500);
+  innerparam1.mutable_weight_filler().set_type("xavier");
+  innerparam1.mutable_bias_filler().set_type("constant");
   std::vector<std::string> bottom6, top6;
   bottom6.push_back("pool2"); top6.push_back("ip1");
   LayerParameter l6("ip1","InnerProduct",bottom6, top6, 0);
@@ -105,6 +107,8 @@ int main () {
    * define InnerProduct layer (500) -> (10)
    * ****/
   InnerProductParameter innerparam2(10);
+  innerparam2.mutable_weight_filler().set_type("xavier");
+  innerparam2.mutable_bias_filler().set_type("constant");
   std::vector<std::string> bottom8, top8;
   bottom8.push_back("relu1"); top8.push_back("ip2");
   LayerParameter l8("ip2", "InnerProduct", bottom8, top8, 0);

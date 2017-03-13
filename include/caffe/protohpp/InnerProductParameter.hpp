@@ -27,6 +27,8 @@ class InnerProductParameter {
     void set_num_output(int N) { num_output_ = N; }
     inline const FillerParameter& bias_filler() const { return bias_filler_; }
     inline const FillerParameter& weight_filler() const { return weight_filler_; }
+    inline FillerParameter& mutable_bias_filler() { return bias_filler_; }
+    inline FillerParameter& mutable_weight_filler() { return weight_filler_; }
     inline bool bias_term() const { return bias_term_; }
     inline bool transpose() const { return transpose_; }
   private:
