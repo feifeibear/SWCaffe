@@ -7,33 +7,36 @@ int main () {
    * define input layer (2, 1, 8, 8) 
    ********/
 
-  /*
   std::vector<std::string> bottom1, top1;
   top1.push_back("data");
   std::vector<std::vector<int> >input_size;
   input_size.resize(1);
   input_size[0].push_back(2);
   input_size[0].push_back(1);
-  input_size[0].push_back(8);
-  input_size[0].push_back(8);
+  input_size[0].push_back(28);
+  input_size[0].push_back(28);
   InputParameter input_param(input_size);
   LayerParameter l1("data","Input",bottom1, top1, 0);
   l1.setup_input_param(input_param);
   DLOG(INFO) <<  "input layer paramter is OK!";
-  */
 
+
+  /*
   //mnist input 10, 1, 28, 28
   std::vector<std::string> bottom1, top1;
   top1.push_back("data");
-  DataParameter data_param(10);
+  DataParameter data_param(1);
   LayerParameter l1("data", "Data", bottom1, top1, 0);
   l1.setup_data_param(data_param);
   DLOG(INFO) <<  "Data layer paramter is OK!";
+  */
 
   /********
    * define convolution layer (10,1,28,28) -> (10, 20, 24, 24)
    *******/
   ConvolutionParameter conv_param1(20);
+  conv_param1.mutable_weight_filler().set_type("xavier");
+  conv_param1.mutable_bias_filler().set_type("constant");
   conv_param1.set_pad_2d();
   conv_param1.set_kernel_2d(5,5);
   conv_param1.set_stride_2d(1,1);
@@ -59,6 +62,8 @@ int main () {
    * define convolution layer (10,20,12,12) -> (10, 50, 8, 8)
    *******/
   ConvolutionParameter conv_param2(50);
+  conv_param2.mutable_weight_filler().set_type("xavier");
+  conv_param2.mutable_bias_filler().set_type("constant");
   conv_param2.set_pad_2d();
   conv_param2.set_kernel_2d(5,5);
   conv_param2.set_stride_2d(1,1);
@@ -131,7 +136,6 @@ int main () {
 
   Net<float> net(net_param);
   net.set_debug_info(true);
-  net.visit_for_check();
 
   DLOG(INFO) << "begin forward pass of this net";
   float loss = 0;
@@ -143,10 +147,10 @@ int main () {
   //set backward
 
   DLOG(INFO) << "begin backward pass of this net";
-  net.fjr_rand_init_output_blobs();
-  //net.fjr_rand_init_input_blobs();
+  //net.fjr_rand_init_output_data_blobs();
+  net.fjr_rand_init_output_diff_blobs();
+  net.fjr_rand_init_input_blobs();
 
-  net.ForwardBackward();
   net.ForwardBackward();
 
   DLOG(INFO) << "test end";

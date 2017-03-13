@@ -50,14 +50,18 @@ class DataLayer : public Layer<Dtype> {
     //if(offset_ > number_of_images)
     //  offset_ = 0;
     for( int img = 0; img < batch_size; ++img ){
-      for( int r = 0; r < n_rows; ++r )
-        for( int c = 0; c < n_cols; ++c ){
+      for( int c = 0; c < n_cols; ++c )
+        for( int r = 0; r < n_rows; ++r ) {
           unsigned char temp;
           file.read((char*) &temp, sizeof(temp));
-          //top[0]->mutable_cpu_data()[img][0][r][c] = static_cast<Dtype>(temp);
+          int temp_offset = img * n_rows * n_cols + c * n_cols + r;
+          top[0]->mutable_cpu_data()[temp_offset] = static_cast<Dtype>(temp);
         }
       offset_++;
-      if( offset_ > number_of_images ) offset_ = 0;
+      if( offset_ > number_of_images ) {
+        offset_ = 0;
+        file.seekg( 0, std::ios_base::beg );
+      }
     }
     //offset_+=batch_size;
 

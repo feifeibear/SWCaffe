@@ -52,22 +52,17 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   phase_ = in_param.state().phase();
   // Filter layers based on their include/exclude rules and
   // the current NetState.
-  NetParameter filtered_param;
-
-  DLOG(INFO) << "before FilterNet";
-  FilterNet(in_param, &filtered_param);
-  //filtered_param.CopyFrom(in_param);
-  DLOG(INFO) << "FilterNet is OK";
-  LOG_IF(INFO, Caffe::root_solver())
-      << "Initializing net from parameters: " << std::endl
-      << filtered_param.DebugString();
+  //NetParameter filtered_param;
+  //FilterNet(in_param, &filtered_param);
+  //LOG_IF(INFO, Caffe::root_solver())
+  //    << "Initializing net from parameters: " << std::endl
+  //    << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
   //TODO
-  InsertSplits(filtered_param, &param);
+  //InsertSplits(filtered_param, &param);
+  InsertSplits(in_param, &param);
   //param.CopyFrom(filtered_param);
-  DLOG(INFO) << "InsertSplits is OK";
-  //NetParameter param;
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
 
@@ -210,6 +205,8 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
     }
     if (!layer_contributes_loss) { layer_need_backward_[layer_id] = false; }
+    //FJR
+    layer_need_backward_[layer_id] = true;
     if (Caffe::root_solver()) {
       if (layer_need_backward_[layer_id]) {
         LOG(INFO) << layer_names_[layer_id] << " needs backward computation.";
@@ -276,9 +273,7 @@ template <typename Dtype>
 void Net<Dtype>::FilterNet(const NetParameter& param,
     NetParameter* param_filtered) {
   NetState net_state(param.state());
-  DLOG(INFO) << "fjrdebug before FilterNet CopyFrom";
   param_filtered->CopyFrom(param);
-  DLOG(INFO) << "fjrdebug after FilterNet CopyFrom";
   param_filtered->clear_layer();
   for (int i = 0; i < param.layer_size(); ++i) {
     const LayerParameter& layer_param = param.layer(i);

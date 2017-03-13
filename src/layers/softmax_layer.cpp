@@ -57,6 +57,8 @@ void SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       top_data += inner_num_;
     }
   }
+  //bottom[0]->fjr_print_data();
+  //top[0]->fjr_print_data();
 }
 
 template <typename Dtype>
@@ -69,6 +71,9 @@ void SoftmaxLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   Dtype* scale_data = scale_.mutable_cpu_data();
   int channels = top[0]->shape(softmax_axis_);
   int dim = top[0]->count() / outer_num_;
+
+  //DLOG(INFO) << "fjrdebug : dim " << dim << " channels " << channels << " outer_num_ " <<  outer_num_;
+
   caffe_copy(top[0]->count(), top_diff, bottom_diff);
   for (int i = 0; i < outer_num_; ++i) {
     // compute dot(top_diff, top_data) and subtract them from the bottom diff
@@ -83,6 +88,10 @@ void SoftmaxLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   }
   // elementwise multiplication
   caffe_mul(top[0]->count(), bottom_diff, top_data, bottom_diff);
+
+  //top[0]->fjr_print_data();
+  //top[0]->fjr_print_diff();
+  //bottom[0]->fjr_print_diff();
 }
 
 

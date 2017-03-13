@@ -144,11 +144,18 @@ class Net {
     return net_output_blobs_;
   }
   //FJRdebug
-  inline void fjr_rand_init_output_blobs() {
+  inline void fjr_rand_init_output_data_blobs() {
     for(int i = 0; i < num_outputs(); ++i) {
       int blob_size = net_output_blobs_[i]->count();
       for( int j = 0; j < blob_size; j++)
-        net_output_blobs_[i]->mutable_cpu_diff()[j] = 0.02;
+        net_output_blobs_[i]->mutable_cpu_data()[j] = (Dtype)rand()/RAND_MAX;
+    }
+  }
+  inline void fjr_rand_init_output_diff_blobs() {
+    for(int i = 0; i < num_outputs(); ++i) {
+      int blob_size = net_output_blobs_[i]->count();
+      for( int j = 0; j < blob_size; j++)
+        net_output_blobs_[i]->mutable_cpu_diff()[j] = (Dtype)rand()/RAND_MAX;
     }
   }
   inline void fjr_rand_init_input_blobs() {
@@ -156,7 +163,7 @@ class Net {
       int blob_size = net_input_blobs_[i]->count();
       DLOG(INFO) << " rand init input " << i << blob_size;
       for( int j = 0; j < blob_size; j++ )
-        net_input_blobs_[i]->mutable_cpu_data()[j] = 0.015;
+        net_input_blobs_[i]->mutable_cpu_data()[j] = (Dtype)rand()/RAND_MAX;
     }
   }
 
@@ -199,47 +206,6 @@ class Net {
   const vector<Callback*>& after_backward() const { return after_backward_; }
   void add_after_backward(Callback* value) {
     after_backward_.push_back(value);
-  }
-
-  void visit_for_check() {
-    std::cout << "* print blobs_" <<std::endl;
-    for(int i = 0; i < blobs_.size(); ++i){
-      std::cout << blobs_[i]->name() << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "* bottom_id_vecs_" <<std::endl;
-    for(int i = 0; i < bottom_vecs_.size(); ++i){
-      std::cout << i << " : ";
-      for(int j = 0; j < bottom_vecs_[i].size(); ++j)
-        std::cout << bottom_vecs_[i][j]->count() << " ";
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-
-    std::cout << "* top_id_vecs_" <<std::endl;
-    for(int i = 0; i < top_vecs_.size(); ++i){
-      std::cout << i << " : ";
-      for(int j = 0; j < top_vecs_[i].size(); ++j)
-        std::cout << top_vecs_[i][j]->count() << " ";
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-
-    std::cout << "* input blobs" <<std::endl;
-    for(int i = 0; i < net_input_blobs_.size(); ++i){
-      std::cout << net_input_blobs_[i]->name() << 
-        net_input_blobs_[i]->count() << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "* output blobs" <<std::endl;
-    for(int i = 0; i < net_output_blobs_.size(); ++i){
-      std::cout << net_output_blobs_[i]->name() << 
-      net_output_blobs_[i]->count() << " ";
-    }
-    std::cout << std::endl;
-
   }
 
  protected:

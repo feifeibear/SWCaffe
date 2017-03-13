@@ -275,6 +275,20 @@ class Blob {
   string name() { return name_; }
   void set_name(string name) {name_ = name;}
   Blob(string name):name_(name) {}
+  inline void fjr_print_data () const {
+    std::cout << name_ << "'s data" << std::endl;
+    for( int i = 0; i < count_; ++i ) {
+      std::cout << cpu_data()[i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  inline void fjr_print_diff () const {
+    std::cout << name_ << "'s diff" << std::endl;
+    for( int i = 0; i < count_; ++i ) {
+      std::cout << cpu_diff()[i] << "\t";
+    }
+    std::cout << std::endl;
+  }
  protected:
   shared_ptr<SyncedMemory> data_;
   shared_ptr<SyncedMemory> diff_;

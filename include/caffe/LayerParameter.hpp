@@ -69,7 +69,8 @@ class ParamSpec {
     PERMISSIVE = 1
   };
 
-  ParamSpec():has_lr_mult_(false), decay_mult_(false) {}
+  ParamSpec():has_lr_mult_(true), has_decay_mult_(true),
+  lr_mult_(1.0),decay_mult_(1.0) {}
   explicit ParamSpec(std::string name, enum DimCheckMode share_mode,
       float lr_mult, float decay_mult,
       bool has_lr_mult, bool has_decay_mult):
@@ -244,12 +245,12 @@ class LayerParameter {
         std::string type,
         std::vector<std::string> bottom,
         std::vector<std::string> top,
-        int blob_size):
+        int blob_size = 0):
       name_(name), type_(type), bottom_(bottom), top_(top),
       blob_size_(blob_size)
     {
       phase_ = TRAIN;
-      has_phase_ = false;
+      has_phase_ = true;
       propagate_down_.resize(0);
       include_.resize(0);
       exclude_.resize(0);

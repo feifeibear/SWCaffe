@@ -21,7 +21,12 @@ class ConvolutionParameter {
       num_output_(num_output), bias_term_(bias_term),
       dilation_(dilation), group_(group), axis_(axis), 
       force_nd_im2col_(force_nd_im2col), engine_(engine)
-    { LOG(INFO)<<engine_<<"!!!"; dilation_.resize(2); dilation_[0] = dilation_[1] = dilation; }    // Note that dilation is restricted to 2d. Might need revise.
+    { dilation_.resize(2); 
+      dilation_[0] = dilation_[1] = dilation; 
+      weight_filler_.set_type("xavier");
+      bias_filler_.set_type("constant");
+      
+    }    // Note that dilation is restricted to 2d. Might need revise.
 
     /** Calling these set_functions are required !
         But should only call either one of set_xxx & set_xxx_2d !
@@ -80,13 +85,14 @@ class ConvolutionParameter {
       has_stride_h_ = other.has_stride_h();
       has_stride_w_ = other.has_stride_w();
       engine_ = other.engine();
-      LOG(INFO)<<engine_<<"!!!";
     }
 
     inline int axis() const { return axis_; }
     inline int num_output() const { return num_output_; }
     inline const FillerParameter bias_filler() const { return bias_filler_; }
+    inline FillerParameter& mutable_bias_filler() { return bias_filler_; }
     inline const FillerParameter weight_filler() const { return weight_filler_; }
+    inline FillerParameter& mutable_weight_filler() { return weight_filler_; }
     inline bool bias_term() const { return bias_term_; }
     inline std::vector<int> pad_vec() const { return pad_; }
     inline int pad(int i) const { return pad_[i]; }

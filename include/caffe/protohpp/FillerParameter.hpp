@@ -12,8 +12,8 @@ enum VarianceNorm {
   };
 
 class FillerParameter {
-  public: 
-  FillerParameter(): 
+  public:
+  FillerParameter():
     type_("gaussian"),
     value_(0.0),
     min_(0.0),
@@ -23,13 +23,14 @@ class FillerParameter {
     sparse_(-1.0),
     variance_norm_(FAN_IN)
     {}
-  std::string type() const { return type_; }
-  float value() const { return value_; }
-  float min() const { return min_; }
-  float mean() const { return mean_; }
-  float std() const { return std_; }
-  float sparse() const { return sparse_; }
-  float max() const { return max_; }
+  inline std::string type() const { return type_; }
+  void set_type( const std::string& t ) { type_ = t; }
+  inline float value() const { return value_; }
+  inline float min() const { return min_; }
+  inline float mean() const { return mean_; }
+  inline float std() const { return std_; }
+  inline float sparse() const { return sparse_; }
+  inline float max() const { return max_; }
   VarianceNorm variance_norm() const { return variance_norm_; }
   void CopyFrom(const FillerParameter& other) {
     value_ = other.value();
