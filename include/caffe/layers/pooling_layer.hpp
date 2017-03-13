@@ -5,7 +5,6 @@
 
 #include "caffe/blob.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/LayerParameter.hpp"
 //#include "caffe/proto/caffe.pb.h"
 #include "caffe/util/math_functions.hpp"
 

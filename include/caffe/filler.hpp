@@ -8,7 +8,7 @@
 #include <string>
 
 #include "caffe/blob.hpp"
-#include "LayerParameter.hpp"
+#include "caffe/protohpp/LayerParameter.hpp"
 //#include "caffe/proto/caffe.pb.h"
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/math_functions.hpp"

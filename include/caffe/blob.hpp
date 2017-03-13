@@ -269,7 +269,7 @@ class Blob {
   void ShareDiff(const Blob& other);
 
   //FJR
-  //bool ShapeEquals(const BlobProto& other);
+  bool ShapeEquals(const BlobProto& other);
 
   //FJR FOR DEBUG
   string name() { return name_; }

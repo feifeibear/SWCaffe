@@ -2,8 +2,8 @@
 #define _CAFFE_UTIL_INSERT_SPLITS_HPP_
 
 #include <string>
-#include "caffe/NetParameter.hpp"
-#include "caffe/LayerParameter.hpp"
+#include "caffe/protohpp/NetParameter.hpp"
+#include "caffe/protohpp/LayerParameter.hpp"
 //#include "caffe/proto/caffe.pb.h"
 
 namespace caffe {

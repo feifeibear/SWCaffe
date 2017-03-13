@@ -1,12 +1,16 @@
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
 
-INC_FLAGS=-I../thirdparty/glog_install/include -I../thirdparty/openblas_install/include -I./include
+INC_FLAGS=-I../thirdparty/glog_install/include \
+ 			-I../thirdparty/openblas_install/include \
+ 			-I../thirdparty/hdf5_install/include \
+ 			-I./include
 
 OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
-		./build/util/math_function.o \
+		./build/util/math_functions.o \
 		./build/util/insert_splits.o \
 		./build/util/im2col.o \
+		./build/util/hdf5.o \
 		./build/layers/inner_product_layer.o \
 		./build/layers/input_layer.o \
 		./build/layers/base_conv_layer.o \
@@ -16,7 +20,15 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/layers/neuron_layer.o\
 		./build/layers/relu_layer.o\
 		./build/layers/softmax_layer.o\
-		./build/net.o
+		./build/net.o\
+		./build/solvers/adadelta_solver.o\
+		./build/solvers/adagrad_solver.o\
+		./build/solvers/adam_solver.o\
+		./build/solvers/nesterov_solver.o\
+		./build/solvers/rmsprop_solver.o\
+		./build/solvers/sgd_solver.o\
+		./build/util/benchmark.o\
+		./build/solver.o
 
 
 test: test.o $(OBJ)
@@ -30,7 +42,7 @@ testcp.o: test_conv_pool.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_solver: test_solver.o $(OBJ)
-	g++ $^ -L ./glog_install -L ./openblas_install/lib -lglog -lopenblas -o $@
+	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -L ../thirdparty/hdf5_install/lib -lglog -lopenblas -lhdf5 -lhdf5_cpp -lhdf5_hl -lhdf5_hl_cpp -o $@
 test_solver.o: test_solver.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
@@ -38,7 +50,9 @@ test_solver.o: test_solver.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/layers/%.o: ./src/layers/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
-./build/util/math_function.o: ./src/util/math_functions.cpp
+./build/util/%.o: ./src/util/%.cpp
+	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+./build/solvers/%.o: ./src/solvers/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 clean:
 	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o test

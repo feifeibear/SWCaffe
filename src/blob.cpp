@@ -407,7 +407,7 @@ void Blob<Dtype>::scale_diff(Dtype scale_factor) {
   }
 }
 //FJR
-/*
+
 template <typename Dtype>
 bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
   if (other.has_num() || other.has_channels() ||
@@ -430,7 +430,7 @@ bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
   }
   return shape_ == other_shape;
 }
-*/
+
 template <typename Dtype>
 void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   if (source.count() != count_ || source.shape() != shape_) {

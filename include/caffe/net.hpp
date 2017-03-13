@@ -10,8 +10,8 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/LayerParameter.hpp"
-#include "caffe/NetParameter.hpp"
+#include "caffe/protohpp/LayerParameter.hpp"
+#include "caffe/protohpp/NetParameter.hpp"
 //#include "caffe/proto/caffe.pb.h"
 
 namespace caffe {
@@ -65,20 +65,20 @@ class Net {
       Dtype* loss = NULL);
 */
 
-  /*
+  
   void ClearParamDiffs();
 
   void Update();
-  */
-/*
+  
+
   void ShareTrainedLayersWith(const Net* other);
   void CopyTrainedLayersFrom(const NetParameter& param);
   void CopyTrainedLayersFrom(const string trained_filename);
-  void CopyTrainedLayersFromBinaryProto(const string trained_filename);
+  //void CopyTrainedLayersFromBinaryProto(const string trained_filename);
   void CopyTrainedLayersFromHDF5(const string trained_filename);
-  void ToProto(NetParameter* param, bool write_diff = false) const;
+  //void ToProto(NetParameter* param, bool write_diff = false) const;
   void ToHDF5(const string& filename, bool write_diff = false) const;
-*/
+
   inline const string& name() const { return name_; }
   inline const vector<string>& layer_names() const { return layer_names_; }
   inline const vector<string>& blob_names() const { return blob_names_; }
