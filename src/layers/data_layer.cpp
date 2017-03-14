@@ -12,31 +12,25 @@
 
 namespace caffe {
 
-int reverseInt (int i) 
-{
-    unsigned char c1, c2, c3, c4;
-
-    c1 = i & 255;
-    c2 = (i >> 8) & 255;
-    c3 = (i >> 16) & 255;
-    c4 = (i >> 24) & 255;
-
-    return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
-}
 
 template <typename Dtype>
 DataLayer<Dtype>::DataLayer(const LayerParameter& param):offset_(0),
 	n_rows(0), n_cols(0), number_of_images(0),
 	Layer<Dtype>(param)
 {
-  file.open("../data/train-images-idx3-ubyte",std::ios::binary);
-	if(!file.is_open()) DLOG(FATAL) << "MNIST Read failed";
+  file.open("../data/train-images-idx3-ubyte",std::ios::in | std::ios::binary);
+
+
+	label_file.open("../data/train-labels-idx1-ubyte",std::ios::in | std::ios::binary );
+	if(!file.is_open() || !label_file.is_open())
+		DLOG(FATAL) << "MNIST Read failed";
 	DLOG(INFO) << "fjrdebug read mnist data OK";
 }
 
 template <typename Dtype>
 DataLayer<Dtype>::~DataLayer() {
 	file.close();
+	label_file.close();
 }
 
 template <typename Dtype>
@@ -63,15 +57,30 @@ void DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   batch_size = this->layer_param_.data_param().batch_size();
 	DLOG(INFO) << "number_of_images is " << number_of_images << " batch_size is " <<
 		batch_size;
+
+  label_file.read(reinterpret_cast<char*>(&magic_number), 4);
+  magic_number = reverseInt(magic_number);
+  CHECK_EQ(magic_number, 2049) << "Incorrect label file magic.";
+	int num_labels = 0;
+  label_file.read(reinterpret_cast<char*>(&num_labels), 4);
+  num_labels = reverseInt(num_labels);
+  CHECK_EQ(num_labels, number_of_images);
 	//assert(number_of_images%batch_size == 0);
 
 	vector<int> top_shape;
 	top_shape.push_back(batch_size);
+	//TODO
 	top_shape.push_back(1);
 	top_shape.push_back(n_rows);
 	top_shape.push_back(n_cols);
 
   top[0]->Reshape(top_shape);
+
+	top_shape.clear();
+	top_shape.push_back(batch_size);
+	//TODO
+	top_shape.push_back(10);
+	top[1]->Reshape(top_shape);
 
   LOG_IF(INFO, Caffe::root_solver())
       << "output data size: " << top[0]->num() << ","
