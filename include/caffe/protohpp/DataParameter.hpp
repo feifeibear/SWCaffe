@@ -18,7 +18,7 @@ public:
     mirror_(false),
     force_encoded_color_(false),
     prefetch_(4){}
-  
+
   inline void CopyFrom(const DataParameter& other) {
       batch_size_ = other.batch_size();
       source_ = other.source();
@@ -34,7 +34,7 @@ public:
         mean_value_[i] = other.mean_value(i);
     }
   inline int batch_size() const { return batch_size_; }
-  inline int& mutable_batch_size() { return batch_size_; }
+  inline void set_batch_size( int value ) { batch_size_ = value; }
   inline const std::string& source() const { return source_; }
   inline int rand_skip() const { return rand_skip_; }
   inline DB backend() const { return backend_; }

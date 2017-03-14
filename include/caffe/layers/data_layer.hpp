@@ -55,24 +55,42 @@ class DataLayer : public Layer<Dtype> {
           unsigned char temp;
           file.read((char*) &temp, sizeof(temp));
           int temp_offset = img * n_rows * n_cols + c * n_cols + r;
-          top[0]->mutable_cpu_data()[temp_offset] = static_cast<Dtype>(temp);
+          top[0]->mutable_cpu_data()[temp_offset] = 1.0/255 * static_cast<Dtype>(temp);
         }
+
+      //read label
+      char tmp_label = 0;
+      label_file.read(&tmp_label, 1);
+      //TODO
+      top[1]->mutable_cpu_data()[img*10+ static_cast<int>(tmp_label)] = static_cast<Dtype>(1);
+
       offset_++;
       if( offset_ > number_of_images ) {
         offset_ = 0;
         file.seekg( 0, std::ios_base::beg );
+        label_file.seekg( 0, std::ios_base::beg );
       }
     }
-    //offset_+=batch_size;
-
+    //top[1]->fjr_print_data();
+    //top[0]->fjr_print_data();
   }
 
  protected:
+
+  int reverseInt (int i) {
+      unsigned char c1, c2, c3, c4;
+      c1 = i & 255;
+      c2 = (i >> 8) & 255;
+      c3 = (i >> 16) & 255;
+      c4 = (i >> 24) & 255;
+      return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
+  }
   int n_cols;
   int n_rows;
   int number_of_images;
   int batch_size;
   std::ifstream file;
+  std::ifstream label_file;
   //void Next();
   //bool Skip();
   //virtual void load_batch(Batch<Dtype>* batch);
