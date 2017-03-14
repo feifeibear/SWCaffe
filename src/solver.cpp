@@ -6,8 +6,8 @@
 #include "caffe/solver.hpp"
 #include "caffe/util/format.hpp"
 #include "caffe/util/hdf5.hpp"
-#include "caffe/util/io.hpp"
-#include "caffe/util/upgrade_proto.hpp"
+//#include "caffe/util/io.hpp"
+//#include "caffe/util/upgrade_proto.hpp"
 
 namespace caffe {
 
@@ -34,15 +34,15 @@ Solver<Dtype>::Solver(const SolverParameter& param)
 template <typename Dtype>
 Solver<Dtype>::Solver(const string& param_file)
     : net_(), callbacks_(), requested_early_exit_(false) {
-  SolverParameter param;
+  /*SolverParameter param;
   ReadSolverParamsFromTextFileOrDie(param_file, &param);
-  Init(param);
+  Init(param);*/
 }
 
 template <typename Dtype>
 void Solver<Dtype>::Init(const SolverParameter& param) {
   LOG_IF(INFO, Caffe::root_solver()) << "Initializing solver from parameters: "
-    << std::endl << param.DebugString();
+    << std::endl;// << param.DebugString();
   param_ = param;
   CHECK_GE(param_.average_loss(), 1) << "average_loss should be non-negative.";
   CheckSnapshotWritePermissions();
@@ -51,6 +51,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   }
   // Scaffolding code
   InitTrainNet();
+  LOG(INFO)<<"init train net done...";
   if (Caffe::root_solver()) {
     InitTestNets();
     LOG(INFO) << "Solver scaffolding done.";
@@ -74,9 +75,9 @@ void Solver<Dtype>::InitTrainNet() {
         << "Creating training net specified in train_net_param.";
     net_param.CopyFrom(param_.train_net_param());
   } else if (param_.has_train_net()) {
-    LOG_IF(INFO, Caffe::root_solver())
+    /*LOG_IF(INFO, Caffe::root_solver())
         << "Creating training net from train_net file: " << param_.train_net();
-    ReadNetParamsFromTextFileOrDie(param_.train_net(), &net_param);
+    ReadNetParamsFromTextFileOrDie(param_.train_net(), &net_param);*/
   }
   if (param_.has_net_param()) {
     LOG_IF(INFO, Caffe::root_solver())
@@ -84,9 +85,9 @@ void Solver<Dtype>::InitTrainNet() {
     net_param.CopyFrom(param_.net_param());
   }
   if (param_.has_net()) {
-    LOG_IF(INFO, Caffe::root_solver())
+    /*LOG_IF(INFO, Caffe::root_solver())
         << "Creating training net from net file: " << param_.net();
-    ReadNetParamsFromTextFileOrDie(param_.net(), &net_param);
+    ReadNetParamsFromTextFileOrDie(param_.net(), &net_param);*/
   }
   // Set the correct NetState.  We start with the solver defaults (lowest
   // precedence); then, merge in any NetState specified by the net_param itself;
@@ -139,11 +140,11 @@ void Solver<Dtype>::InitTestNets() {
       sources[test_net_id] = "test_net_param";
       net_params[test_net_id].CopyFrom(param_.test_net_param(i));
   }
-  for (int i = 0; i < num_test_net_files; ++i, ++test_net_id) {
+  /*for (int i = 0; i < num_test_net_files; ++i, ++test_net_id) {
       sources[test_net_id] = "test_net file: " + param_.test_net(i);
       ReadNetParamsFromTextFileOrDie(param_.test_net(i),
           &net_params[test_net_id]);
-  }
+  }*/
   const int remaining_test_nets = param_.test_iter_size() - test_net_id;
   if (has_net_param) {
     for (int i = 0; i < remaining_test_nets; ++i, ++test_net_id) {
@@ -151,12 +152,12 @@ void Solver<Dtype>::InitTestNets() {
       net_params[test_net_id].CopyFrom(param_.net_param());
     }
   }
-  if (has_net_file) {
+  /*if (has_net_file) {
     for (int i = 0; i < remaining_test_nets; ++i, ++test_net_id) {
       sources[test_net_id] = "net file: " + param_.net();
       ReadNetParamsFromTextFileOrDie(param_.net(), &net_params[test_net_id]);
     }
-  }
+  }*/
   test_nets_.resize(num_test_net_instances);
   for (int i = 0; i < num_test_net_instances; ++i) {
     // Set the correct NetState.  We start with the solver defaults (lowest
@@ -199,7 +200,6 @@ void Solver<Dtype>::Step(int iters) {
         break;
       }
     }
-
     for (int i = 0; i < callbacks_.size(); ++i) {
       callbacks_[i]->on_start();
     }
@@ -245,7 +245,6 @@ void Solver<Dtype>::Step(int iters) {
       callbacks_[i]->on_gradients_ready();
     }
     ApplyUpdate();
-
     // Increment the internal iter_ counter -- its value should always indicate
     // the number of times the weights have been updated.
     ++iter_;
@@ -444,12 +443,12 @@ string Solver<Dtype>::SnapshotFilename(const string extension) {
 
 template <typename Dtype>
 string Solver<Dtype>::SnapshotToBinaryProto() {
-  string model_filename = SnapshotFilename(".caffemodel");
+  /*string model_filename = SnapshotFilename(".caffemodel");
   LOG(INFO) << "Snapshotting to binary proto file " << model_filename;
   NetParameter net_param;
   net_->ToProto(&net_param, param_.snapshot_diff());
   WriteProtoToBinaryFile(net_param, model_filename);
-  return model_filename;
+  */return "";//model_filename;
 }
 
 template <typename Dtype>

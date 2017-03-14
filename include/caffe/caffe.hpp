@@ -15,7 +15,6 @@
 //#include "caffe/util/io.hpp"
 //#include "caffe/util/upgrade_proto.hpp"
 
-#include "caffe/LayerParameter.hpp"
-#include "caffe/NetParameter.hpp"
+#include "caffe/protohpp/NetParameter.hpp"
 
 #endif  // CAFFE_CAFFE_HPP_

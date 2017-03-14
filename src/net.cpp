@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-//#include "hdf5.h"
+#include "hdf5.h"
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
@@ -15,7 +15,7 @@
 //FJR
 //#include "caffe/parallel.hpp"
 //#include "caffe/proto/caffe.pb.h"
-//#include "caffe/util/hdf5.hpp"
+#include "caffe/util/hdf5.hpp"
 //#include "caffe/util/upgrade_proto.hpp"
 
 //#include "caffe/test/test_caffe_main.hpp"
@@ -697,7 +697,7 @@ void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
 
   }
 }
-/*
+
 
 
 template <typename Dtype>
@@ -802,17 +802,17 @@ void Net<Dtype>::CopyTrainedLayersFrom(const string trained_filename) {
       trained_filename.compare(trained_filename.size() - 3, 3, ".h5") == 0) {
     CopyTrainedLayersFromHDF5(trained_filename);
   } else {
-    CopyTrainedLayersFromBinaryProto(trained_filename);
+    //CopyTrainedLayersFromBinaryProto(trained_filename);
   }
 }
 
-template <typename Dtype>
+/*template <typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromBinaryProto(
     const string trained_filename) {
   NetParameter param;
   ReadNetParamsFromBinaryFileOrDie(trained_filename, &param);
   CopyTrainedLayersFrom(param);
-}
+}*/
 
 template <typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromHDF5(const string trained_filename) {
@@ -863,7 +863,7 @@ void Net<Dtype>::CopyTrainedLayersFromHDF5(const string trained_filename) {
   H5Gclose(data_hid);
   H5Fclose(file_hid);
 }
-
+/*
 template <typename Dtype>
 void Net<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
   param->Clear();
@@ -875,7 +875,7 @@ void Net<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
     layers_[i]->ToProto(layer_param, write_diff);
   }
 }
-
+*/
 template <typename Dtype>
 void Net<Dtype>::ToHDF5(const string& filename, bool write_diff) const {
   hid_t file_hid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
@@ -960,7 +960,7 @@ void Net<Dtype>::ClearParamDiffs() {
     }
   }
 }
-*/
+
 template <typename Dtype>
 void Net<Dtype>::ShareWeights() {
   for (int i = 0; i < params_.size(); ++i) {
@@ -969,7 +969,7 @@ void Net<Dtype>::ShareWeights() {
     params_[i]->ShareDiff(*params_[param_owners_[i]]);
   }
 }
-/*
+
 template <typename Dtype>
 bool Net<Dtype>::has_blob(const string& blob_name) const {
   return blob_names_index_.find(blob_name) != blob_names_index_.end();
@@ -1005,7 +1005,7 @@ const shared_ptr<Layer<Dtype> > Net<Dtype>::layer_by_name(
   }
   return layer_ptr;
 }
-  */
+
 
 INSTANTIATE_CLASS(Net);
 

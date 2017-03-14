@@ -5,7 +5,7 @@
  * rewrite from caffe.pb.h
  */
 
-#include "caffe/LayerParameter.hpp"
+#include "caffe/protohpp/LayerParameter.hpp"
 #include <vector>
 #include <string>
 
@@ -32,6 +32,7 @@ public:
   inline std::string name() const { return name_; } 
 
   inline Phase phase() const { return phase_; }
+  inline void set_phase(Phase p) { phase_ = p; }
 
   int level() const { return level_; }
 
@@ -56,12 +57,12 @@ private:
 class NetParameter {
   public:
     explicit NetParameter(std::string name, std::vector<LayerParameter> layerparams):
-      name_(name), layer_(layerparams), force_backward_(true), debug_info_(false) {}
-    NetParameter(){}
+      name_(name), layer_(layerparams), force_backward_(true), debug_info_(false), state_(NULL) {}
+    NetParameter(): state_(NULL){}
 
     ~NetParameter() {}
     inline std::string name() const { return name_; }
-    inline NetState state() const { return state_; }
+    inline NetState state() const { LOG(INFO)<<"state_:"<<state_; return state_!=NULL ? *state_:NetState(); }
 
     inline int layer_size() const { return layer_.size();  }
     LayerParameter layer(int id) const { return layer_[id]; }
@@ -77,7 +78,8 @@ class NetParameter {
       this->name_ = other.name();
       force_backward_ = other.force_backward();
       debug_info_ = other.debug_info();
-      state_.CopyFrom(other.state());
+      if (state_ == NULL) state_ = new NetState;
+      state_->CopyFrom(other.state());
       int layer_size = other.get_layer().size();
       for( int i = 0; i < layer_size; ++i )
         layer_.push_back(other.get_layer()[i]);
@@ -95,12 +97,17 @@ class NetParameter {
       return &layer_[layer_.size()-1];
     }
 
+    inline NetState* mutable_state() {
+      if (state_ == NULL) state_ = new NetState;
+      return state_;
+    }
+
   private:
     std::string name_;
     bool force_backward_;
     bool debug_info_;
 
-    NetState state_;
+    NetState* state_;
     std::vector<LayerParameter> layer_;
 };
 

@@ -7,6 +7,9 @@
 #include <caffe/protohpp/BlobProto.hpp>
 #include <caffe/protohpp/ConvolutionParameter.hpp>
 #include <caffe/protohpp/PoolingParameter.hpp>
+#include <caffe/protohpp/DataParameter.hpp>
+#include <caffe/protohpp/ReLUParameter.hpp>
+#include <caffe/protohpp/SoftmaxParameter.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -66,7 +69,8 @@ class ParamSpec {
     PERMISSIVE = 1
   };
 
-  ParamSpec():has_lr_mult_(false), decay_mult_(false) {}
+  ParamSpec():has_lr_mult_(true), has_decay_mult_(true),
+  lr_mult_(1.0),decay_mult_(1.0) {}
   explicit ParamSpec(std::string name, enum DimCheckMode share_mode,
       float lr_mult, float decay_mult,
       bool has_lr_mult, bool has_decay_mult):
@@ -170,6 +174,7 @@ class LayerParameter {
       has_inner_product_param_ = false;
       has_convolution_param_ = false;
       has_pooling_param_ = false;
+      has_data_param_ = false;
     }
     //TODO
     bool has_phase() const { return has_phase_; }
@@ -208,6 +213,11 @@ class LayerParameter {
 
       has_input_param_ = other.has_input_parameter();
       has_inner_product_param_ = other.has_inner_product_param();
+      has_convolution_param_ = other. has_convolution_param();
+      has_pooling_param_ = other.has_pooling_param();
+      has_data_param_ = other.has_data_param();
+      has_softmax_param_ = other.has_softmax_param();
+      
 
       if(has_input_param_) {
         input_param_.CopyFrom(other.input_param());
@@ -221,6 +231,12 @@ class LayerParameter {
       if(has_pooling_param_) {
         pooling_param_.CopyFrom(other.pooling_param());
       }
+      if(has_data_param_) {
+        data_param_.CopyFrom(other.data_param());
+      }
+      if( has_softmax_param_ ) {
+        softmax_param_.CopyFrom(other.softmax_param());
+      }
     }
 
 
@@ -229,18 +245,24 @@ class LayerParameter {
         std::string type,
         std::vector<std::string> bottom,
         std::vector<std::string> top,
-        int blob_size):
+        int blob_size=0):
       name_(name), type_(type), bottom_(bottom), top_(top),
       blob_size_(blob_size)
     {
       phase_ = TRAIN;
-      has_phase_ = false;
+      has_phase_ = true;
       propagate_down_.resize(0);
       include_.resize(0);
       exclude_.resize(0);
       has_input_param_ = false;
       has_inner_product_param_ = false;
+      has_convolution_param_ = false;
+      has_pooling_param_ = false;
+      has_data_param_ = false;
+      has_relu_param_ = false;
+      has_softmax_param_ = false;
     }
+
     LayerParameter() {
       phase_ = TRAIN;
       has_phase_ = false;
@@ -249,6 +271,11 @@ class LayerParameter {
       exclude_.resize(0);
       has_input_param_ = false;
       has_inner_product_param_ = false;
+      has_convolution_param_ = false;
+      has_pooling_param_ = false;
+      has_data_param_ = false;
+      has_relu_param_ = false;
+      has_softmax_param_ = false;
     }
     ~LayerParameter() {}
 
@@ -296,6 +323,35 @@ class LayerParameter {
     }
     inline bool has_pooling_param() const { return has_pooling_param_; }
 
+    //data
+    inline const DataParameter& data_param() const {
+      return data_param_;
+    }
+    inline bool has_data_param() const { return has_data_param_; }
+    inline void setup_data_param( const DataParameter& other ) {
+     data_param_.CopyFrom(other);
+     has_data_param_ = true;
+    }
+
+    //relu
+    inline const ReLUParameter& relu_param() const {
+      return relu_param_;
+    }
+    inline bool has_relu_param() const { return has_relu_param_; }
+    inline void setup_relu_param( const ReLUParameter& other ) {
+      relu_param_.CopyFrom(other);
+      has_relu_param_ = true;
+    }
+
+    //Softmax
+    inline const SoftmaxParameter& softmax_param() const {
+      return softmax_param_;
+    }
+    inline bool has_softmax_param() const { return has_softmax_param_; }
+    inline void setup_softmax_param( const SoftmaxParameter& other ) {
+      softmax_param_.CopyFrom(other);
+      has_softmax_param_ = true;
+    } 
 
   private:
     std::string name_;
@@ -327,6 +383,12 @@ class LayerParameter {
     bool has_convolution_param_;
     PoolingParameter pooling_param_;
     bool has_pooling_param_;
+    DataParameter data_param_;
+    bool has_data_param_;
+    ReLUParameter relu_param_;
+    bool has_relu_param_;
+    SoftmaxParameter softmax_param_;
+    bool has_softmax_param_;
 
 };
 

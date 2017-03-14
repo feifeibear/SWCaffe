@@ -1,4 +1,4 @@
-//#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "caffe/common.hpp"
 #include "caffe/util/benchmark.hpp"
@@ -32,7 +32,7 @@ void Timer::Start() {
       NO_GPU;
 #endif
     } else {
-      start_cpu_ = time(NULL);
+      start_cpu_ = boost::posix_time::microsec_clock::local_time();
     }
     running_ = true;
     has_run_at_least_once_ = true;
@@ -48,7 +48,7 @@ void Timer::Stop() {
       NO_GPU;
 #endif
     } else {
-      stop_cpu_ = time(NULL);
+      stop_cpu_ = boost::posix_time::microsec_clock::local_time();
     }
     running_ = false;
   }

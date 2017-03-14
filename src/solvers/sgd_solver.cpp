@@ -3,8 +3,8 @@
 
 #include "caffe/sgd_solvers.hpp"
 #include "caffe/util/hdf5.hpp"
-#include "caffe/util/io.hpp"
-#include "caffe/util/upgrade_proto.hpp"
+//#include "caffe/util/io.hpp"
+//#include "caffe/util/upgrade_proto.hpp"
 
 namespace caffe {
 
@@ -75,6 +75,7 @@ void SGDSolver<Dtype>::PreSolve() {
     update_.push_back(shared_ptr<Blob<Dtype> >(new Blob<Dtype>(shape)));
     temp_.push_back(shared_ptr<Blob<Dtype> >(new Blob<Dtype>(shape)));
   }
+  LOG(INFO)<<"presolve done...";
 }
 
 template <typename Dtype>
@@ -246,7 +247,7 @@ template <typename Dtype>
 void SGDSolver<Dtype>::SnapshotSolverState(const string& model_filename) {
   switch (this->param_.snapshot_format()) {
     case caffe::SolverParameter_SnapshotFormat_BINARYPROTO:
-      SnapshotSolverStateToBinaryProto(model_filename);
+      //SnapshotSolverStateToBinaryProto(model_filename);
       break;
     case caffe::SolverParameter_SnapshotFormat_HDF5:
       SnapshotSolverStateToHDF5(model_filename);
@@ -259,7 +260,7 @@ void SGDSolver<Dtype>::SnapshotSolverState(const string& model_filename) {
 template <typename Dtype>
 void SGDSolver<Dtype>::SnapshotSolverStateToBinaryProto(
     const string& model_filename) {
-  SolverState state;
+  /*SolverState state;
   state.set_iter(this->iter_);
   state.set_learned_net(model_filename);
   state.set_current_step(this->current_step_);
@@ -272,7 +273,7 @@ void SGDSolver<Dtype>::SnapshotSolverStateToBinaryProto(
   string snapshot_filename = Solver<Dtype>::SnapshotFilename(".solverstate");
   LOG(INFO)
     << "Snapshotting solver state to binary proto file " << snapshot_filename;
-  WriteProtoToBinaryFile(state, snapshot_filename.c_str());
+  WriteProtoToBinaryFile(state, snapshot_filename.c_str());*/
 }
 
 template <typename Dtype>
@@ -304,7 +305,7 @@ void SGDSolver<Dtype>::SnapshotSolverStateToHDF5(
 template <typename Dtype>
 void SGDSolver<Dtype>::RestoreSolverStateFromBinaryProto(
     const string& state_file) {
-  SolverState state;
+  /*SolverState state;
   ReadProtoFromBinaryFile(state_file, &state);
   this->iter_ = state.iter();
   if (state.has_learned_net()) {
@@ -318,7 +319,7 @@ void SGDSolver<Dtype>::RestoreSolverStateFromBinaryProto(
   LOG(INFO) << "SGDSolver: restoring history";
   for (int i = 0; i < history_.size(); ++i) {
     history_[i]->FromProto(state.history(i));
-  }
+  }*/
 }
 
 template <typename Dtype>
