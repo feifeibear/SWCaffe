@@ -6,7 +6,7 @@ int main () {
   /********
    * define input layer (2, 1, 8, 8) 
    ********/
-
+/*
   std::vector<std::string> bottom1, top1;
   top1.push_back("data");
   std::vector<std::vector<int> >input_size;
@@ -19,17 +19,18 @@ int main () {
   LayerParameter l1("data","Input",bottom1, top1, 0);
   l1.setup_input_param(input_param);
   DLOG(INFO) <<  "input layer paramter is OK!";
+*/
 
-
-  /*
+  
   //mnist input 10, 1, 28, 28
   std::vector<std::string> bottom1, top1;
   top1.push_back("data");
-  DataParameter data_param(1);
+  top1.push_back("label");
+  DataParameter data_param;
+  data_param.set_batch_size(10);
   LayerParameter l1("data", "Data", bottom1, top1, 0);
   l1.setup_data_param(data_param);
   DLOG(INFO) <<  "Data layer paramter is OK!";
-  */
 
   /********
    * define convolution layer (10,1,28,28) -> (10, 20, 24, 24)
@@ -115,11 +116,19 @@ int main () {
   l8.setup_inner_product_param(innerparam2);
 
 
-  SoftmaxParameter softmaxparam;
+  LossParameter loss_param;
   std::vector<std::string> bottom9, top9;
-  bottom9.push_back("ip2"); top9.push_back("prob");
-  LayerParameter l9("prob", "Softmax", bottom9, top9, 0);
-  l9.setup_softmax_param(softmaxparam);
+  bottom9.push_back("ip2"); bottom9.push_back("label"); top9.push_back("loss");
+  LayerParameter l9("loss", "SoftmaxWithLoss", bottom9, top9, 0);
+  l9.setup_loss_param(loss_param);
+  // softmax_with_loss layer use scalar labels y, since loss=-log(softmax(y)[x]). (Euclidean use vec)
+
+  AccuracyParameter accuracy_param;
+  std::vector<std::string> bottom10, top10;
+  bottom10.push_back("ip2"); bottom10.push_back("label"); top10.push_back("accuracy");
+  LayerParameter l10("accuracy", "Accuracy", bottom10, top10, 0);
+  l10.setup_accuracy_param(accuracy_param);
+  l10.add_include(TEST);
 
 
   std::vector<LayerParameter> layerparams;
@@ -132,6 +141,7 @@ int main () {
   layerparams.push_back(l7);
   layerparams.push_back(l8);
   layerparams.push_back(l9);
+  layerparams.push_back(l10);
   DLOG(INFO) <<  "paramter Initialization is OK!";
 
   NetParameter net_param("mynet", layerparams);
@@ -143,7 +153,7 @@ int main () {
   //net.fjr_rand_init_input_blobs();
 
   DLOG(INFO) << "Init solver_param...";
-  SolverParameter solver_param(1, 1, 0.1, 0, 2, "fixed", 0.9, 0.005);
+  SolverParameter solver_param(10, 100, 0.01, 0, 10000, "fixed", 0.9, 0.0005);
   DLOG(INFO) << "Set net_param...";
   solver_param.set_net(net_param);
   DLOG(INFO) << "Init solver...";

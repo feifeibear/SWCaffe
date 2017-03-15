@@ -10,6 +10,8 @@
 #include <caffe/protohpp/DataParameter.hpp>
 #include <caffe/protohpp/ReLUParameter.hpp>
 #include <caffe/protohpp/SoftmaxParameter.hpp>
+#include <caffe/protohpp/LossParameter.hpp>
+#include <caffe/protohpp/AccuracyParameter.hpp>
 //#include <caffe/common.hpp>
 
 namespace caffe {
@@ -25,8 +27,10 @@ public:
   //TODO
   NetStateRule(){
    has_phase_ = false; 
+   has_min_level_ = has_max_level_ = false;
   }
   ~NetStateRule() {}
+  void set_phase(Phase phase) { phase_ = phase; has_phase_ = true; }
   bool has_phase() const { return has_phase_; }
   Phase phase() const { return phase_; }
   bool has_min_level() const { return has_min_level_; }
@@ -37,6 +41,10 @@ public:
   int not_stage_size() const { return not_stage_.size(); }
   std::string stage( int id ) const { return stage_[id]; }
   std::string not_stage( int id ) const { return not_stage_[id]; }
+  void CopyFrom(NetStateRule other){
+    phase_ = other.phase();
+    // ...
+  }
 private:
   Phase phase_;
   bool has_phase_;
@@ -148,6 +156,11 @@ class LayerParameter {
       return include_;
     }
     inline int include_size() const { return include_.size(); }
+    void add_include(Phase phase) { 
+      NetStateRule include_phase;
+      include_phase.set_phase(phase);
+      include_.push_back(include_phase);
+    }
 
     inline const std::vector<NetStateRule> get_exclude_vec() const {
       return exclude_;
@@ -175,6 +188,10 @@ class LayerParameter {
       has_convolution_param_ = false;
       has_pooling_param_ = false;
       has_data_param_ = false;
+      has_softmax_param_ = false;
+      has_relu_param_ = false;
+      has_loss_param_ = false;
+      has_accuracy_param_ = false;
     }
     //TODO
     bool has_phase() const { return has_phase_; }
@@ -206,8 +223,15 @@ class LayerParameter {
       COPY_VEC(loss_weight);
       COPY_VEC(param);
       COPY_VEC(propagate_down);
-      COPY_VEC(include);
+      //COPY_VEC(include);
       COPY_VEC(exclude);
+
+      for (int i=0; i<other.get_include_vec().size(); i++){
+        NetStateRule nsr;
+        nsr.CopyFrom(other.include(i));
+        include_.push_back(nsr);
+      }
+
       for(int i = 0; i < blobprotos_.size(); ++i)
         blobprotos_[i].CopyFrom(other.blobs(i));
 
@@ -217,7 +241,9 @@ class LayerParameter {
       has_pooling_param_ = other.has_pooling_param();
       has_data_param_ = other.has_data_param();
       has_softmax_param_ = other.has_softmax_param();
-      
+      has_relu_param_ = other.has_relu_param();
+      has_loss_param_ = other.has_loss_param();
+      has_accuracy_param_ = other.has_accuracy_param();
 
       if(has_input_param_) {
         input_param_.CopyFrom(other.input_param());
@@ -236,6 +262,15 @@ class LayerParameter {
       }
       if( has_softmax_param_ ) {
         softmax_param_.CopyFrom(other.softmax_param());
+      }
+      if (has_relu_param_) {
+        relu_param_.CopyFrom(other.relu_param());
+      }
+      if (has_loss_param_) {
+        loss_param_.CopyFrom(other.loss_param());
+      }
+      if (has_accuracy_param_) {
+        accuracy_param_.CopyFrom(other.accuracy_param());
       }
     }
 
@@ -261,6 +296,8 @@ class LayerParameter {
       has_data_param_ = false;
       has_relu_param_ = false;
       has_softmax_param_ = false;
+      has_loss_param_ = false;
+      has_accuracy_param_ = false;
     }
 
     LayerParameter() {
@@ -276,6 +313,8 @@ class LayerParameter {
       has_data_param_ = false;
       has_relu_param_ = false;
       has_softmax_param_ = false;
+      has_loss_param_=  false;
+      has_accuracy_param_ = false;
     }
     ~LayerParameter() {}
 
@@ -353,6 +392,26 @@ class LayerParameter {
       has_softmax_param_ = true;
     } 
 
+    //Loss
+    inline const LossParameter& loss_param() const {
+      return loss_param_;
+    }
+    inline bool has_loss_param() const { return has_loss_param_; }
+    inline void setup_loss_param( const LossParameter& other ) {
+      loss_param_.CopyFrom(other);
+      has_loss_param_ = true;
+    }
+
+    //Accuracy
+    inline const AccuracyParameter& accuracy_param() const {
+      return accuracy_param_;
+    }
+    inline bool has_accuracy_param() const { return has_accuracy_param_; }
+    inline void setup_accuracy_param( const AccuracyParameter& other ) {
+      accuracy_param_.CopyFrom(other);
+      has_accuracy_param_ = true;
+    }
+
   private:
     std::string name_;
     std::string type_;
@@ -389,7 +448,10 @@ class LayerParameter {
     bool has_relu_param_;
     SoftmaxParameter softmax_param_;
     bool has_softmax_param_;
-
+    LossParameter loss_param_;
+    bool has_loss_param_;
+    AccuracyParameter accuracy_param_;
+    bool has_accuracy_param_;
 };
 
 }//end caffe

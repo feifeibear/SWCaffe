@@ -7,6 +7,7 @@ int main () {
    * define input layer (2, 1, 8, 8) 
    ********/
 
+  /*
   std::vector<std::string> bottom1, top1;
   top1.push_back("data");
   std::vector<std::vector<int> >input_size;
@@ -19,17 +20,18 @@ int main () {
   LayerParameter l1("data","Input",bottom1, top1, 0);
   l1.setup_input_param(input_param);
   DLOG(INFO) <<  "input layer paramter is OK!";
+  */
 
 
-  /*
   //mnist input 10, 1, 28, 28
   std::vector<std::string> bottom1, top1;
   top1.push_back("data");
-  DataParameter data_param(1);
+  top1.push_back("label");
+  DataParameter data_param;
+  data_param.set_batch_size(10);
   LayerParameter l1("data", "Data", bottom1, top1, 0);
   l1.setup_data_param(data_param);
   DLOG(INFO) <<  "Data layer paramter is OK!";
-  */
 
   /********
    * define convolution layer (10,1,28,28) -> (10, 20, 24, 24)
@@ -152,8 +154,8 @@ int main () {
 
   DLOG(INFO) << "begin backward pass of this net";
   //net.fjr_rand_init_output_data_blobs();
-  net.fjr_rand_init_output_diff_blobs();
-  net.fjr_rand_init_input_blobs();
+  //net.fjr_rand_init_output_diff_blobs();
+  //net.fjr_rand_init_input_blobs();
 
   net.ForwardBackward();
 

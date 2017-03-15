@@ -1,14 +1,15 @@
-## SWcaffe : code name Quixote
-This is a caffe customized for Sunway.
+## Brief Introduction :
+This is a caffe customized for Deep Nerual Network Training on Enbedded Devices.
 
-### Dependencies(Availabale on Sunway):
-1. openblas
+### Dependencies:
+1. blas
+http://www.netlib.org/blas/
 2. glog
-3. HDF5
 
 ### Features
 1. No protocbuf
 2. boost with only hpp headers
+3. No database for data storage, read from binary file
 
 ### Usage
 1. Please install glog into ../thirdparty/glog_install/ and openBLAS into 

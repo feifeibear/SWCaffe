@@ -52,16 +52,16 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   phase_ = in_param.state().phase();
   // Filter layers based on their include/exclude rules and
   // the current NetState.
-  //NetParameter filtered_param;
-  //FilterNet(in_param, &filtered_param);
-  //LOG_IF(INFO, Caffe::root_solver())
-  //    << "Initializing net from parameters: " << std::endl
-  //    << filtered_param.DebugString();
+  NetParameter filtered_param;
+  FilterNet(in_param, &filtered_param);
+  LOG_IF(INFO, Caffe::root_solver())
+      << "Initializing net from parameters: " << std::endl
+      << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
   //TODO
-  //InsertSplits(filtered_param, &param);
-  InsertSplits(in_param, &param);
+  InsertSplits(filtered_param, &param);
+  //InsertSplits(in_param, &param);
   //param.CopyFrom(filtered_param);
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
@@ -283,18 +283,20 @@ void Net<Dtype>::FilterNet(const NetParameter& param,
     // If no include rules are specified, the layer is included by default and
     // only excluded if it meets one of the exclude rules.
     bool layer_included = (layer_param.include_size() == 0);
+    //LOG(INFO)<<"layer "<<layer_name<<" included is "<<layer_included;
     for (int j = 0; layer_included && j < layer_param.exclude_size(); ++j) {
       if (StateMeetsRule(net_state, layer_param.exclude(j), layer_name)) {
         layer_included = false;
       }
     }
     for (int j = 0; !layer_included && j < layer_param.include_size(); ++j) {
+      //LOG(INFO)<<"!!!!!layer_param.include(0).phase():"<<layer_param.include(0).phase();
       if (StateMeetsRule(net_state, layer_param.include(j), layer_name)) {
         layer_included = true;
       }
     }
     //FJR
-    layer_included= true;
+    //layer_included= true;
     if (layer_included) {
       param_filtered->add_layer()->CopyFrom(layer_param);
     }

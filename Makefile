@@ -20,6 +20,10 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/layers/neuron_layer.o\
 		./build/layers/relu_layer.o\
 		./build/layers/softmax_layer.o\
+		./build/layers/softmax_loss_layer.o\
+		./build/layers/loss_layer.o\
+		./build/layers/accuracy_layer.o\
+		./build/layers/split_layer.o\
 		./build/net.o\
 		./build/solvers/adadelta_solver.o\
 		./build/solvers/adagrad_solver.o\
@@ -29,7 +33,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/solvers/sgd_solver.o\
 		./build/util/benchmark.o\
 		./build/solver.o
-
+all:test_solver
 
 test: test.o $(OBJ)
 	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -lglog -lopenblas -o $@

@@ -62,7 +62,7 @@ class NetParameter {
 
     ~NetParameter() {}
     inline std::string name() const { return name_; }
-    inline NetState state() const { LOG(INFO)<<"state_:"<<state_; return state_!=NULL ? *state_:NetState(); }
+    inline NetState state() const { return state_!=NULL ? *state_:NetState(); }
 
     inline int layer_size() const { return layer_.size();  }
     LayerParameter layer(int id) const { return layer_[id]; }
