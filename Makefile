@@ -59,4 +59,4 @@ test_solver.o: test_solver.cpp
 ./build/solvers/%.o: ./src/solvers/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 clean:
-	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o test
+	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o test testcp test_solver
