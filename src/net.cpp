@@ -12,13 +12,7 @@
 #include "caffe/net.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/insert_splits.hpp"
-//FJR
-//#include "caffe/parallel.hpp"
-//#include "caffe/proto/caffe.pb.h"
 #include "caffe/util/hdf5.hpp"
-//#include "caffe/util/upgrade_proto.hpp"
-
-//#include "caffe/test/test_caffe_main.hpp"
 
 namespace caffe {
 
@@ -59,10 +53,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
-  //TODO
   InsertSplits(filtered_param, &param);
-  //InsertSplits(in_param, &param);
-  //param.CopyFrom(filtered_param);
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
 
@@ -206,7 +197,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     }
     if (!layer_contributes_loss) { layer_need_backward_[layer_id] = false; }
     //FJR
-    layer_need_backward_[layer_id] = true;
+    //layer_need_backward_[layer_id] = true;
     if (Caffe::root_solver()) {
       if (layer_need_backward_[layer_id]) {
         LOG(INFO) << layer_names_[layer_id] << " needs backward computation.";
@@ -283,23 +274,20 @@ void Net<Dtype>::FilterNet(const NetParameter& param,
     // If no include rules are specified, the layer is included by default and
     // only excluded if it meets one of the exclude rules.
     bool layer_included = (layer_param.include_size() == 0);
-    //LOG(INFO)<<"layer "<<layer_name<<" included is "<<layer_included;
     for (int j = 0; layer_included && j < layer_param.exclude_size(); ++j) {
       if (StateMeetsRule(net_state, layer_param.exclude(j), layer_name)) {
         layer_included = false;
       }
     }
     for (int j = 0; !layer_included && j < layer_param.include_size(); ++j) {
-      //LOG(INFO)<<"!!!!!layer_param.include(0).phase():"<<layer_param.include(0).phase();
       if (StateMeetsRule(net_state, layer_param.include(j), layer_name)) {
         layer_included = true;
       }
     }
-    //FJR
-    //layer_included= true;
     if (layer_included) {
       param_filtered->add_layer()->CopyFrom(layer_param);
     }
+    LOG(INFO)<<"layer_size:"<<param_filtered->layer_size();
   }
 }
 

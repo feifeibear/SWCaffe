@@ -18,10 +18,8 @@ DataLayer<Dtype>::DataLayer(const LayerParameter& param):offset_(0),
 	n_rows(0), n_cols(0), number_of_images(0),
 	Layer<Dtype>(param)
 {
-  file.open("../data/train-images-idx3-ubyte",std::ios::in | std::ios::binary);
-
-
-	label_file.open("../data/train-labels-idx1-ubyte",std::ios::in | std::ios::binary );
+  file.open(this->layer_param_.data_param().data_source().c_str(), std::ios::in | std::ios::binary);
+	label_file.open(this->layer_param_.data_param().label_source().c_str(), std::ios::in | std::ios::binary );
 	if(!file.is_open() || !label_file.is_open())
 		DLOG(FATAL) << "MNIST Read failed";
 	DLOG(INFO) << "fjrdebug read mnist data OK";

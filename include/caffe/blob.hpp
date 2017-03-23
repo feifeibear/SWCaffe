@@ -7,8 +7,6 @@
 #include <caffe/protohpp/BlobProto.hpp>
 
 #include "caffe/common.hpp"
-//FJR
-//#include "caffe/proto/caffe.pb.h"
 #include "caffe/syncedmem.hpp"
 
 const int kMaxBlobAxes = 32;
@@ -51,8 +49,7 @@ class Blob {
    * propagate the new input shape to higher layers.
    */
   void Reshape(const vector<int>& shape);
-  //FJR
-  //void Reshape(const BlobShape& shape);
+  void Reshape(const BlobShape& shape);
   void ReshapeLike(const Blob& other);
   inline string shape_string() const {
     ostringstream stream;
@@ -231,7 +228,7 @@ class Blob {
   Dtype* mutable_cpu_diff();
   Dtype* mutable_gpu_diff();
   void Update();
-  //FJR
+  
   void FromProto(const BlobProto& proto, bool reshape = true);
   //void ToProto(BlobProto* proto, bool write_diff = false) const;
 
@@ -268,7 +265,6 @@ class Blob {
    */
   void ShareDiff(const Blob& other);
 
-  //FJR
   bool ShapeEquals(const BlobProto& other);
 
   //FJR FOR DEBUG

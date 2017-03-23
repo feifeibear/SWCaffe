@@ -4,12 +4,15 @@
 class BlobShape {
 public:
   BlobShape() {}
-  void set_dim(std::vector<int> dim) { dim_ = dim; }
-  int dim(int i) const { return dim_[i]; }
-  std::vector<int> dim_vec() const { return dim_; }
-  int dim_size() const { return dim_.size(); }
+  BlobShape(const BlobShape& other){
+    this->CopyFrom(other);
+  }
+  inline void add_dim(int d) { dim_.push_back(d); }
+  inline int dim(int i) const { return dim_[i]; }
+  inline std::vector<int> dim() const { return dim_; }
+  inline int dim_size() const { return dim_.size(); }
   void CopyFrom(const BlobShape& other) {
-    dim_ = other.dim_vec();
+    dim_ = other.dim();
   }
 private:
   std::vector<int> dim_;
@@ -17,22 +20,11 @@ private:
 
 class BlobProto {
   public:
-    BlobProto(int num, int channels, int height, int width):
-      num_(num), channels_(channels), height_(height), width_(width)
-      {
-        std::vector<int> d;
-        d.resize(4);
-        d[0] = num_; d[1] = channels_;
-        d[2] = height_; d[3] = width_;
-        shape_.set_dim(d);
-      }
-    void CopyFrom(const BlobProto& other) {
-      num_ = other.num();
-      channels_ = other.channels();
-      height_ = other.height();
-      width_ = other.width();
-      shape_.CopyFrom(other.shape_);
+    BlobProto() { has_num_ = has_channels_ = has_height_ = has_width_ = false; }
+    BlobProto(const BlobProto& other){
+      this->CopyFrom(other);
     }
+
     bool has_num() const { return has_num_; }
     bool has_channels() const { return has_channels_; }
     bool has_height() const { return has_height_; }
@@ -44,13 +36,18 @@ class BlobProto {
     int width() const { return width_; }
     const BlobShape& shape() const { return shape_; }
 
+    inline void set_num(int x) { num_ = x; has_num_ = true;}
+    inline void set_channels(int x) { channels_ = x; has_channels_ = true;}
+    inline void set_height(int x) { height_ = x; has_height_ = true;}
+    inline void set_width(int x) { width_ = x; has_width_ = true;}
+
     std::vector<double> double_data() const { return double_data_; }
     std::vector<double> double_diff() const { return double_diff_; }
     int double_data_size() const { return double_data_.size(); }
     double double_data(int i) const { return double_data_[i]; }
     int double_diff_size() const { return double_diff_.size(); }
     double double_diff(int i) const { return double_diff_[i]; }
-    
+
     std::vector<float>  diff() const { return diff_; }
     int diff_size() const { return diff_.size(); }
     float diff(int i) const { return diff_[i]; }
@@ -58,6 +55,19 @@ class BlobProto {
     int data_size() const { return data_.size();}
     float data(int i) const { return data_[i]; }
 
+
+    void CopyFrom(const BlobProto& other) {
+      num_ = other.num();
+      channels_ = other.channels();
+      height_ = other.height();
+      width_ = other.width();
+      shape_.CopyFrom(other.shape_);
+      has_num_ = other.has_num();
+      has_channels_ = other.has_channels();
+      has_height_ = other.has_height();
+      has_width_ = other.has_width();
+    }
+   
   private:
     int num_;
     int channels_;

@@ -19,9 +19,19 @@ public:
     force_encoded_color_(false),
     prefetch_(4){}
 
+  DataParameter(const DataParameter& other){
+      this->CopyFrom(other);
+    }
+
+    inline DataParameter& operator=(const DataParameter& other) {
+      this->CopyFrom(other);
+      return *this;
+    }
+
   inline void CopyFrom(const DataParameter& other) {
       batch_size_ = other.batch_size();
-      source_ = other.source();
+      data_source_ = other.data_source();
+      label_source_ = other.label_source();
       rand_skip_ = other.rand_skip();
       backend_= other.backend();
       scale_ = other.scale();
@@ -32,10 +42,12 @@ public:
       mean_value_.resize(other.mean_value_size());
       for( int i = 0; i < other.mean_value_size(); ++i )
         mean_value_[i] = other.mean_value(i);
-    }
+  }
+  void set_source(std::string dsource, std::string lsource) { data_source_ = dsource; label_source_ = lsource; }
   inline int batch_size() const { return batch_size_; }
   inline void set_batch_size( int value ) { batch_size_ = value; }
-  inline const std::string& source() const { return source_; }
+  inline const std::string data_source() const { return data_source_; }
+  inline const std::string label_source() const { return label_source_; }
   inline int rand_skip() const { return rand_skip_; }
   inline DB backend() const { return backend_; }
   inline int scale() const { return scale_; }
@@ -48,7 +60,7 @@ public:
 
   private:
     int batch_size_;
-    std::string source_;
+    std::string data_source_, label_source_;
     int rand_skip_;
     DB backend_;
     float scale_;

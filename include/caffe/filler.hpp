@@ -152,11 +152,11 @@ class XavierFiller : public Filler<Dtype> {
     int fan_out = blob->count() / blob->channels();
     Dtype n = fan_in;  // default to fan_in
     if (this->filler_param_.variance_norm() ==
-        AVERAGE) {
+        FillerParameter_VarianceNorm_AVERAGE) {
         //FillerParameter_VarianceNorm_AVERAGE) {
       n = (fan_in + fan_out) / Dtype(2);
     } else if (this->filler_param_.variance_norm() ==
-        FAN_OUT) {
+        FillerParameter_VarianceNorm_FAN_OUT) {
       n = fan_out;
     }
     Dtype scale = sqrt(Dtype(3) / n);
@@ -195,11 +195,11 @@ class MSRAFiller : public Filler<Dtype> {
     int fan_out = blob->count() / blob->channels();
     Dtype n = fan_in;  // default to fan_in
     if (this->filler_param_.variance_norm() ==
-        AVERAGE) {
+        FillerParameter_VarianceNorm_AVERAGE) {
         //FillerParameter_VarianceNorm_AVERAGE) {
       n = (fan_in + fan_out) / Dtype(2);
     } else if (this->filler_param_.variance_norm() ==
-        FAN_OUT) {
+        FillerParameter_VarianceNorm_FAN_OUT) {
       n = fan_out;
     }
     Dtype std = sqrt(Dtype(2) / n);

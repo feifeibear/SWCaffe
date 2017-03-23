@@ -80,6 +80,7 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           bottom_data_vector.end(), std::greater<std::pair<Dtype, int> >());
       // check if true label is in top k predictions
       for (int k = 0; k < top_k_; k++) {
+        //LOG(INFO)<<"bottom_data_vector[k].second = "<<bottom_data_vector[k].second<<"; label_value = "<<label_value;
         if (bottom_data_vector[k].second == label_value) {
           ++accuracy;
           if (top.size() > 1) ++top[1]->mutable_cpu_data()[label_value];

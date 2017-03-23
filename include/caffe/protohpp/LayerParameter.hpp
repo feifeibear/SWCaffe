@@ -12,7 +12,7 @@
 #include <caffe/protohpp/SoftmaxParameter.hpp>
 #include <caffe/protohpp/LossParameter.hpp>
 #include <caffe/protohpp/AccuracyParameter.hpp>
-//#include <caffe/common.hpp>
+#include <caffe/common.hpp>
 
 namespace caffe {
 
@@ -21,85 +21,107 @@ enum Phase {
   TEST = 1
 };
 class NetStateRule {
-  // Set phase to require the NetState have a particular phase (TRAIN or TEST)
-  // to meet this rule.
 public:
-  //TODO
   NetStateRule(){
-   has_phase_ = false; 
-   has_min_level_ = has_max_level_ = false;
+    has_phase_ = false; 
+    has_min_level_ = has_max_level_ = false;
   }
-  ~NetStateRule() {}
-  void set_phase(Phase phase) { phase_ = phase; has_phase_ = true; }
-  bool has_phase() const { return has_phase_; }
-  Phase phase() const { return phase_; }
-  bool has_min_level() const { return has_min_level_; }
-  bool has_max_level() const { return has_max_level_; }
-  int min_level() const { return min_level_; }
-  int max_level() const { return max_level_; }
-  int stage_size() const { return stage_.size(); }
-  int not_stage_size() const { return not_stage_.size(); }
-  std::string stage( int id ) const { return stage_[id]; }
-  std::string not_stage( int id ) const { return not_stage_[id]; }
-  void CopyFrom(NetStateRule other){
+
+  NetStateRule(const NetStateRule& other){
+    this->CopyFrom(other);
+  }
+
+  NetStateRule& operator=(const NetStateRule& other){
+    this->CopyFrom(other);
+    return *this;
+  }
+
+  inline void set_phase(Phase phase) { phase_ = phase; has_phase_ = true; }
+  inline bool has_phase() const { return has_phase_; }
+  inline Phase phase() const { return phase_; }
+  inline void set_min_level(int x) { min_level_=x; has_min_level_ = true;}
+  inline void set_max_level(int x) { max_level_=x; has_max_level_ = true;}
+  inline bool has_min_level() const { return has_min_level_; }
+  inline bool has_max_level() const { return has_max_level_; }
+  inline int min_level() const { return min_level_; }
+  inline int max_level() const { return max_level_; }
+  
+  inline int stage_size() const { return stage_.size(); }
+  inline int not_stage_size() const { return not_stage_.size(); }
+  inline std::string stage( int id ) const { return stage_[id]; }
+  inline std::string not_stage( int id ) const { return not_stage_[id]; }
+  inline std::vector<std::string> stage() const { return stage_; }
+  inline std::vector<std::string> not_stage() const { return not_stage_; }
+  inline void add_stage(std::string x) { stage_.push_back(x); }
+  inline void add_not_stage(std::string x) { not_stage_.push_back(x); }
+
+  void CopyFrom(const NetStateRule& other){
     phase_ = other.phase();
-    // ...
+    min_level_ = other.min_level();
+    max_level_ = other.max_level();
+    stage_ = other.stage();
+    not_stage_ = other.not_stage();
+
+    has_phase_ = other.has_phase();
+    has_min_level_ = other.has_min_level();
+    has_max_level_ = other.has_max_level();
   }
+
 private:
   Phase phase_;
   bool has_phase_;
 
-  // Set the minimum and/or maximum levels in which the layer should be used.
-  // Leave undefined to meet the rule regardless of level.
   int min_level_;
   bool has_min_level_;
   int max_level_;
   bool has_max_level_;
 
-  // Customizable sets of stages to include or exclude.
-  // The net must have ALL of the specified stages and NONE of the specified
-  // "not_stage"s to meet the rule.
-  // (Use multiple NetStateRules to specify conjunctions of stages.)
   std::vector<std::string> stage_;
   std::vector<std::string> not_stage_;
 };
 
 class ParamSpec {
-
-  public:
-
-  // Whether to require shared weights to have the same shape, or just the same
-  // count -- defaults to STRICT if unspecified.
+public:
   enum DimCheckMode {
-    // STRICT (default) requires that num, channels, height, width each match.
     STRICT = 0,
-    // PERMISSIVE requires only the count (num*channels*height*width) to match.
     PERMISSIVE = 1
   };
 
   ParamSpec():has_lr_mult_(true), has_decay_mult_(true),
   lr_mult_(1.0),decay_mult_(1.0) {}
-  explicit ParamSpec(std::string name, enum DimCheckMode share_mode,
-      float lr_mult, float decay_mult,
-      bool has_lr_mult, bool has_decay_mult):
-    name_(name), share_mode_(share_mode), lr_mult_(lr_mult), 
-    decay_mult_(decay_mult),
-    has_lr_mult_(has_lr_mult),
-    has_decay_mult_(has_decay_mult)
-    {}
 
-  float lr_mult() const { return lr_mult_; }
-  float decay_mult() const { return decay_mult_; }
-  bool has_lr_mult() const { return has_lr_mult_; }
-  bool has_decay_mult() const { return has_decay_mult_; }
+  ParamSpec(const ParamSpec& other){
+    this->CopyFrom(other);
+  }
 
-  DimCheckMode share_mode() const { return share_mode_; }
-  std::string name() const { return name_; }
+  ParamSpec& operator=(const ParamSpec& other){
+    this->CopyFrom(other);
+    return *this;
+  }
+
+  inline float lr_mult() const { return lr_mult_; }
+  inline void set_lr_mult(float x) { lr_mult_=x; }
+  inline float decay_mult() const { return decay_mult_; }
+  inline void set_decay_mult(float x) { decay_mult_=x; }
+  inline bool has_lr_mult() const { return has_lr_mult_; }
+  inline bool has_decay_mult() const { return has_decay_mult_; }
+
+  inline DimCheckMode share_mode() const { return share_mode_; }
+  inline void set_share_mode(DimCheckMode x) { share_mode_=x; }
+  inline std::string name() const { return name_; }
+  inline void set_name(std::string x) { name_ = x; }
+
+  void CopyFrom(const ParamSpec& other){
+    name_ = other.name();
+    share_mode_ = other.share_mode();
+    lr_mult_ = other.lr_mult();
+    decay_mult_ = other.decay_mult();
+
+    has_lr_mult_ = other.has_lr_mult();
+    has_decay_mult_ = other.has_decay_mult();
+  }
 
 private:
-  // The names of the parameter blobs -- useful for sharing parameters among
-  // layers, but never required otherwise.  To share a parameter between two
-  // layers, give it a (non-empty) name.
   std::string name_;
 
   DimCheckMode share_mode_;
@@ -113,199 +135,12 @@ private:
   bool has_decay_mult_;
 };
 
-//template <typename DType>
+
 class LayerParameter {
   public:
-    inline const std::string name() const { return name_; }
-    void set_name(std::string name) { name_ = name; }
-
-    inline const std::string type() const { return type_; }
-    void set_type(std::string type) { type_ = type; }
-
-    inline int loss_weight_size() const {return loss_weight_.size();}
-    inline float loss_weight(int id) const { return loss_weight_[id]; }
-    inline std::vector<float> get_loss_weight_vec() const { return loss_weight_; }
-
-    inline Phase phase() const {return phase_;}
-
-    inline int blobs_size() const { return blob_size_; }
-    inline void set_blob_size( int blob_size ) { blob_size_ = blob_size; }
-
-    inline const std::vector<std::string>& get_bottom_vec() const { return bottom_; }
-    inline std::string bottom( int id ) const { return bottom_[id]; }
-    inline void set_bottom (int id, std::string name) { bottom_[id] = name; }
-    inline int bottom_size() const { return bottom_.size(); }
-    void add_bottom(std::string bottom_name) { bottom_.push_back(bottom_name); }
-
-    inline const std::vector<std::string>& get_top_vec() const { return top_; }
-    inline std::string top( int id ) const { return top_[id]; }
-    inline int top_size() const { return top_.size(); }
-    void add_top(std::string top_name) { top_.push_back(top_name); }
-
-    inline const std::vector<bool> get_propagate_down_vec() const 
-    { return propagate_down_; } 
-    inline int propagate_down_size() const { return propagate_down_.size(); }
-
-    inline const std::vector<ParamSpec> get_param_vec() const {
-      return param_;
-    }
-    inline int param_size() const { return param_.size(); }
-
-    NetStateRule include( int id ) const { return include_[id]; }
-    inline const std::vector<NetStateRule> get_include_vec() const {
-      return include_;
-    }
-    inline int include_size() const { return include_.size(); }
-    void add_include(Phase phase) { 
-      NetStateRule include_phase;
-      include_phase.set_phase(phase);
-      include_.push_back(include_phase);
-    }
-
-    inline const std::vector<NetStateRule> get_exclude_vec() const {
-      return exclude_;
-    }
-    inline int exclude_size() const { return exclude_.size(); }
-
-    NetStateRule exclude( int id ) const { return exclude_[id]; }
-
-
-    //TODO
-    inline const ParamSpec& param( int id ) const { return param_[id]; }
-    void clear_loss_weight() { loss_weight_.clear(); }
-    void add_loss_weight(float loss_weight) { loss_weight_.push_back(loss_weight); }
-    void Clear() {
-      bottom_.clear();
-      top_.clear();
-      loss_weight_.clear();
-      param_.clear();
-      propagate_down_.clear();
-      include_.clear();
-      exclude_.clear();
-      blob_size_ = 0;
-      has_input_param_ = false;
-      has_inner_product_param_ = false;
-      has_convolution_param_ = false;
-      has_pooling_param_ = false;
-      has_data_param_ = false;
-      has_softmax_param_ = false;
-      has_relu_param_ = false;
-      has_loss_param_ = false;
-      has_accuracy_param_ = false;
-    }
-    //TODO
-    bool has_phase() const { return has_phase_; }
-    void set_phase( const Phase& newphase ) { phase_ = newphase; }
-    bool propagate_down( int id ) const { return propagate_down_[id]; }
-
-
-#define COPY_VEC(name)\
-    int name##_size = other.get_##name##_vec().size(); \
-    name##_.clear(); \
-    for( int i = 0; i < name##_size; ++i ){ \
-      name##_.push_back(other.get_##name##_vec()[i]); \
-    }
-
-    LayerParameter& operator=(const LayerParameter& other){
-      this->CopyFrom(other);
-      return *this;
-    }
-
-    void CopyFrom(const LayerParameter& other) {
-      set_name(other.name());
-      set_type(other.type());
-      set_phase(other.phase());
-      has_phase_ = true;
-      blob_size_ = other.blobs_size();
-
-      COPY_VEC(bottom);
-      COPY_VEC(top);
-      COPY_VEC(loss_weight);
-      COPY_VEC(param);
-      COPY_VEC(propagate_down);
-      //COPY_VEC(include);
-      COPY_VEC(exclude);
-
-      for (int i=0; i<other.get_include_vec().size(); i++){
-        NetStateRule nsr;
-        nsr.CopyFrom(other.include(i));
-        include_.push_back(nsr);
-      }
-
-      for(int i = 0; i < blobprotos_.size(); ++i)
-        blobprotos_[i].CopyFrom(other.blobs(i));
-
-      has_input_param_ = other.has_input_parameter();
-      has_inner_product_param_ = other.has_inner_product_param();
-      has_convolution_param_ = other. has_convolution_param();
-      has_pooling_param_ = other.has_pooling_param();
-      has_data_param_ = other.has_data_param();
-      has_softmax_param_ = other.has_softmax_param();
-      has_relu_param_ = other.has_relu_param();
-      has_loss_param_ = other.has_loss_param();
-      has_accuracy_param_ = other.has_accuracy_param();
-
-      if(has_input_param_) {
-        input_param_.CopyFrom(other.input_param());
-      }
-      if(has_inner_product_param_) {
-        inner_product_param_.CopyFrom(other.inner_product_param());
-      }
-      if(has_convolution_param_) {
-        convolution_param_.CopyFrom(other.convolution_param());
-      }
-      if(has_pooling_param_) {
-        pooling_param_.CopyFrom(other.pooling_param());
-      }
-      if(has_data_param_) {
-        data_param_.CopyFrom(other.data_param());
-      }
-      if( has_softmax_param_ ) {
-        softmax_param_.CopyFrom(other.softmax_param());
-      }
-      if (has_relu_param_) {
-        relu_param_.CopyFrom(other.relu_param());
-      }
-      if (has_loss_param_) {
-        loss_param_.CopyFrom(other.loss_param());
-      }
-      if (has_accuracy_param_) {
-        accuracy_param_.CopyFrom(other.accuracy_param());
-      }
-    }
-
-
-    //TODO
-    explicit LayerParameter(std::string name,
-        std::string type,
-        std::vector<std::string> bottom,
-        std::vector<std::string> top,
-        int blob_size=0):
-      name_(name), type_(type), bottom_(bottom), top_(top),
-      blob_size_(blob_size)
-    {
-      phase_ = TRAIN;
-      has_phase_ = true;
-      propagate_down_.resize(0);
-      include_.resize(0);
-      exclude_.resize(0);
-      has_input_param_ = false;
-      has_inner_product_param_ = false;
-      has_convolution_param_ = false;
-      has_pooling_param_ = false;
-      has_data_param_ = false;
-      has_relu_param_ = false;
-      has_softmax_param_ = false;
-      has_loss_param_ = false;
-      has_accuracy_param_ = false;
-    }
-
     LayerParameter() {
-      phase_ = TRAIN;
       has_phase_ = false;
-      propagate_down_.resize(0);
-      include_.resize(0);
-      exclude_.resize(0);
+
       has_input_param_ = false;
       has_inner_product_param_ = false;
       has_convolution_param_ = false;
@@ -315,117 +150,342 @@ class LayerParameter {
       has_softmax_param_ = false;
       has_loss_param_=  false;
       has_accuracy_param_ = false;
-    }
-    ~LayerParameter() {}
 
-    //ProtoBlob
-    const BlobProto& blobs(int i) const { return blobprotos_[i]; }
+      data_param_ = NULL;
+      input_param_ = NULL;
+      inner_product_param_ = NULL;
+      convolution_param_ = NULL;
+      pooling_param_ = NULL;
+      relu_param_ = NULL;
+      softmax_param_ = NULL;
+      loss_param_ = NULL;
+      accuracy_param_ = NULL;
+    }
+
+    LayerParameter(const LayerParameter& other) {
+      data_param_ = NULL;
+      input_param_ = NULL;
+      inner_product_param_ = NULL;
+      convolution_param_ = NULL;
+      pooling_param_ = NULL;
+      relu_param_ = NULL;
+      softmax_param_ = NULL;
+      loss_param_ = NULL;
+      accuracy_param_ = NULL;
+      this->CopyFrom(other);
+    }
+
+    LayerParameter& operator=(const LayerParameter& other){
+      this->CopyFrom(other);
+      return *this;
+    }
+
+    void CopyFrom(const LayerParameter& other) {
+      name_ = other.name();
+      type_ = other.type();
+      bottom_ = other.bottom();
+      top_ = other.top();
+      phase_ = other.phase();
+      has_phase_ = other.has_phase();
+      loss_weight_ = other.loss_weight();
+      propagate_down_ = other.propagate_down();
+
+// SAFE_COPY_VEC macro
+#define SAFE_COPY_VEC(name)\
+    int name##_size = other.name##_size(); \
+    name##_.resize(name##_size); \
+    for( int i = 0; i < name##_size; ++i ) \
+      name##_[i].CopyFrom(other.name(i)); \
+
+
+      SAFE_COPY_VEC(param);
+      SAFE_COPY_VEC(blobs);
+      SAFE_COPY_VEC(include);
+      SAFE_COPY_VEC(exclude);
+
+      has_input_param_ = other.has_input_param();
+      has_inner_product_param_ = other.has_inner_product_param();
+      has_convolution_param_ = other.has_convolution_param();
+      has_pooling_param_ = other.has_pooling_param();
+      has_data_param_ = other.has_data_param();
+      has_softmax_param_ = other.has_softmax_param();
+      has_relu_param_ = other.has_relu_param();
+      has_loss_param_ = other.has_loss_param();
+      has_accuracy_param_ = other.has_accuracy_param();
+
+      if(has_input_param_)
+        this->mutable_input_param()->CopyFrom(other.input_param());
+
+      if(has_inner_product_param_)
+        this->mutable_inner_product_param()->CopyFrom(other.inner_product_param());
+      
+      if(has_convolution_param_)
+        this->mutable_convolution_param()->CopyFrom(other.convolution_param());
+      
+      if(has_pooling_param_)
+        this->mutable_pooling_param()->CopyFrom(other.pooling_param());
+
+      if(has_data_param_) {
+        this->mutable_data_param()->CopyFrom(other.data_param());
+      }
+      if (has_softmax_param_)
+        this->mutable_softmax_param()->CopyFrom(other.softmax_param());
+      
+      if (has_relu_param_)
+        this->mutable_relu_param()->CopyFrom(other.relu_param());
+
+      if (has_loss_param_)
+        this->mutable_loss_param()->CopyFrom(other.loss_param());
+
+      if (has_accuracy_param_)
+        this->mutable_accuracy_param()->CopyFrom(other.accuracy_param());
+    }
+
+    void Clear() {
+      bottom_.clear();
+      top_.clear();
+      loss_weight_.clear();
+      param_.clear();
+      propagate_down_.clear();
+      include_.clear();
+      exclude_.clear();
+      has_input_param_ = false;
+      has_inner_product_param_ = false;
+      has_convolution_param_ = false;
+      has_pooling_param_ = false;
+      has_data_param_ = false;
+      has_softmax_param_ = false;
+      has_relu_param_ = false;
+      has_loss_param_ = false;
+      has_accuracy_param_ = false;
+    }
+
+    ~LayerParameter() { 
+      if (input_param_ != NULL) delete input_param_;
+      if (data_param_ != NULL) delete data_param_;
+      if (inner_product_param_ != NULL) delete inner_product_param_;
+      if (convolution_param_ != NULL) delete convolution_param_;
+      if (softmax_param_ != NULL) delete softmax_param_;
+      if (relu_param_ != NULL) delete relu_param_;
+      if (loss_param_ != NULL) delete loss_param_;
+      if (accuracy_param_ != NULL) delete accuracy_param_;
+    }
+
+    inline const std::string name() const { return name_; }
+    void set_name(std::string name) { name_ = name; }
+
+    inline const std::string type() const { return type_; }
+    void set_type(std::string type) { type_ = type; }
+
+    inline const std::vector<std::string> bottom() const { return bottom_; }
+    inline std::string bottom( int id ) const { return bottom_[id]; }
+    inline int bottom_size() const { return bottom_.size(); }
+    inline void add_bottom(std::string bottom_name) { bottom_.push_back(bottom_name); }
+    inline void set_bottom(int id, std::string bottom_name) { bottom_[id] = bottom_name; }
+
+    inline const std::vector<std::string> top() const { return top_; }
+    inline std::string top( int id ) const { return top_[id]; }
+    inline int top_size() const { return top_.size(); }
+    inline void add_top(std::string top_name) { top_.push_back(top_name); }
+
+    inline Phase phase() const {return phase_;}
+    inline bool has_phase() const { return has_phase_; }
+    inline void set_phase( Phase newphase ) { phase_ = newphase; }
+
+    inline int loss_weight_size() const {return loss_weight_.size();}
+    inline float loss_weight(int id) const { return loss_weight_[id]; }
+    inline std::vector<float> loss_weight() const { return loss_weight_; }
+    inline void add_loss_weight(float loss_weight) { loss_weight_.push_back(loss_weight); }
+    inline void clear_loss_weight() { loss_weight_.clear(); }
+    
+    inline const ParamSpec& param(int i) const { return param_[i]; }
+    inline int param_size() const { return param_.size(); }
+
+    inline const BlobProto& blobs(int i) const { return blobs_[i]; }
+    inline int blobs_size() const { return blobs_.size(); }
+    
+    inline const std::vector<bool> propagate_down() const { return propagate_down_; }
+    inline const bool propagate_down(int i) const { return propagate_down_[i]; }
+    inline int propagate_down_size() const { return propagate_down_.size(); }
+    inline void add_propagate_down(bool x) { propagate_down_.push_back(x); }
+
+    inline const NetStateRule& include( int id ) const { return include_[id]; }
+    inline int include_size() const { return include_.size(); }
+    inline void add_include(const NetStateRule& x) {
+      NetStateRule n(x);
+      include_.push_back(n);
+    }
+
+    inline const NetStateRule& exclude( int id ) const { return exclude_[id]; }
+    inline int exclude_size() const { return exclude_.size(); }
+    inline void add_exclude(const NetStateRule& x) { 
+      NetStateRule n(x);
+      exclude_.push_back(n); 
+    }
 
     //for specified layers
     //Input
     void setup_input_param(const InputParameter& other) {
-      input_param_.CopyFrom(other);
       has_input_param_ = true;
+      if (input_param_ == NULL) input_param_ = new InputParameter;
+      input_param_->CopyFrom(other);
     }
-    const InputParameter& input_param() const { 
-      return input_param_; 
+    InputParameter* mutable_input_param() {
+      has_input_param_ = true;
+      if (input_param_ == NULL) input_param_ = new InputParameter;
+      return input_param_;
     }
-    inline bool has_input_parameter() const { return has_input_param_; }
+    inline const InputParameter& input_param() const { 
+      CHECK_NOTNULL(input_param_);
+      return *input_param_;
+    }
+    inline bool has_input_param() const { return has_input_param_; }
 
     //inner_product
     void setup_inner_product_param(const InnerProductParameter& other) {
-      inner_product_param_.CopyFrom(other);
       has_inner_product_param_ = true;
+      if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
+      inner_product_param_->CopyFrom(other);
+    }
+    InnerProductParameter* mutable_inner_product_param() {
+      has_inner_product_param_ = true;
+      if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
+      return inner_product_param_;
     }
     inline const InnerProductParameter& inner_product_param() const { 
-      return inner_product_param_;
+      CHECK_NOTNULL(inner_product_param_);
+      return *inner_product_param_;
     }
     inline bool has_inner_product_param() const { return has_inner_product_param_; }
 
     //convolution
     void setup_convolution_param(const ConvolutionParameter& other) {
-      convolution_param_.CopyFrom(other);
       has_convolution_param_ = true;
+      if (convolution_param_ == NULL) convolution_param_ = new ConvolutionParameter;
+      convolution_param_->CopyFrom(other);
+    }
+    ConvolutionParameter* mutable_convolution_param() {
+      has_convolution_param_ = true;
+      if (convolution_param_ == NULL) convolution_param_ = new ConvolutionParameter;
+      return convolution_param_;
     }
     inline const ConvolutionParameter& convolution_param() const { 
-      return convolution_param_;
+      CHECK_NOTNULL(convolution_param_);
+      return *convolution_param_;
     }
     inline bool has_convolution_param() const { return has_convolution_param_; }
 
     //pooling
     void setup_pooling_param(const PoolingParameter& other) {
-      pooling_param_.CopyFrom(other);
       has_pooling_param_ = true;
+      if (pooling_param_ == NULL) pooling_param_ = new PoolingParameter;
+      pooling_param_->CopyFrom(other);
+    }
+    PoolingParameter* mutable_pooling_param() {
+      has_pooling_param_ = true;
+      if (pooling_param_ == NULL) pooling_param_ = new PoolingParameter;
+      return pooling_param_;
     }
     inline const PoolingParameter& pooling_param() const { 
-      return pooling_param_;
+      CHECK_NOTNULL(pooling_param_);
+      return *pooling_param_;
     }
     inline bool has_pooling_param() const { return has_pooling_param_; }
 
     //data
-    inline const DataParameter& data_param() const {
+    void setup_data_param(const DataParameter& other) {
+      has_data_param_ = true;
+      if (data_param_ == NULL) data_param_ = new DataParameter;
+      data_param_->CopyFrom(other);
+    }
+    DataParameter* mutable_data_param() {
+      has_data_param_ = true;
+      if (data_param_ == NULL) data_param_ = new DataParameter;
       return data_param_;
     }
-    inline bool has_data_param() const { return has_data_param_; }
-    inline void setup_data_param( const DataParameter& other ) {
-     data_param_.CopyFrom(other);
-     has_data_param_ = true;
+    inline const DataParameter& data_param() const { 
+      CHECK_NOTNULL(data_param_);
+      return *data_param_;
     }
+    inline bool has_data_param() const { return has_data_param_; }
 
     //relu
-    inline const ReLUParameter& relu_param() const {
+    void setup_relu_param(const ReLUParameter& other) {
+      has_relu_param_ = true;
+      if (relu_param_ == NULL) relu_param_ = new ReLUParameter;
+      relu_param_->CopyFrom(other);
+    }
+    ReLUParameter* mutable_relu_param() {
+      has_relu_param_ = true;
+      if (relu_param_ == NULL) relu_param_ = new ReLUParameter;
       return relu_param_;
     }
-    inline bool has_relu_param() const { return has_relu_param_; }
-    inline void setup_relu_param( const ReLUParameter& other ) {
-      relu_param_.CopyFrom(other);
-      has_relu_param_ = true;
+    inline const ReLUParameter& relu_param() const { 
+      CHECK_NOTNULL(relu_param_);
+      return *relu_param_;
     }
+    inline bool has_relu_param() const { return has_relu_param_; }
 
     //Softmax
-    inline const SoftmaxParameter& softmax_param() const {
+    void setup_softmax_param(const SoftmaxParameter& other) {
+      has_softmax_param_ = true;
+      if (softmax_param_ == NULL) softmax_param_ = new SoftmaxParameter;
+      softmax_param_->CopyFrom(other);
+    }
+    SoftmaxParameter* mutable_softmax_param() {
+      has_softmax_param_ = true;
+      if (softmax_param_ == NULL) softmax_param_ = new SoftmaxParameter;
       return softmax_param_;
     }
+    inline const SoftmaxParameter& softmax_param() const {
+      return softmax_param_ != NULL ? *softmax_param_ : SoftmaxParameter::default_instance_;
+    }
     inline bool has_softmax_param() const { return has_softmax_param_; }
-    inline void setup_softmax_param( const SoftmaxParameter& other ) {
-      softmax_param_.CopyFrom(other);
-      has_softmax_param_ = true;
-    } 
 
     //Loss
-    inline const LossParameter& loss_param() const {
+    void setup_loss_param(const LossParameter& other) {
+      has_loss_param_ = true;
+      if (loss_param_ == NULL) loss_param_ = new LossParameter;
+      loss_param_->CopyFrom(other);
+    }
+    LossParameter* mutable_loss_param() {
+      has_loss_param_ = true;
+      if (loss_param_ == NULL) loss_param_ = new LossParameter;
       return loss_param_;
     }
-    inline bool has_loss_param() const { return has_loss_param_; }
-    inline void setup_loss_param( const LossParameter& other ) {
-      loss_param_.CopyFrom(other);
-      has_loss_param_ = true;
+    inline const LossParameter& loss_param() const { 
+      return loss_param_ != NULL ? *loss_param_ : LossParameter::default_instance_;
     }
+    inline bool has_loss_param() const { return has_loss_param_; }
 
     //Accuracy
-    inline const AccuracyParameter& accuracy_param() const {
+    void setup_accuracy_param(const AccuracyParameter& other) {
+      has_accuracy_param_ = true;
+      if (accuracy_param_ == NULL) accuracy_param_ = new AccuracyParameter;
+      accuracy_param_->CopyFrom(other);
+    }
+    AccuracyParameter* mutable_accuracy_param() {
+      has_accuracy_param_ = true;
+      if (accuracy_param_ == NULL) accuracy_param_ = new AccuracyParameter;
       return accuracy_param_;
     }
-    inline bool has_accuracy_param() const { return has_accuracy_param_; }
-    inline void setup_accuracy_param( const AccuracyParameter& other ) {
-      accuracy_param_.CopyFrom(other);
-      has_accuracy_param_ = true;
+    inline const AccuracyParameter& accuracy_param() const { 
+      return accuracy_param_ != NULL ? *accuracy_param_ : AccuracyParameter::default_instance_;
     }
+    inline bool has_accuracy_param() const { return has_accuracy_param_; }
 
   private:
     std::string name_;
     std::string type_;
-    Phase phase_;
-    bool has_phase_;
-
     vector<std::string> bottom_;
     vector<std::string> top_;
 
+    Phase phase_;
+    bool has_phase_;
+
     std::vector<float> loss_weight_;
     std::vector<ParamSpec> param_;
-    //size of learnable parameters
-    int blob_size_;
-    std::vector<BlobProto> blobprotos_;
+    std::vector<BlobProto> blobs_;
 
     std::vector<bool> propagate_down_;
     std::vector<NetStateRule> include_;
@@ -433,24 +493,23 @@ class LayerParameter {
 
   //for BlobProto
   //for specified layers
-    InputParameter input_param_;
+    InputParameter* input_param_;
     bool has_input_param_;
-    InnerProductParameter inner_product_param_;
+    InnerProductParameter* inner_product_param_;
     bool has_inner_product_param_;
-
-    ConvolutionParameter convolution_param_;
+    ConvolutionParameter* convolution_param_;
     bool has_convolution_param_;
-    PoolingParameter pooling_param_;
+    PoolingParameter* pooling_param_;
     bool has_pooling_param_;
-    DataParameter data_param_;
+    DataParameter* data_param_;
     bool has_data_param_;
-    ReLUParameter relu_param_;
+    ReLUParameter* relu_param_;
     bool has_relu_param_;
-    SoftmaxParameter softmax_param_;
+    SoftmaxParameter* softmax_param_;
     bool has_softmax_param_;
-    LossParameter loss_param_;
+    LossParameter* loss_param_;
     bool has_loss_param_;
-    AccuracyParameter accuracy_param_;
+    AccuracyParameter* accuracy_param_;
     bool has_accuracy_param_;
 };
 

@@ -1,0 +1,11 @@
+test_filler done
+test_conv done
+test_blob done
+test_syncedmem done
+test_random_number_generator done
+test_common done
+test_pooling done
+test_filler done
+test_softmax done
+test_softmax_with_loss done (strange during debug...)
+test_accuracy done

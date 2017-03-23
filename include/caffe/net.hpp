@@ -12,7 +12,6 @@
 #include "caffe/layer.hpp"
 #include "caffe/protohpp/LayerParameter.hpp"
 #include "caffe/protohpp/NetParameter.hpp"
-//#include "caffe/proto/caffe.pb.h"
 
 namespace caffe {
 

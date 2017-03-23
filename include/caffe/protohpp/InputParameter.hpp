@@ -6,31 +6,32 @@ namespace caffe {
 class InputParameter{
   public:
     InputParameter() {}
-    explicit InputParameter(std::vector<std::vector<int> > shapes){
-      int len1 = shapes.size();
-      shapes_.resize(len1);
-      for( int i = 0; i < len1; ++i ){
-        int len2 = shapes[i].size();
-        shapes_[i].resize(len2);
-        for( int j = 0; j < len2; ++j )
-          shapes_[i][j] = shapes[i][j];
-      }
+
+    InputParameter(const InputParameter& other){
+      this->CopyFrom(other);
     }
+
+    inline InputParameter& operator=(const InputParameter& other) {
+      this->CopyFrom(other);
+      return *this;
+    }
+
     inline void CopyFrom(const InputParameter& other){
-      int len1 = other.shape_size();
-      shapes_.resize(len1);
-      for( int i = 0; i < len1; ++i ){
-        int len2 = other.get_shape()[i].size();
-        shapes_[i].resize(len2);
-        for( int j = 0; j < len2; ++j )
-          shapes_[i][j] = other.get_shape()[i][j];
-      }
+      int shape_size = other.shape_size();
+      shapes_.resize(shape_size);
+      for (int i=0; i<shape_size; i++)
+        shapes_[i].CopyFrom(other.shape(i));
     }
+
     inline int shape_size() const { return shapes_.size(); }
-    inline const std::vector<std::vector<int> > get_shape() const { return shapes_; }
-    inline const std::vector<int> shape(int id) const { return shapes_[id]; }
+    inline const BlobShape& shape(int id) const { return shapes_[id]; }
+    inline void add_shape(const BlobShape& x) { 
+      BlobShape b(x);
+      shapes_.push_back(b); 
+    }
+
   public:
-    std::vector<std::vector<int> > shapes_;
+    std::vector<BlobShape> shapes_;
 };
 
 }

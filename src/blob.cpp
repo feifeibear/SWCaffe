@@ -44,16 +44,15 @@ void Blob<Dtype>::Reshape(const vector<int>& shape) {
   }
 }
 
-//FJR
-//template <typename Dtype>
-//void Blob<Dtype>::Reshape(const BlobShape& shape) {
-//  CHECK_LE(shape.dim_size(), kMaxBlobAxes);
-//  vector<int> shape_vec(shape.dim_size());
-//  for (int i = 0; i < shape.dim_size(); ++i) {
-//    shape_vec[i] = shape.dim(i);
-//  }
-//  Reshape(shape_vec);
-//}
+template <typename Dtype>
+void Blob<Dtype>::Reshape(const BlobShape& shape) {
+  CHECK_LE(shape.dim_size(), kMaxBlobAxes);
+  vector<int> shape_vec(shape.dim_size());
+  for (int i = 0; i < shape.dim_size(); ++i) {
+    shape_vec[i] = shape.dim(i);
+  }
+  Reshape(shape_vec);
+}
 
 template <typename Dtype>
 void Blob<Dtype>::ReshapeLike(const Blob<Dtype>& other) {
@@ -406,7 +405,6 @@ void Blob<Dtype>::scale_diff(Dtype scale_factor) {
     LOG(FATAL) << "Unknown SyncedMemory head state: " << diff_->head();
   }
 }
-//FJR
 
 template <typename Dtype>
 bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
@@ -464,7 +462,6 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   }
 }
 
-//FJR
 template <typename Dtype>
 void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
   if (reshape) {
@@ -479,15 +476,14 @@ void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
       shape[2] = proto.height();
       shape[3] = proto.width();
     } else {
-      //TODO
-      //shape.resize(proto.shape().dim_size());
-      //for (int i = 0; i < proto.shape().dim_size(); ++i) {
-      //  shape[i] = proto.shape().dim(i);
-      //}
+      shape.resize(proto.shape().dim_size());
+      for (int i = 0; i < proto.shape().dim_size(); ++i) {
+        shape[i] = proto.shape().dim(i);
+      }
     }
     Reshape(shape);
   } else {
-    //CHECK(ShapeEquals(proto)) << "shape mismatch (reshape not set)";
+    CHECK(ShapeEquals(proto)) << "shape mismatch (reshape not set)";
   }
   // copy data
   Dtype* data_vec = mutable_cpu_data();

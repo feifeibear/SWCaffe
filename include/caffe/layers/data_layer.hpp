@@ -74,6 +74,7 @@ class DataLayer : public Layer<Dtype> {
     }
     //top[1]->fjr_print_data();
     //top[0]->fjr_print_data();
+    LOG(INFO)<<"label:"<<top[1]->cpu_data()[10];
   }
 
  protected:
