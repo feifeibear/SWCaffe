@@ -68,13 +68,26 @@ class DataLayer : public Layer<Dtype> {
       offset_++;
       if( offset_ > number_of_images ) {
         offset_ = 0;
+        file.clear();
         file.seekg( 0, std::ios_base::beg );
+
+        int dump;
+        file.read((char*)&dump,sizeof(dump)); 
+        file.read((char*)&dump,sizeof(dump));
+        file.read((char*)&dump,sizeof(dump));
+        file.read((char*)&dump,sizeof(dump));
+        
+
+        label_file.clear();
         label_file.seekg( 0, std::ios_base::beg );
+
+        label_file.read(reinterpret_cast<char*>(&dump), 4);
+        label_file.read(reinterpret_cast<char*>(&dump), 4);
+
       }
     }
     //top[1]->fjr_print_data();
     //top[0]->fjr_print_data();
-    LOG(INFO)<<"label:"<<top[1]->cpu_data()[10];
   }
 
  protected:
@@ -99,7 +112,7 @@ class DataLayer : public Layer<Dtype> {
 
   //shared_ptr<db::DB> db_;
   //shared_ptr<db::Cursor> cursor_;
-  uint64_t offset_;
+  long offset_;
 };
 
 }  // namespace caffe

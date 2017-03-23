@@ -84,12 +84,14 @@ test.o: test.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 testcp: testcp.o $(OBJ)
-	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -L ../thirdparty/hdf5_install/lib -lglog -lopenblas -lhdf5 -lhdf5_cpp -lhdf5_hl -lhdf5_hl_cpp -o $@
+	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -L ../thirdparty/hdf5_install/lib -lglog -lopenblas -lhdf5 -lhdf5_hl -lhdf5_hl_cpp -o $@
+#-lhdf5_cpp 
 testcp.o: test_conv_pool.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_solver: test_solver.o $(OBJ)
-	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -L ../thirdparty/hdf5_install/lib -lglog -lopenblas -lhdf5 -lhdf5_cpp -lhdf5_hl -lhdf5_hl_cpp -o $@
+	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -L ../thirdparty/hdf5_install/lib -lglog -lopenblas -lhdf5 -lhdf5_hl -o $@
+#-lhdf5_cpp -lhdf5_hl_cpp  
 test_solver.o: test_solver.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
