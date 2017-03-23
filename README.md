@@ -19,5 +19,10 @@ http://yann.lecun.com/exdb/mnist/
 2. Make
 3. ./test for test
 
-### contact
+### Bugs
+DataLayer is customized for mnist
+
+### Developer
+Jiaui Fang
 fang_jiarui@163.com
+Zheyu Zhang
