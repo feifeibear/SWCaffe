@@ -37,7 +37,8 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/solvers/rmsprop_solver.o\
 		./build/solvers/sgd_solver.o\
 		./build/util/benchmark.o\
-		./build/solver.o
+		./build/solver.o\
+		./build/glog/logging.o
 
 TEST_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
@@ -113,6 +114,10 @@ test_all: $(OBJ)
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/solvers/%.o: ./src/solvers/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+./build/glog/%.o: ./src/glog/%.cpp
+	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+
 ./build/test/%.o: ./src/test/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -isystem ../thirdparty/googletest/include/ -o $@
 
