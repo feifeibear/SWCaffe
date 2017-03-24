@@ -515,3 +515,4 @@ class LayerParameter {
 
 }//end caffe
 #endif
+
