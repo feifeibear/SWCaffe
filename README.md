@@ -12,12 +12,12 @@ http://www.netlib.org/blas/
 3. No database for data storage, read from binary file
 
 ### Usage
-1. Please install glog into ../thirdparty/glog_install/ and openBLAS into 
+1. Please install openBLAS into 
 ../thirdparty/OpenBLAS/
 2. please download mnist data into ../data/
 http://yann.lecun.com/exdb/mnist/
 2. Make
-3. ./test for test
+3. ./test_solver for test mnist LeNet Training
 
 ### Bugs
 DataLayer is customized for mnist
