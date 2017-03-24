@@ -4,7 +4,6 @@ This is a caffe customized for Deep Nerual Network Training on Enbedded Devices.
 ### Dependencies:
 1. blas
 http://www.netlib.org/blas/
-2. glog
 
 ### Features
 1. No protocbuf
