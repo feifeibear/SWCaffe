@@ -34,7 +34,8 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/net.o\
 		./build/solvers/sgd_solver.o\
 		./build/util/benchmark.o\
-		./build/solver.o
+		./build/solver.o\
+		./build/glog/logging.o
 		#./build/solvers/adadelta_solver.o\
 		#./build/solvers/adagrad_solver.o\
 		#./build/solvers/adam_solver.o\
