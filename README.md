@@ -24,5 +24,8 @@ DataLayer is customized for mnist
 
 ### Developer
 Jiaui Fang
-fang_jiarui@163.com
 Zheyu Zhang
+
+### Contact
+fang_jiarui@163.com
+
