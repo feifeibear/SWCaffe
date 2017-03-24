@@ -22,8 +22,7 @@ http://yann.lecun.com/exdb/mnist/
 DataLayer is customized for mnist
 
 ### Developer
-Jiaui Fang
-Zheyu Zhang
+Jiaui Fang, Zheyu Zhang
 
 ### Contact
 fang_jiarui@163.com
