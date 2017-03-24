@@ -329,8 +329,10 @@ void Solver<Dtype>::Test(const int test_net_id) {
   CHECK(Caffe::root_solver());
   LOG(INFO) << "Iteration " << iter_
             << ", Testing net (#" << test_net_id << ")";
-  CHECK_NOTNULL(test_nets_[test_net_id].get())->
-      ShareTrainedLayersWith(net_.get());
+  //FJR for glog
+  //CHECK_NOTNULL(test_nets_[test_net_id].get())->
+  //    ShareTrainedLayersWith(net_.get());
+  test_nets_[test_net_id].get() -> ShareTrainedLayersWith(net_.get());
   vector<Dtype> test_score;
   vector<int> test_score_output_id;
   const shared_ptr<Net<Dtype> >& test_net = test_nets_[test_net_id];

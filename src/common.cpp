@@ -47,9 +47,10 @@ void GlobalInit(int* pargc, char*** pargv) {
   //FJR
   //::gflags::ParseCommandLineFlags(pargc, pargv, true);
   // Google logging.
-  ::google::InitGoogleLogging(*(pargv)[0]);
+  // FJR delete for glog
+  //::google::InitGoogleLogging(*(pargv)[0]);
   // Provide a backtrace on segfault.
-  ::google::InstallFailureSignalHandler();
+  //::google::InstallFailureSignalHandler();
 }
 
 #ifdef CPU_ONLY  // CPU-only Caffe.

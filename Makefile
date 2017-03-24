@@ -1,10 +1,14 @@
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
 
-INC_FLAGS=-I../thirdparty/glog_install/include \
- 			-I../thirdparty/openblas_install/include \
- 			-I../thirdparty/hdf5_install/include \
- 			-I./include
+#INC_FLAGS=-I../thirdparty/glog_install/include
+INC_FLAGS += -I../thirdparty/openblas_install/include
+INC_FLAGS += -I../thirdparty/hdf5_install/include
+INC_FLAGS += -I./include
+
+#LDFLAGS += -L ../thirdparty/glog_install/lib/ -lglog
+LDFLAGS += -L ../thirdparty/openblas_install/lib -lopenblas
+LDFLAGS += -L ../thirdparty/hdf5_install/lib -lhdf5 -lhdf5_hl
 
 OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
@@ -89,8 +93,9 @@ testcp: testcp.o $(OBJ)
 testcp.o: test_conv_pool.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
+
 test_solver: test_solver.o $(OBJ)
-	g++ $^ -L ../thirdparty/glog_install/lib/ -L ../thirdparty/openblas_install/lib -L ../thirdparty/hdf5_install/lib -lglog -lopenblas -lhdf5 -lhdf5_hl -o $@
+	g++ $^ $(LDFLAGS)  -o $@
 #-lhdf5_cpp -lhdf5_hl_cpp  
 test_solver.o: test_solver.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
