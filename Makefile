@@ -120,7 +120,7 @@ TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_fa
 		./swtest/obj/test_convolution_layer.o
 #		./swtest/obj/conv_layer_impl.o
 
-all: test_sw
+all: test_solver
 
 test_solver: test_solver.o $(OBJ)
 	g++ $^ $(LDFLAGS)  -o $@
@@ -135,7 +135,7 @@ test_sw: $(TEST_sw_OBJ)
 	g++ $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
 
 ./swtest/obj/%.o: ./swtest/src/%.cpp
-	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -I ./swtest/include/ -o $@
+	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -I ./swtest/include -o $@
 ./build/test/%.o: ./src/test/%.cpp
 	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -o $@
 ./build/%.o: ./src/%.cpp
@@ -149,5 +149,6 @@ test_sw: $(TEST_sw_OBJ)
 ./build/glog/%.o: ./src/glog/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 clean:
+	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o ./build/test/*.o test testcp test_solver test_all
+swclean:
 	rm swtest/obj/* && rm test_sw
-#	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o ./build/test/*.o test testcp test_solver test_all

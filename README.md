@@ -9,6 +9,8 @@ http://www.netlib.org/blas/
 1. No protocbuf
 2. boost with only hpp headers
 3. No database for data storage, read from binary file
+4. Support swBLAS and swDNN
+https://github.com/THUHPGC/swDNN.git
 
 ### Usage
 1. Please install openBLAS into 
