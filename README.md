@@ -1,4 +1,5 @@
 ## Brief Introduction :
+<img src="https://github.com/feifeibear/SWCaffe/blob/master/swdnnlogo.png" width = "300" height = "200" alt="swdnnlogo" align=center />
 This is a caffe customized for Deep Nerual Network Training on Enbedded Devices.
 
 ### Dependencies:
