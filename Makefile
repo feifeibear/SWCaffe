@@ -1,16 +1,15 @@
-export XMATH_PRESERVE_LDM=1
 CXX 	=  	mpiCC -host
 SWCXX = 	sw5cc.new -slave
 LINK 	=   mpiCC -hybrid
 FLAGS = 	-O3
 FLAGS += 	-DCPU_ONLY
 
+THIRD_PARTY_DIR = ../thirdparty
 SWINC_FLAGS = -I ./include
-SWINC_FLAGS += -I ../../tools/CBLAS/include
+SWINC_FLAGS += -I $(THIRD_PARTY_DIR)/CBLAS/include
 
-
-SWLIBOBJ = ../../tools/swblas/SWCBLAS/lib/cblas_LINUX0324.a
-SWLIBOBJ += ../../tools/swblas/SWCBLAS/libswblas0324.a
+SWLIBOBJ = $(THIRD_PARTY_DIR)/swblas/SWCBLAS/lib/cblas_LINUX0324.a
+SWLIBOBJ += $(THIRD_PARTY_DIR)/swblas/SWCBLAS/libswblas0324.a
 
 #SWLIBOBJ = ../../tools/swblas/BLAS-3.6.0/blas_LINUX.a
 #SWLIBOBJ += ../../tools/swblas/CBLAS/lib/cblas_LINUX.a
@@ -88,5 +87,5 @@ test_solver.o: test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
 clean:
-	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o ./build/test/*.o ./build/swlayers/*.o test testcp test_solver test_all
-	rm swtest/obj/* && rm athread_test && rm test_sw
+	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/glog/*.o ./build/solvers/*.o ./build/test/*.o ./build/swlayers/*.o test testcp test_solver test_all
+	rm swtest/obj/* && rm athread_test && rm athread_test
