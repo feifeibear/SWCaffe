@@ -19,6 +19,8 @@ https://github.com/THUHPGC/swDNN.git
 http://yann.lecun.com/exdb/mnist/
 2. Make
 3. ./test_solver for test mnist LeNet Training
+4. To use Sunway version please
+git checkout sunway
 
 ### Bugs
 DataLayer is customized for mnist
