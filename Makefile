@@ -1,15 +1,20 @@
-CXX = mpiCC -host
-LINK = mpiCC
-FLAGS=-O3
-FLAGS+=-DCPU_ONLY
+export XMATH_PRESERVE_LDM=1
+CXX 	=  	mpiCC -host
+SWCXX = 	sw5cc.new -slave
+LINK 	=   mpiCC -hybrid
+FLAGS = 	-O3
+FLAGS += 	-DCPU_ONLY
 
 SWINC_FLAGS = -I ./include
 SWINC_FLAGS += -I ../../tools/CBLAS/include
-#INC_FLAGS += -I ../../local/swhdf5/include
 
 
 SWLIBOBJ = ../../tools/swblas/SWCBLAS/lib/cblas_LINUX0324.a
 SWLIBOBJ += ../../tools/swblas/SWCBLAS/libswblas0324.a
+
+#SWLIBOBJ = ../../tools/swblas/BLAS-3.6.0/blas_LINUX.a
+#SWLIBOBJ += ../../tools/swblas/CBLAS/lib/cblas_LINUX.a
+
 SWOBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
 		./build/util/insert_splits.o \
@@ -32,144 +37,56 @@ SWOBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.
 		./build/solvers/sgd_solver.o\
 		./build/util/benchmark.o\
 		./build/solver.o\
-		./build/glog/logging.o
-		#./build/solvers/adadelta_solver.o\
-		#./build/solvers/adagrad_solver.o\
-		#./build/solvers/adam_solver.o\
-		#./build/solvers/nesterov_solver.o\
-		#./build/solvers/rmsprop_solver.o\
-		#./build/util/hdf5.o \
-
-
-TEST_INC_FLAGS += -I../thirdparty/openblas_install/include
-TEST_INC_FLAGS += -I../thirdparty/hdf5_install/include
-TEST_INC_FLAGS += -I./include
-TEST_INC_FLAGS += -I../thirdparty/googletest/include
-
-LDFLAGS += -L ../thirdparty/openblas_install/lib -lopenblas
-LDFLAGS += -L ../thirdparty/hdf5_install/lib -lhdf5 -lhdf5_hl
-
-
-TEST_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
-		./build/util/math_functions.o \
-		./build/util/insert_splits.o \
-		./build/util/im2col.o \
-		./build/util/hdf5.o \
-		./build/layers/inner_product_layer.o \
-		./build/layers/input_layer.o \
-		./build/layers/base_conv_layer.o \
-		./build/layers/conv_layer.o \
-		./build/layers/pooling_layer.o \
-		./build/layers/data_layer.o \
-		./build/layers/neuron_layer.o\
-		./build/layers/relu_layer.o\
-		./build/layers/softmax_layer.o\
-		./build/layers/softmax_loss_layer.o\
-		./build/layers/loss_layer.o\
-		./build/layers/accuracy_layer.o\
-		./build/layers/split_layer.o\
-		./build/layers/default_instance.o\
-		./build/net.o\
-		./build/solvers/adadelta_solver.o\
-		./build/solvers/adagrad_solver.o\
-		./build/solvers/adam_solver.o\
-		./build/solvers/nesterov_solver.o\
-		./build/solvers/rmsprop_solver.o\
-		./build/solvers/sgd_solver.o\
-		./build/util/benchmark.o\
-		./build/solver.o\
-		./build/test/test_caffe_main.o\
-		./build/test/test_accuracy_layer.o\
-		./build/test/test_blob.o\
-		./build/test/test_common.o\
-		./build/test/test_convolution_layer.o\
-		./build/test/test_filler.o\
-		./build/test/test_inner_product_layer.o\
-		./build/test/test_math_functions.o\
-		./build/test/test_pooling_layer.o\
-		./build/test/test_softmax_layer.o\
-		./build/test/test_softmax_with_loss_layer.o\
-		./build/test/test_syncedmem.o
-		./build/test/test_syncedmem.o\
-		./build/glog/logging.o
-
-all:test_solver
-run: test_solver
-	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./$^
-
-test_solver: test_solver.o $(OBJ) $(LIBOBJ)
-	$(LINK) $^ $(LDFLAGS)  -o $@
-#-lhdf5_cpp -lhdf5_hl_cpp  
-test_solver.o: test_solver.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
-
-
-TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
-		./build/util/math_functions.o \
-		./build/util/insert_splits.o \
-		./build/util/im2col.o \
-		./build/util/hdf5.o \
-		./build/layers/inner_product_layer.o \
-		./build/layers/input_layer.o \
-		./build/layers/base_conv_layer.o \
-		./build/layers/conv_layer.o \
-		./build/layers/pooling_layer.o \
-		./build/layers/data_layer.o \
-		./build/layers/neuron_layer.o\
-		./build/layers/relu_layer.o\
-		./build/layers/softmax_layer.o\
-		./build/layers/softmax_loss_layer.o\
-		./build/layers/loss_layer.o\
-		./build/layers/accuracy_layer.o\
-		./build/layers/split_layer.o\
-		./build/layers/default_instance.o\
-		./build/net.o\
-		./build/solvers/adadelta_solver.o\
-		./build/solvers/adagrad_solver.o\
-		./build/solvers/adam_solver.o\
-		./build/solvers/nesterov_solver.o\
-		./build/solvers/rmsprop_solver.o\
-		./build/solvers/sgd_solver.o\
-		./build/util/benchmark.o\
 		./build/glog/logging.o\
-		./build/solver.o\
-		./build/test/test_caffe_main.o\
-		./swtest/obj/test_convolution_layer.o
-#		./swtest/obj/conv_layer_impl.o
+	  ./build/swlayers/sw_slave_conv_valid.o\
+	  ./build/swlayers/sw_slave_conv_full.o\
+	  ./build/swlayers/gemm_asm.o\
+		./build/swlayers/sw_conv_layer_impl.o
 
-all: test_solver
+all: test_solver 
 
-test_solver: test_solver.o $(SWOBJ)
-	g++ $^ $(LDFLAGS)  -o $@
-#-lhdf5_cpp -lhdf5_hl_cpp  
+run: test_solver
+	bsub -b -I -m 1 -p -q q_sw_expr -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./test_solver
+run_test: athread_test
+	bsub -b -I -m 1 -p -q q_sw_expr -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./athread_test
+
+ATHREAD_OBJ = ./swtest/obj/athread_test.o\
+							./build/swlayers/sw_conv_layer_impl.o\
+							./build/swlayers/sw_slave_conv_valid.o\
+							./build/swlayers/sw_slave_conv_full.o\
+							./build/swlayers/gemm_asm.o
+
+athread_test: $(ATHREAD_OBJ) 
+	mpiCC -hybrid -lslave $^ -o $@
+./swtest/obj/athread_test.o: ./swtest/src/athread_test.c 
+	mpiCC -host $(FLAGS) $(SWINC_FLAGS) -c $^ -o $@ 
+	#mpiCC -host -O2 -c $^ -o $@ 
+
+test_solver: test_solver.o $(SWOBJ) $(SWLIBOBJ)
+	$(LINK) $^ $(LDFLAGS)  -o $@
 test_solver.o: test_solver.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-test_all: $(TEST_OBJ)
-	g++ $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
+./build/swlayers/sw_conv_layer_impl.o: ./src/swlayers/sw_conv_layer_impl.c
+	sw5cc.new -host $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
+./build/swlayers/sw_slave_conv_valid.o: ./src/swlayers/sw_slave_conv_valid.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+./build/swlayers/sw_slave_conv_full.o: ./src/swlayers/sw_slave_conv_full.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+./build/swlayers/gemm_asm.o: ./src/swlayers/gemm.S
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 
-test_sw: $(TEST_sw_OBJ)
-	g++ $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
-
-./swtest/obj/%.o: ./swtest/src/%.cpp
-	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -I ./swtest/include -o $@
-./build/test/%.o: ./src/test/%.cpp
-	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -o $@
 ./build/%.o: ./src/%.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 ./build/layers/%.o: ./src/layers/%.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 ./build/util/%.o: ./src/util/%.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 ./build/solvers/%.o: ./src/solvers/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 ./build/glog/%.o: ./src/glog/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
-
-./build/test/%.o: ./src/test/%.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -isystem ../thirdparty/googletest/include/ -o $@
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
 clean:
-	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o ./build/test/*.o test testcp test_solver test_all
-swclean:
-	rm swtest/obj/* && rm test_sw
+	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o ./build/test/*.o ./build/swlayers/*.o test testcp test_solver test_all
+	rm swtest/obj/* && rm athread_test && rm test_sw

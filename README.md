@@ -11,6 +11,7 @@ http://www.netlib.org/blas/
 3. No database for data storage, read from binary file
 4. Support swBLAS and swDNN
 https://github.com/THUHPGC/swDNN.git
+large image channels, swDNN is used and small channels swBLAS is used
 
 ### Usage
 1. Please install openBLAS into 
@@ -22,6 +23,7 @@ http://yann.lecun.com/exdb/mnist/
 
 ### Bugs
 DataLayer is customized for mnist
+Only support double for Sunway
 
 ### Developer
 Jiaui Fang, Zheyu Zhang

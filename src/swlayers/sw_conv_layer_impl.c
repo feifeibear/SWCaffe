@@ -5,6 +5,9 @@
 //#include "util.h"
 #include "caffe/swlayers/sw_conv_layer_impl.h"
 
+extern SLAVE_FUN(conv_valid)();
+extern SLAVE_FUN(conv_full)();
+
 // high -> low
 // B, N, R, C
 inline int image_caffe_offset(int n, int c, int h, int w, int N, int C, int H, int W) {
@@ -31,8 +34,6 @@ inline int weight_swdnn_offset_back(int no, int ni, int kr, int kc, int No, int 
   return ((( kr*K + kc )*Ni + ni) * No + no );
 }
 
-extern SLAVE_FUN(conv_valid)();
-extern SLAVE_FUN(conv_full)();
 
 typedef double Type;
 
@@ -45,6 +46,7 @@ typedef struct ConvData_st{
 }ConvData;
 
 
+static int init_flag = 0;
 void sw_conv_forward_impl_d(
         const Type* in, 
         const Type* weight, 
@@ -61,17 +63,16 @@ void sw_conv_forward_impl_d(
     int cRo, cCo, cB;
     int cRi, cCi, cNi;
     int Ro = Ri-K+1 , Co = Ci-K+1;
-
     Type* my_in   = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
     Type* my_out  = (Type*)malloc(sizeof(Type)*Ro*Co*No*B);
     Type* my_weight = (Type*)malloc(sizeof(Type)*K*K*No*Ni);
 
     for(cRi = 0; cRi < Ri; ++cRi)
-        for(cCi = 0; cCi < Ci; ++cCi)
-            for(cNi = 0; cNi < Ni; ++cNi)
-                for(cB = 0; cB < B; ++cB)
-                  my_in[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
-                    in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
+      for(cCi = 0; cCi < Ci; ++cCi)
+        for(cNi = 0; cNi < Ni; ++cNi)
+          for(cB = 0; cB < B; ++cB)
+            my_in[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
+              in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
 
     for(cNi = 0; cNi < Ni; ++cNi)
       for(cNo = 0; cNo < No; ++cNo)
@@ -79,9 +80,10 @@ void sw_conv_forward_impl_d(
           for(cKc = 0; cKc < K; ++cKc)
               my_weight[weight_swdnn_offset(cNo, cNi, cKr, cKc, No, Ni, K)] = 
                 weight[weight_caffe_offset(cNo, cNi, cKr, cKc, No, Ni, K)];
+	  //printf("after copy data forward OK\n");
 
     ConvData* param = (ConvData*)malloc(sizeof(ConvData));
-    param->input = my_in;
+    param->input =  my_in;
     param->weight = my_weight;
     param->output = my_out;
 	  param->_Ni = Ni;
@@ -103,23 +105,31 @@ void sw_conv_forward_impl_d(
 	  int ldm_consume = 8*(Ni*No*K*2 + No*B*(Costride+K-1) + Ni*B*2);
 	  //printf("ldm comsumption is %d\n", ldm_consume/64);
 	  assert(ldm_consume < 64*1024*64);
-    memset(param->output, (Type)0, sizeof(Type)*Ni*B*Ci*Ri);
+    //memset(param->output, (Type)0, sizeof(Type)*Ni*B*Ci*Ri);
+	  //printf("befor init forward OK\n");
 
-    athread_init();
+    if(init_flag == 0){
+      int rtcode = athread_init();
+      if( rtcode != 1)
+	      printf("thread init error, return code %d\n", rtcode);
+      init_flag++ ;
+    }
 	  athread_spawn(conv_valid, param);
 	  athread_join();
-
+    //if(athread_halt() != 0)
+	  //  printf("thread halt error\n");
     for(cRo = 0; cRo < Ro; ++cRo)
-        for(cCo = 0; cCo < Co; ++cCo)
-            for(cNo = 0; cNo < No; ++cNo)
-                for(cB = 0; cB < B; ++cB)
-                  out[image_swdnn_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)] = 
-                    my_out[image_caffe_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)];
+      for(cCo = 0; cCo < Co; ++cCo)
+        for(cNo = 0; cNo < No; ++cNo)
+          for(cB = 0; cB < B; ++cB)
+            out[image_caffe_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)] =
+              my_out[image_swdnn_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)];
 
     free(my_in);
     free(my_weight);
     free(my_out);
     free(param);
+	  //printf("forward OK\n");
 }
 
 void sw_conv_backward_impl_d(
@@ -142,10 +152,10 @@ void sw_conv_backward_impl_d(
     int cRi, cCi, cNi;
     int Ro = Ri-K+1 , Co = Ci-K+1;
 
-
     //weight_diff
     ConvData* param = (ConvData*)malloc(sizeof(ConvData));
     Type* my_in_grad = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
+    Type* my_in = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
     Type* my_out_grad = (Type*)malloc(sizeof(Type)*Ro*Co*No*B);
     Type* my_weight_diff = (Type*)malloc(sizeof(Type)*Ni*No*K*K);
 
@@ -155,19 +165,21 @@ void sw_conv_backward_impl_d(
         for(cCi = 0; cCi < Ci; ++cCi)
             for(cNi = 0; cNi < Ni; ++cNi)
                 for(cB = 0; cB < B; ++cB)
-                  my_in_grad[image_swdnn_offset_back(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
-                    in_grad[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
+                  //my_in_grad[image_swdnn_offset_back(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
+                  my_in[image_swdnn_offset_back(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
+                    in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
 
     for(cRo = 0; cRo < Ro; ++cRo)
         for(cCo = 0; cCo < Co; ++cCo)
             for(cNo = 0; cNo < No; ++cNo)
                 for(cB = 0; cB < B; ++cB)
-                  my_out_grad[image_swdnn_offset_back(cB, cNo, cRo, cCo, B, No, Ro, Co)] = 
+                  //my_out_grad[image_swdnn_offset_back(cB, cNo, cRo, cCo, B, No, Ro, Co)] = 
+                  my_out_grad[image_swdnn_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)] = 
                     out_grad[image_caffe_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)];
 
-    memset(my_weight_diff, 0, sizeof(Type)*Ni*No*K*K);
+    //memset(my_weight_diff, 0, sizeof(Type)*Ni*No*K*K);
 
-    param->input  = my_in_grad;
+    param->input  = my_in;
     param->weight = my_out_grad;
     param->output = my_weight_diff;
 	  param->_Ni = B;
@@ -186,12 +198,16 @@ void sw_conv_backward_impl_d(
 	  int Costride = (64*55*1024/8-param->_Ni*param->_B*2-
             param->_Ni*param->_No)/
         (param->_No*param->_B);
-	  printf("Costride is %d\n", Costride);
+	  //printf("Costride is %d\n", Costride);
 	  param->_Costride = Costride;
     assert(Costride > 0);
 
     // weight_diff = conv((in), out_grad, 'valid')
-    athread_init();
+    if( init_flag == 0 ){
+      int rtcode = athread_init();
+      if( rtcode != 1 )
+        printf("init error");
+    }
 	  athread_spawn(conv_valid, param);
 	  athread_join();
 
@@ -199,10 +215,10 @@ void sw_conv_backward_impl_d(
         for(cKc = 0; cKc < K; ++cKc)
             for(cNo = 0; cNo < No; ++cNo)
                 for(cNi = 0; cNi < Ni; ++cNi){
-              weight_diff[(cNo, cNi, cKr, cKc, No, Ni, K)]
-              = my_weight_diff[weight_swdnn_offset_back(cNo, cNi, cKr, cKc, No, Ni, K)];
+              weight_diff[weight_caffe_offset(cNo, cNi, cKr, cKc, No, Ni, K)]
+              = my_weight_diff[weight_swdnn_offset(cNo, cNi, cKr, cKc, No, Ni, K)];
                 }
-	  printf("Backward weight_diff OK\n");
+	  //printf("Backward weight_diff OK\n");
 
     //in_grad TODO should be loaded to 64 CPEs
     //Transforamation and rot180 for Weight
@@ -214,7 +230,7 @@ void sw_conv_backward_impl_d(
             for(cNo = 0; cNo < No; ++cNo)
                 for(cNi = 0; cNi < Ni; ++cNi){
                   my_weight[weight_swdnn_offset_back(cNo, cNi, K-1-cKr, K-1-cKc, No, Ni, K)]
-                    = weight[(cNo, cNi, cKr, cKc, No, Ni, K)];
+                    = weight[weight_caffe_offset(cNo, cNi, cKr, cKc, No, Ni, K)];
                 }
 
     param->input  =   my_out_grad;
@@ -232,10 +248,10 @@ void sw_conv_backward_impl_d(
     Costride = (64*55*1024/8-param->_Ni*param->_B*2-param->_Ni*param->_No*2)/
             (param->_No*param->_B);
 	  param->_Costride = Costride;
-	  printf("Costride is %d\n", Costride);
+	  //printf("Costride is %d\n", Costride);
     assert(Costride > 0);
 
-    memset(my_in_grad, 0, sizeof(Type)*Ni*B*Ci*Ri);
+    //memset(my_in_grad, 0, sizeof(Type)*Ni*B*Ci*Ri);
 // in_grad = conv(out_grad, rot180(weight), 'full')
 	  athread_spawn(conv_full, param);
 	  athread_join();
@@ -245,14 +261,15 @@ void sw_conv_backward_impl_d(
             for(cNi = 0; cNi < Ni; ++cNi)
                 for(cB = 0; cB < B; ++cB)
                   in_grad[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] =
-                    my_in_grad[image_swdnn_offset_back(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
+                    //my_in_grad[image_swdnn_offset_back(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
+                    my_in_grad[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
+
+	  //printf("Backward in_grad calc is OK!\n");
 
     free(my_in_grad);
+    free(my_in);
     free(my_weight);
     free(my_out_grad);
     free(my_weight_diff);
-
-	  printf("Backward in_grad calc is OK!\n");
-
     free(param);
 }

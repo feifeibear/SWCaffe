@@ -5,7 +5,7 @@
 #include <math.h>
 #include "simd.h"
 #include "dma.h"
-#include "caffe/swlayers/gemm.h" 
+#include "caffe/swlayers/gemm.h"
 
 /***************
  * GEMM PLAN 

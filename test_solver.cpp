@@ -6,7 +6,7 @@ int main () {
   //mnist input 10, 1, 28, 28
   DataParameter data_param_data;
   data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
-  data_param_data.set_batch_size(64);
+  data_param_data.set_batch_size(128);
   LayerParameter data_train;
   data_train.set_name("data_train");
   data_train.set_type("Data");
@@ -20,7 +20,7 @@ int main () {
 
   DataParameter data_param_label;
   data_param_label.set_source("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte");
-  data_param_label.set_batch_size(100);
+  data_param_label.set_batch_size(128);
   LayerParameter data_test;
   data_test.set_name("data_test");
   data_test.set_type("Data");
@@ -36,7 +36,7 @@ int main () {
    * define convolution layer (10,1,28,28) -> (10, 20, 24, 24)
    *******/
   ConvolutionParameter conv_param1;
-  conv_param1.set_num_output(20);
+  conv_param1.set_num_output(128);
   conv_param1.set_pad_h(0);
   conv_param1.set_pad_w(0);
   conv_param1.set_kernel_h(5);
@@ -71,7 +71,7 @@ int main () {
    * define convolution layer (10,20,12,12) -> (10, 50, 8, 8)
    *******/
   ConvolutionParameter conv_param2;
-  conv_param2.set_num_output(50);
+  conv_param2.set_num_output(128);
   conv_param2.set_pad_h(0);
   conv_param2.set_pad_w(0);
   conv_param2.set_kernel_h(5);
@@ -182,8 +182,8 @@ int main () {
   SolverParameter solver_param;
   DLOG(INFO) << "Set net_param...";
   solver_param.set_net_param(net_param);
-  solver_param.add_test_iter(100);
-  solver_param.set_test_interval(500);
+  solver_param.add_test_iter(1);
+  solver_param.set_test_interval(5);
   solver_param.set_base_lr(0.01);
   solver_param.set_display(100);
   solver_param.set_max_iter(10000);
@@ -195,8 +195,8 @@ int main () {
   solver_param.set_type("SGD");
 
   DLOG(INFO) << "Init solver...";
-  shared_ptr<Solver<float> >
-      solver(SolverRegistry<float>::CreateSolver(solver_param));
+  shared_ptr<Solver<double> >
+      solver(SolverRegistry<double>::CreateSolver(solver_param));
   DLOG(INFO) << "Begin solve...";
   solver->Solve(NULL);
 
