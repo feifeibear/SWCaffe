@@ -9,3 +9,157 @@ test_filler done
 test_softmax done
 test_softmax_with_loss done (strange during debug...)
 test_accuracy done
+
+test_lstm error:
+--> top blob cont_1 missing
+--> layer cont_slice missing
+look into recurrent unrollnet function carefully
+
+Next:
+check and compare FillUnrolledNet and CreatUnrolledNet !
+
+solve:
+cannot use std::vector for vector of complex objects
+use vector of pointer instead
+see NetParameter::layer_
+
+
+I0414 16:00:29.263231  4713 net.cpp:735] Copying source layer lstm
+I0414 16:00:29.263319  4713 net.cpp:735] Copying source layer slice
+I0414 16:00:29.263402  4713 net.cpp:735] Copying source layer silence
+I0414 16:00:29.263484  4713 net.cpp:735] Copying source layer reshape
+I0414 16:00:29.263567  4713 net.cpp:735] Copying source layer ip1
+I0414 16:00:29.263653  4713 net.cpp:735] Copying source layer loss
+I0414 16:01:34.382791  4713 solver.cpp:401]     Test net output #0: accuracy = 0.1845
+I0414 16:01:34.382896  4713 solver.cpp:401]     Test net output #1: loss = 2.30015 (* 1 = 2.30015 loss)
+I0414 16:01:36.267009  4713 solver.cpp:220] Iteration 0 (0 iter/s, 67.004s/100 iters), loss = 2.30258
+I0414 16:01:36.267305  4713 solver.cpp:240]     Train net output #0: loss = 2.30258 (* 1 = 2.30258 loss)
+I0414 16:01:36.267455  4713 sgd_solver.cpp:106] Iteration 0, lr = 0.001
+I0414 16:05:35.252410  4713 solver.cpp:220] Iteration 100 (0.418436 iter/s, 238.985s/100 iters), loss = 0.627077
+I0414 16:05:35.252807  4713 solver.cpp:240]     Train net output #0: loss = 0.627077 (* 1 = 0.627077 loss)
+I0414 16:05:35.253024  4713 sgd_solver.cpp:106] Iteration 100, lr = 0.001
+I0414 16:08:19.099046  4713 solver.cpp:220] Iteration 200 (0.610329 iter/s, 163.846s/100 iters), loss = 0.518804
+I0414 16:08:19.099205  4713 solver.cpp:240]     Train net output #0: loss = 0.518804 (* 1 = 0.518804 loss)
+I0414 16:08:19.099277  4713 sgd_solver.cpp:106] Iteration 200, lr = 0.001
+I0414 16:10:38.143048  4713 solver.cpp:220] Iteration 300 (0.719202 iter/s, 139.043s/100 iters), loss = 0.315939
+I0414 16:10:38.143200  4713 solver.cpp:240]     Train net output #0: loss = 0.315939 (* 1 = 0.315939 loss)
+I0414 16:10:38.143273  4713 sgd_solver.cpp:106] Iteration 300, lr = 0.001
+I0414 16:12:57.855401  4713 solver.cpp:220] Iteration 400 (0.715758 iter/s, 139.712s/100 iters), loss = 0.305383
+I0414 16:12:57.855571  4713 solver.cpp:240]     Train net output #0: loss = 0.305383 (* 1 = 0.305383 loss)
+I0414 16:12:57.855653  4713 sgd_solver.cpp:106] Iteration 400, lr = 0.001
+I0414 16:15:14.816241  4713 solver.cpp:332] Iteration 500, Testing net (#0)
+I0414 16:15:14.816440  4713 net.cpp:732] Ignoring source layer data_train
+I0414 16:15:14.816570  4713 net.cpp:735] Copying source layer lstm
+I0414 16:15:14.816689  4713 net.cpp:735] Copying source layer slice
+I0414 16:15:14.816805  4713 net.cpp:735] Copying source layer silence
+I0414 16:15:14.816920  4713 net.cpp:735] Copying source layer reshape
+I0414 16:15:14.817034  4713 net.cpp:735] Copying source layer ip1
+I0414 16:15:14.817149  4713 net.cpp:735] Copying source layer loss
+I0414 16:15:55.067984  4713 solver.cpp:401]     Test net output #0: accuracy = 0.9287
+I0414 16:15:55.068189  4713 solver.cpp:401]     Test net output #1: loss = 0.231538 (* 1 = 0.231538 loss)
+I0414 16:15:56.451050  4713 solver.cpp:220] Iteration 500 (0.559926 iter/s, 178.595s/100 iters), loss = 0.136176
+I0414 16:15:56.451119  4713 solver.cpp:240]     Train net output #0: loss = 0.136176 (* 1 = 0.136176 loss)
+I0414 16:15:56.451143  4713 sgd_solver.cpp:106] Iteration 500, lr = 0.001
+I0414 16:18:16.740315  4713 solver.cpp:220] Iteration 600 (0.712814 iter/s, 140.289s/100 iters), loss = 2.30539
+I0414 16:18:16.740474  4713 solver.cpp:240]     Train net output #0: loss = 2.30539 (* 1 = 2.30539 loss)
+I0414 16:18:16.740556  4713 sgd_solver.cpp:106] Iteration 600, lr = 0.001
+I0414 16:20:42.007053  4713 solver.cpp:220] Iteration 700 (0.688392 iter/s, 145.266s/100 iters), loss = 0.184941
+I0414 16:20:42.007237  4713 solver.cpp:240]     Train net output #0: loss = 0.184941 (* 1 = 0.184941 loss)
+I0414 16:20:42.007331  4713 sgd_solver.cpp:106] Iteration 700, lr = 0.001
+I0414 16:23:02.687757  4713 solver.cpp:220] Iteration 800 (0.710833 iter/s, 140.68s/100 iters), loss = 0.185847
+I0414 16:23:02.687907  4713 solver.cpp:240]     Train net output #0: loss = 0.185847 (* 1 = 0.185847 loss)
+I0414 16:23:02.687979  4713 sgd_solver.cpp:106] Iteration 800, lr = 0.001
+I0414 16:25:24.807049  4713 solver.cpp:220] Iteration 900 (0.703636 iter/s, 142.119s/100 iters), loss = 0.194047
+I0414 16:25:24.807123  4713 solver.cpp:240]     Train net output #0: loss = 0.194047 (* 1 = 0.194047 loss)
+I0414 16:25:24.807145  4713 sgd_solver.cpp:106] Iteration 900, lr = 0.001
+I0414 16:28:12.811123  4713 solver.cpp:332] Iteration 1000, Testing net (#0)
+I0414 16:28:12.811581  4713 net.cpp:732] Ignoring source layer data_train
+I0414 16:28:12.811799  4713 net.cpp:735] Copying source layer lstm
+I0414 16:28:12.812005  4713 net.cpp:735] Copying source layer slice
+I0414 16:28:12.812209  4713 net.cpp:735] Copying source layer silence
+I0414 16:28:12.812407  4713 net.cpp:735] Copying source layer reshape
+I0414 16:28:12.812607  4713 net.cpp:735] Copying source layer ip1
+I0414 16:28:12.812803  4713 net.cpp:735] Copying source layer loss
+I0414 16:29:18.674078  4713 solver.cpp:401]     Test net output #0: accuracy = 0.9498
+I0414 16:29:18.674176  4713 solver.cpp:401]     Test net output #1: loss = 0.164392 (* 1 = 0.164392 loss)
+I0414 16:29:20.913851  4713 solver.cpp:220] Iteration 1000 (0.423539 iter/s, 236.106s/100 iters), loss = 0.0591977
+I0414 16:29:20.913982  4713 solver.cpp:240]     Train net output #0: loss = 0.0591976 (* 1 = 0.0591976 loss)
+I0414 16:29:20.914145  4713 sgd_solver.cpp:106] Iteration 1000, lr = 0.001
+I0414 16:33:20.231066  4713 solver.cpp:220] Iteration 1100 (0.417856 iter/s, 239.317s/100 iters), loss = 0.0628604
+I0414 16:33:20.231170  4713 solver.cpp:240]     Train net output #0: loss = 0.0628603 (* 1 = 0.0628603 loss)
+I0414 16:33:20.231204  4713 sgd_solver.cpp:106] Iteration 1100, lr = 0.001
+I0414 16:35:50.313542  4713 solver.cpp:220] Iteration 1200 (0.666302 iter/s, 150.082s/100 iters), loss = 2.30703
+I0414 16:35:50.313689  4713 solver.cpp:240]     Train net output #0: loss = 2.30703 (* 1 = 2.30703 loss)
+I0414 16:35:50.313771  4713 sgd_solver.cpp:106] Iteration 1200, lr = 0.001
+I0414 16:38:08.415052  4713 solver.cpp:220] Iteration 1300 (0.724108 iter/s, 138.101s/100 iters), loss = 0.111744
+I0414 16:38:08.415211  4713 solver.cpp:240]     Train net output #0: loss = 0.111744 (* 1 = 0.111744 loss)
+I0414 16:38:08.415285  4713 sgd_solver.cpp:106] Iteration 1300, lr = 0.001
+I0414 16:40:25.439064  4713 solver.cpp:220] Iteration 1400 (0.729805 iter/s, 137.023s/100 iters), loss = 0.114496
+I0414 16:40:25.439239  4713 solver.cpp:240]     Train net output #0: loss = 0.114496 (* 1 = 0.114496 loss)
+I0414 16:40:25.439332  4713 sgd_solver.cpp:106] Iteration 1400, lr = 0.001
+I0414 16:42:44.195123  4713 solver.cpp:332] Iteration 1500, Testing net (#0)
+I0414 16:42:44.195340  4713 net.cpp:732] Ignoring source layer data_train
+I0414 16:42:44.195439  4713 net.cpp:735] Copying source layer lstm
+I0414 16:42:44.195533  4713 net.cpp:735] Copying source layer slice
+I0414 16:42:44.195624  4713 net.cpp:735] Copying source layer silence
+I0414 16:42:44.195714  4713 net.cpp:735] Copying source layer reshape
+I0414 16:42:44.195802  4713 net.cpp:735] Copying source layer ip1
+I0414 16:42:44.195893  4713 net.cpp:735] Copying source layer loss
+I0414 16:43:26.143657  4713 solver.cpp:401]     Test net output #0: accuracy = 0.9552
+I0414 16:43:26.143851  4713 solver.cpp:401]     Test net output #1: loss = 0.138678 (* 1 = 0.138678 loss)
+I0414 16:43:27.320940  4713 solver.cpp:220] Iteration 1500 (0.54981 iter/s, 181.881s/100 iters), loss = 0.187888
+I0414 16:43:27.321012  4713 solver.cpp:240]     Train net output #0: loss = 0.187887 (* 1 = 0.187887 loss)
+I0414 16:43:27.321034  4713 sgd_solver.cpp:106] Iteration 1500, lr = 0.001
+I0414 16:45:44.655047  4713 solver.cpp:220] Iteration 1600 (0.728152 iter/s, 137.334s/100 iters), loss = 0.0454433
+I0414 16:45:44.655105  4713 solver.cpp:240]     Train net output #0: loss = 0.0454432 (* 1 = 0.0454432 loss)
+I0414 16:45:44.655122  4713 sgd_solver.cpp:106] Iteration 1600, lr = 0.001
+I0414 16:48:06.756177  4713 solver.cpp:220] Iteration 1700 (0.703725 iter/s, 142.101s/100 iters), loss = 0.0628346
+I0414 16:48:06.756336  4713 solver.cpp:240]     Train net output #0: loss = 0.0628344 (* 1 = 0.0628344 loss)
+I0414 16:48:06.756420  4713 sgd_solver.cpp:106] Iteration 1700, lr = 0.001
+I0414 16:50:30.531255  4713 solver.cpp:220] Iteration 1800 (0.695536 iter/s, 143.774s/100 iters), loss = 2.30804
+I0414 16:50:30.531473  4713 solver.cpp:240]     Train net output #0: loss = 2.30804 (* 1 = 2.30804 loss)
+I0414 16:50:30.531580  4713 sgd_solver.cpp:106] Iteration 1800, lr = 0.001
+I0414 16:52:54.739060  4713 solver.cpp:220] Iteration 1900 (0.693448 iter/s, 144.207s/100 iters), loss = 0.126351
+I0414 16:52:54.739212  4713 solver.cpp:240]     Train net output #0: loss = 0.126351 (* 1 = 0.126351 loss)
+I0414 16:52:54.739285  4713 sgd_solver.cpp:106] Iteration 1900, lr = 0.001
+I0414 16:55:16.755103  4713 solver.cpp:332] Iteration 2000, Testing net (#0)
+I0414 16:55:16.755242  4713 net.cpp:732] Ignoring source layer data_train
+I0414 16:55:16.755321  4713 net.cpp:735] Copying source layer lstm
+I0414 16:55:16.755398  4713 net.cpp:735] Copying source layer slice
+I0414 16:55:16.755473  4713 net.cpp:735] Copying source layer silence
+I0414 16:55:16.755548  4713 net.cpp:735] Copying source layer reshape
+I0414 16:55:16.755622  4713 net.cpp:735] Copying source layer ip1
+I0414 16:55:16.755698  4713 net.cpp:735] Copying source layer loss
+I0414 16:55:59.717094  4713 solver.cpp:401]     Test net output #0: accuracy = 0.9587
+I0414 16:55:59.721866  4713 solver.cpp:401]     Test net output #1: loss = 0.126272 (* 1 = 0.126272 loss)
+I0414 16:56:01.030690  4713 solver.cpp:220] Iteration 2000 (0.536795 iter/s, 186.291s/100 iters), loss = 0.0943236
+I0414 16:56:01.030849  4713 solver.cpp:240]     Train net output #0: loss = 0.0943232 (* 1 = 0.0943232 loss)
+I0414 16:56:01.030922  4713 sgd_solver.cpp:106] Iteration 2000, lr = 0.001
+I0414 16:58:21.909178  4713 solver.cpp:220] Iteration 2100 (0.709834 iter/s, 140.878s/100 iters), loss = 0.236741
+I0414 16:58:21.909337  4713 solver.cpp:240]     Train net output #0: loss = 0.23674 (* 1 = 0.23674 loss)
+I0414 16:58:21.909420  4713 sgd_solver.cpp:106] Iteration 2100, lr = 0.001
+I0414 17:00:39.219050  4713 solver.cpp:220] Iteration 2200 (0.728284 iter/s, 137.309s/100 iters), loss = 0.0438413
+I0414 17:00:39.219116  4713 solver.cpp:240]     Train net output #0: loss = 0.0438409 (* 1 = 0.0438409 loss)
+I0414 17:00:39.219135  4713 sgd_solver.cpp:106] Iteration 2200, lr = 0.001
+I0414 17:03:00.732980  4713 solver.cpp:220] Iteration 2300 (0.706649 iter/s, 141.513s/100 iters), loss = 0.0448715
+I0414 17:03:00.733109  4713 solver.cpp:240]     Train net output #0: loss = 0.0448711 (* 1 = 0.0448711 loss)
+I0414 17:03:00.733129  4713 sgd_solver.cpp:106] Iteration 2300, lr = 0.001
+I0414 17:06:58.155072  4713 solver.cpp:220] Iteration 2400 (0.421191 iter/s, 237.422s/100 iters), loss = 2.30866
+I0414 17:06:58.155386  4713 solver.cpp:240]     Train net output #0: loss = 2.30866 (* 1 = 2.30866 loss)
+I0414 17:06:58.155550  4713 sgd_solver.cpp:106] Iteration 2400, lr = 0.001
+I0414 17:11:02.807108  4713 solver.cpp:332] Iteration 2500, Testing net (#0)
+I0414 17:11:02.807329  4713 net.cpp:732] Ignoring source layer data_train
+I0414 17:11:02.807466  4713 net.cpp:735] Copying source layer lstm
+I0414 17:11:02.807603  4713 net.cpp:735] Copying source layer slice
+I0414 17:11:02.807749  4713 net.cpp:735] Copying source layer silence
+I0414 17:11:02.807888  4713 net.cpp:735] Copying source layer reshape
+I0414 17:11:02.808029  4713 net.cpp:735] Copying source layer ip1
+I0414 17:11:02.808171  4713 net.cpp:735] Copying source layer loss
+I0414 17:12:10.486757  4713 solver.cpp:401]     Test net output #0: accuracy = 0.9626
+I0414 17:12:10.490553  4713 solver.cpp:401]     Test net output #1: loss = 0.118838 (* 1 = 0.118838 loss)
+I0414 17:12:12.911073  4713 solver.cpp:220] Iteration 2500 (0.317707 iter/s, 314.755s/100 iters), loss = 0.0684411
+I0414 17:12:12.911335  4713 solver.cpp:240]     Train net output #0: loss = 0.068441 (* 1 = 0.068441 loss)
+I0414 17:12:12.911478  4713 sgd_solver.cpp:106] Iteration 2500, lr = 0.001
+I0414 17:16:11.145431  4713 solver.cpp:220] Iteration 2600 (0.419755 iter/s, 238.234s/100 iters), loss = 0.0901467
+I0414 17:16:11.145728  4713 solver.cpp:240]     Train net output #0: loss = 0.0901466 (* 1 = 0.0901466 loss)
+I0414 17:16:11.145894  4713 sgd_solver.cpp:106] Iteration 2600, lr = 0.001

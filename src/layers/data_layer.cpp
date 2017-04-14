@@ -12,7 +12,6 @@
 
 namespace caffe {
 
-
 template <typename Dtype>
 DataLayer<Dtype>::DataLayer(const LayerParameter& param):offset_(0),
 	n_rows(0), n_cols(0), number_of_images(0),
@@ -23,6 +22,7 @@ DataLayer<Dtype>::DataLayer(const LayerParameter& param):offset_(0),
 	if(!file.is_open() || !label_file.is_open())
 		DLOG(FATAL) << "MNIST Read failed";
 	DLOG(INFO) << "fjrdebug read mnist data OK";
+  start = true;
 }
 
 template <typename Dtype>
@@ -35,7 +35,7 @@ template <typename Dtype>
 void DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
 
-	int magic_number=0;
+  int magic_number=0;
   number_of_images=0;
   n_rows=0;
   n_cols=0;
@@ -63,22 +63,35 @@ void DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   label_file.read(reinterpret_cast<char*>(&num_labels), 4);
   num_labels = reverseInt(num_labels);
   CHECK_EQ(num_labels, number_of_images);
-	//assert(number_of_images%batch_size == 0);
 
 	vector<int> top_shape;
+
+#ifdef SEQ_MNIST
+  top_shape.push_back(28);
+  top_shape.push_back(batch_size);
+  top_shape.push_back(28);
+  top[0]->Reshape(top_shape);
+  top_shape.clear();
+  top_shape.push_back(28);
+  top_shape.push_back(batch_size);
+  top[1]->Reshape(top_shape);
+  top_shape.clear();
+  top_shape.push_back(batch_size);
+  top_shape.push_back(1);
+  top[2]->Reshape(top_shape);
+
+#else
 	top_shape.push_back(batch_size);
-	//TODO
 	top_shape.push_back(1);
 	top_shape.push_back(n_rows);
 	top_shape.push_back(n_cols);
-
   top[0]->Reshape(top_shape);
-
 	top_shape.clear();
 	top_shape.push_back(batch_size);
-	//TODO
 	top_shape.push_back(1);
 	top[1]->Reshape(top_shape);
+
+#endif
 
   LOG_IF(INFO, Caffe::root_solver())
       << "output data size: " << top[0]->num() << ","

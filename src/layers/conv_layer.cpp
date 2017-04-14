@@ -3,7 +3,7 @@
 #include "caffe/layers/conv_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 
-#define SW_CODE
+//#define SW_CODE
 //#define TEST
 //#ifdef SW_CODE
 #include "caffe/swlayers/conv_layer_impl.hpp"
@@ -203,12 +203,7 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
   const Dtype* weight = this->blobs_[0]->cpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_cpu_diff();
-  DLOG(INFO) << "propagate_down ? " << this->param_propagate_down_[0]
-    << this->param_propagate_down_[1]; 
   for (int i = 0; i < top.size(); ++i) {
-
-    DLOG(INFO) << "propagate_down[i] ? " << propagate_down[i]; 
-
     const Dtype* top_diff = top[i]->cpu_diff();
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();

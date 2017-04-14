@@ -1,0 +1,30 @@
+original goals: use previous ppt
+
+current progress:
+porting caffe on sw
+	removing and fixing dependencies: glog, blas, hdf5, protobuffer, googletest, GPU and cudnn modules
+
+	protobuffer for parameter communication, replace with our own code: BlobProto, LayerParameter, DataParameter, ConvolutionParameter, RecurrentParameter, LossParameter, NetParameter, SolverParameter,, etc. (21 Parameter.hpp in total)
+
+	minor changes in source files and other header files, in order to work with other parts
+
+	code reconstruction: big improvement on coding style and design patterns. 
+	for example, for each layer_param class:
+		setup_layer_param(): set param with a param object
+		layer_param(): return param
+		has_layer_param(): return has_param
+		mutable_layer_param(): return param*(mutable)
+	4 different design patterns for member variables { basic object, vector<dtype>, pointer, vector<class> }
+	explicitly realize copy constructor and operator= for every class
+
+	unit test: 26 test files in total, 25 of them have passed. test_lstm_layer is under debug.
+
+	whole CNN test: Lenet on mnist test ok. 99% acc.
+
+	port on single core group: done. still optimizing.
+
+next step:
+	optimize single core.
+	parameter server.
+	rnn support requirement from sogou. so currently helping (not in the plan)
+	bigger dataset and CNN according to plan

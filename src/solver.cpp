@@ -216,7 +216,8 @@ void Solver<Dtype>::Step(int iters) {
     if (display) {
       float lapse = iteration_timer_.Seconds();
       float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
-      LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << iter_
+      //zzy
+      LOG(INFO) << "Iteration " << iter_
           << " (" << per_s << " iter/s, " << lapse << "s/"
           << param_.display() << " iters), loss = " << smoothed_loss_;
       iteration_timer_.Start();
@@ -235,7 +236,8 @@ void Solver<Dtype>::Step(int iters) {
             loss_msg_stream << " (* " << loss_weight
                             << " = " << loss_weight * result_vec[k] << " loss)";
           }
-          LOG_IF(INFO, Caffe::root_solver()) << "    Train net output #"
+          //zzy
+          LOG(INFO) << "    Train net output #"
               << score_index++ << ": " << output_name << " = "
               << result_vec[k] << loss_msg_stream.str();
         }
