@@ -1,4 +1,5 @@
 ## Brief Introduction :
+<img src="https://github.com/feifeibear/SWCaffe/blob/master/swdnnlogo.png" width = "300" height = "200" alt="swdnnlogo" align=center />
 This is a caffe customized for Deep Nerual Network Training on Enbedded Devices.
 
 ### Dependencies:
@@ -19,6 +20,8 @@ https://github.com/THUHPGC/swDNN.git
 http://yann.lecun.com/exdb/mnist/
 2. Make
 3. ./test_solver for test mnist LeNet Training
+4. To use Sunway version please
+git checkout sunway
 
 ### Bugs
 DataLayer is customized for mnist
