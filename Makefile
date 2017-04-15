@@ -149,6 +149,6 @@ test_sw: $(TEST_sw_OBJ)
 ./build/glog/%.o: ./src/glog/%.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 clean:
-	rm *.o ./build/*.o ./build/layers/*.o ./build/util/*.o ./build/solvers/*.o ./build/test/*.o test testcp test_solver test_all
+	rm $(OBJ) test_solver 
 swclean:
 	rm swtest/obj/* && rm test_sw
