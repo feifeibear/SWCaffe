@@ -38,7 +38,7 @@ class InnerProductParameter {
     inline bool transpose() const { return transpose_; }
 
     inline void set_num_output(int N) { num_output_ = N; }
-    inline void axis(int x) {axis_=x;}
+    inline void set_axis(int x) {axis_=x;}
     inline void set_bias_term(bool x) {bias_term_=x;}
     inline void set_transpose(bool x) {transpose_=x;}
 

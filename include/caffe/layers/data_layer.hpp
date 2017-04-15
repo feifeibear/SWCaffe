@@ -13,6 +13,8 @@
 //#include "caffe/proto/caffe.pb.h"
 //#include "caffe/util/db.hpp"
 
+#define SEQ_MNIST
+
 namespace caffe {
 
 
@@ -37,7 +39,7 @@ class DataLayer : public Layer<Dtype> {
   virtual inline const char* type() const { return "Data"; }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }
-  virtual inline int MaxTopBlobs() const { return 2; }
+  virtual inline int MaxTopBlobs() const { return 3; }
 
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {}
@@ -49,12 +51,27 @@ class DataLayer : public Layer<Dtype> {
       const vector<Blob<Dtype>*>& top){
     //if(offset_ > number_of_images)
     //  offset_ = 0;
+    #ifdef SEQ_MNIST
+      if (start){
+        start = false;
+        for (int i=0; i<n_rows*batch_size; i++)
+          top[1]->mutable_cpu_data()[i] = 0;
+      }
+      else
+        for (int i=0; i<n_rows*batch_size; i++)
+          top[1]->mutable_cpu_data()[i] = 1;
+    #endif
+
     for( int img = 0; img < batch_size; ++img ){
       for( int c = 0; c < n_cols; ++c )
         for( int r = 0; r < n_rows; ++r ) {
           unsigned char temp;
           file.read((char*) &temp, sizeof(temp));
-          int temp_offset = img * n_rows * n_cols + c * n_cols + r;
+          #ifdef SEQ_MNIST    // n_rows * batch_size * n_cols
+            int temp_offset = r * batch_size * n_cols + img * n_cols + c;
+          #else
+            int temp_offset = img * n_rows * n_cols + c * n_rows + r;
+          #endif
           top[0]->mutable_cpu_data()[temp_offset] = 1.0/255 * static_cast<Dtype>(temp);
         }
 
@@ -63,10 +80,14 @@ class DataLayer : public Layer<Dtype> {
       label_file.read(&tmp_label, 1);
       //TODO
       //top[1]->mutable_cpu_data()[img*10+ static_cast<int>(tmp_label)] = static_cast<Dtype>(1);
-      top[1]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
+      #ifdef SEQ_MNIST
+        top[2]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
+      #else
+        top[1]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
+      #endif
 
       offset_++;
-      if( offset_ > number_of_images ) {
+      if( offset_ >= number_of_images ) {
         offset_ = 0;
         file.clear();
         file.seekg( 0, std::ios_base::beg );
@@ -77,7 +98,6 @@ class DataLayer : public Layer<Dtype> {
         file.read((char*)&dump,sizeof(dump));
         file.read((char*)&dump,sizeof(dump));
         
-
         label_file.clear();
         label_file.seekg( 0, std::ios_base::beg );
 
@@ -86,8 +106,6 @@ class DataLayer : public Layer<Dtype> {
 
       }
     }
-    //top[1]->fjr_print_data();
-    //top[0]->fjr_print_data();
   }
 
  protected:
@@ -113,6 +131,8 @@ class DataLayer : public Layer<Dtype> {
   //shared_ptr<db::DB> db_;
   //shared_ptr<db::Cursor> cursor_;
   long offset_;
+
+  bool start;
 };
 
 }  // namespace caffe

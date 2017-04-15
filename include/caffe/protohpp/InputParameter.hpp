@@ -25,9 +25,10 @@ class InputParameter{
 
     inline int shape_size() const { return shapes_.size(); }
     inline const BlobShape& shape(int id) const { return shapes_[id]; }
-    inline void add_shape(const BlobShape& x) { 
-      BlobShape b(x);
-      shapes_.push_back(b); 
+    inline BlobShape* add_shape() { 
+      BlobShape b;
+      shapes_.push_back(b);
+      return &shapes_[shapes_.size()-1]; 
     }
 
   public:

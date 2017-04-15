@@ -10,6 +10,7 @@
 //FJR
 //#include "caffe/util/device_alternate.hpp"
 #include "caffe/util/mkl_alternate.hpp"
+#include <memory.h>
 
 //FJR
 //#define CBLAS_TRANSPOSE bool

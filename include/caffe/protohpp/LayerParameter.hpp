@@ -12,6 +12,14 @@
 #include <caffe/protohpp/SoftmaxParameter.hpp>
 #include <caffe/protohpp/LossParameter.hpp>
 #include <caffe/protohpp/AccuracyParameter.hpp>
+#include <caffe/protohpp/RecurrentParameter.hpp>
+#include <caffe/protohpp/EltwiseParameter.hpp>
+#include <caffe/protohpp/ScaleParameter.hpp>
+#include <caffe/protohpp/SliceParameter.hpp>
+#include <caffe/protohpp/ConcatParameter.hpp>
+#include <caffe/protohpp/ReshapeParameter.hpp>
+#include <caffe/protohpp/BiasParameter.hpp>
+#include <caffe/protohpp/ReductionParameter.hpp>
 #include <caffe/common.hpp>
 
 namespace caffe {
@@ -150,6 +158,14 @@ class LayerParameter {
       has_softmax_param_ = false;
       has_loss_param_=  false;
       has_accuracy_param_ = false;
+      has_recurrent_param_ = false;
+      has_eltwise_param_ = false;
+      has_scale_param_ = false;
+      has_slice_param_ = false;
+      has_concat_param_ = false;
+      has_reshape_param_ = false;
+      has_bias_param_ = false;
+      has_reduction_param_ = false;
 
       data_param_ = NULL;
       input_param_ = NULL;
@@ -160,6 +176,14 @@ class LayerParameter {
       softmax_param_ = NULL;
       loss_param_ = NULL;
       accuracy_param_ = NULL;
+      recurrent_param_ = NULL;
+      eltwise_param_ = NULL;
+      scale_param_ = NULL;
+      slice_param_ = NULL;
+      concat_param_ = NULL;
+      reshape_param_ = NULL;
+      bias_param_ = NULL;
+      reduction_param_ = NULL;
     }
 
     LayerParameter(const LayerParameter& other) {
@@ -172,6 +196,14 @@ class LayerParameter {
       softmax_param_ = NULL;
       loss_param_ = NULL;
       accuracy_param_ = NULL;
+      recurrent_param_ = NULL;
+      eltwise_param_ = NULL;
+      scale_param_ = NULL;
+      slice_param_ = NULL;
+      concat_param_ = NULL;
+      reshape_param_ = NULL;
+      bias_param_ = NULL;
+      reduction_param_ = NULL;
       this->CopyFrom(other);
     }
 
@@ -212,6 +244,14 @@ class LayerParameter {
       has_relu_param_ = other.has_relu_param();
       has_loss_param_ = other.has_loss_param();
       has_accuracy_param_ = other.has_accuracy_param();
+      has_recurrent_param_ = other.has_recurrent_param();
+      has_eltwise_param_ = other.has_eltwise_param();
+      has_scale_param_ = other.has_scale_param();
+      has_slice_param_ = other.has_slice_param();
+      has_concat_param_ = other.has_concat_param();
+      has_reshape_param_ = other.has_reshape_param();
+      has_bias_param_ = other.has_bias_param();
+      has_reduction_param_ = other.has_reduction_param();
 
       if(has_input_param_)
         this->mutable_input_param()->CopyFrom(other.input_param());
@@ -225,9 +265,9 @@ class LayerParameter {
       if(has_pooling_param_)
         this->mutable_pooling_param()->CopyFrom(other.pooling_param());
 
-      if(has_data_param_) {
+      if(has_data_param_)
         this->mutable_data_param()->CopyFrom(other.data_param());
-      }
+      
       if (has_softmax_param_)
         this->mutable_softmax_param()->CopyFrom(other.softmax_param());
       
@@ -239,6 +279,30 @@ class LayerParameter {
 
       if (has_accuracy_param_)
         this->mutable_accuracy_param()->CopyFrom(other.accuracy_param());
+
+      if (has_recurrent_param_)
+        this->mutable_recurrent_param()->CopyFrom(other.recurrent_param());
+
+      if (has_eltwise_param_)
+        this->mutable_eltwise_param()->CopyFrom(other.eltwise_param());
+
+      if (has_scale_param_)
+        this->mutable_scale_param()->CopyFrom(other.scale_param());
+
+      if (has_slice_param_)
+        this->mutable_slice_param()->CopyFrom(other.slice_param());
+
+      if (has_concat_param_)
+        this->mutable_concat_param()->CopyFrom(other.concat_param());
+
+      if (has_reshape_param_)
+        this->mutable_reshape_param()->CopyFrom(other.reshape_param());
+
+      if (has_bias_param_)
+        this->mutable_bias_param()->CopyFrom(other.bias_param());
+
+      if(has_reduction_param_)
+        this->mutable_reduction_param()->CopyFrom(other.reduction_param());
     }
 
     void Clear() {
@@ -258,6 +322,14 @@ class LayerParameter {
       has_relu_param_ = false;
       has_loss_param_ = false;
       has_accuracy_param_ = false;
+      has_recurrent_param_ = false;
+      has_eltwise_param_ = false;
+      has_scale_param_ = false;
+      has_slice_param_ = false;
+      has_concat_param_ = false;
+      has_reshape_param_ = false;
+      has_bias_param_ = false;
+      has_reduction_param_ = false;
     }
 
     ~LayerParameter() { 
@@ -265,10 +337,19 @@ class LayerParameter {
       if (data_param_ != NULL) delete data_param_;
       if (inner_product_param_ != NULL) delete inner_product_param_;
       if (convolution_param_ != NULL) delete convolution_param_;
+      if (pooling_param_ != NULL) delete pooling_param_;
       if (softmax_param_ != NULL) delete softmax_param_;
       if (relu_param_ != NULL) delete relu_param_;
       if (loss_param_ != NULL) delete loss_param_;
       if (accuracy_param_ != NULL) delete accuracy_param_;
+      if (recurrent_param_ != NULL) delete recurrent_param_;
+      if (eltwise_param_ != NULL) delete eltwise_param_;
+      if (scale_param_ != NULL) delete scale_param_;
+      if (slice_param_ != NULL) delete slice_param_;
+      if (concat_param_ != NULL) delete concat_param_;
+      if (reshape_param_ != NULL) delete reshape_param_;
+      if (bias_param_ != NULL) delete bias_param_;
+      if (reduction_param_ != NULL) delete reduction_param_;
     }
 
     inline const std::string name() const { return name_; }
@@ -280,13 +361,13 @@ class LayerParameter {
     inline const std::vector<std::string> bottom() const { return bottom_; }
     inline std::string bottom( int id ) const { return bottom_[id]; }
     inline int bottom_size() const { return bottom_.size(); }
-    inline void add_bottom(std::string bottom_name) { bottom_.push_back(bottom_name); }
+    inline void add_bottom(std::string bottom_name) { bottom_.push_back(bottom_name); /*LOG(INFO)<<"layer "<<name_<<", bottom_size="<<bottom_.size()<<", bottom "<<bottom_name;*/ }
     inline void set_bottom(int id, std::string bottom_name) { bottom_[id] = bottom_name; }
 
     inline const std::vector<std::string> top() const { return top_; }
     inline std::string top( int id ) const { return top_[id]; }
     inline int top_size() const { return top_.size(); }
-    inline void add_top(std::string top_name) { top_.push_back(top_name); }
+    inline void add_top(std::string top_name) { top_.push_back(top_name); /*LOG(INFO)<<"layer "<<name_<<", top_size="<<top_.size()<<", top "<<top_name;*/ }
 
     inline Phase phase() const {return phase_;}
     inline bool has_phase() const { return has_phase_; }
@@ -300,6 +381,11 @@ class LayerParameter {
     
     inline const ParamSpec& param(int i) const { return param_[i]; }
     inline int param_size() const { return param_.size(); }
+    inline ParamSpec* add_param() {
+      ParamSpec p;
+      param_.push_back(p);
+      return &param_[param_.size()-1];
+    }
 
     inline const BlobProto& blobs(int i) const { return blobs_[i]; }
     inline int blobs_size() const { return blobs_.size(); }
@@ -474,6 +560,137 @@ class LayerParameter {
     }
     inline bool has_accuracy_param() const { return has_accuracy_param_; }
 
+    //Recurrent
+    void setup_recurrent_param(const RecurrentParameter& other) {
+      has_recurrent_param_ = true;
+      if (recurrent_param_ == NULL) recurrent_param_ = new RecurrentParameter;
+      recurrent_param_->CopyFrom(other);
+    }
+    RecurrentParameter* mutable_recurrent_param() {
+      has_recurrent_param_ = true;
+      if (recurrent_param_ == NULL) recurrent_param_ = new RecurrentParameter;
+      return recurrent_param_;
+    }
+    inline const RecurrentParameter& recurrent_param() const { 
+      CHECK_NOTNULL(recurrent_param_);
+      return *recurrent_param_;
+    }
+    inline bool has_recurrent_param() const { return has_recurrent_param_; }
+
+    //Eltwise
+    void setup_eltwise_param(const EltwiseParameter& other) {
+      has_eltwise_param_ = true;
+      if (eltwise_param_ == NULL) eltwise_param_ = new EltwiseParameter;
+      eltwise_param_->CopyFrom(other);
+    }
+    EltwiseParameter* mutable_eltwise_param() {
+      has_eltwise_param_ = true;
+      if (eltwise_param_ == NULL) eltwise_param_ = new EltwiseParameter;
+      return eltwise_param_;
+    }
+    inline const EltwiseParameter& eltwise_param() const { 
+      CHECK_NOTNULL(eltwise_param_);
+      return *eltwise_param_;
+    }
+    inline bool has_eltwise_param() const { return has_eltwise_param_; }
+
+    //Scale
+    void setup_scale_param(const ScaleParameter& other) {
+      has_scale_param_ = true;
+      if (scale_param_ == NULL) scale_param_ = new ScaleParameter;
+      scale_param_->CopyFrom(other);
+    }
+    ScaleParameter* mutable_scale_param() {
+      has_scale_param_ = true;
+      if (scale_param_ == NULL) scale_param_ = new ScaleParameter;
+      return scale_param_;
+    }
+    inline const ScaleParameter& scale_param() const { 
+      return scale_param_ != NULL ? *scale_param_ : ScaleParameter::default_instance_;
+    }
+    inline bool has_scale_param() const { return has_scale_param_; }
+
+    //Slice
+    void setup_slice_param(const SliceParameter& other) {
+      has_slice_param_ = true;
+      if (slice_param_ == NULL) slice_param_ = new SliceParameter;
+      slice_param_->CopyFrom(other);
+    }
+    SliceParameter* mutable_slice_param() {
+      has_slice_param_ = true;
+      if (slice_param_ == NULL) slice_param_ = new SliceParameter;
+      return slice_param_;
+    }
+    inline const SliceParameter& slice_param() const { 
+      return slice_param_ != NULL ? *slice_param_ : SliceParameter::default_instance_;
+    }
+    inline bool has_slice_param() const { return has_slice_param_; }
+
+    //Concat
+    void setup_concat_param(const ConcatParameter& other) {
+      has_concat_param_ = true;
+      if (concat_param_ == NULL) concat_param_ = new ConcatParameter;
+      concat_param_->CopyFrom(other);
+    }
+    ConcatParameter* mutable_concat_param() {
+      has_concat_param_ = true;
+      if (concat_param_ == NULL) concat_param_ = new ConcatParameter;
+      return concat_param_;
+    }
+    inline const ConcatParameter& concat_param() const { 
+      return concat_param_ != NULL ? *concat_param_ : ConcatParameter::default_instance_;
+    }
+    inline bool has_concat_param() const { return has_concat_param_; }
+
+    //Reshape
+    void setup_reshape_param(const ReshapeParameter& other) {
+      has_reshape_param_ = true;
+      if (reshape_param_ == NULL) reshape_param_ = new ReshapeParameter;
+      reshape_param_->CopyFrom(other);
+    }
+    ReshapeParameter* mutable_reshape_param() {
+      has_reshape_param_ = true;
+      if (reshape_param_ == NULL) reshape_param_ = new ReshapeParameter;
+      return reshape_param_;
+    }
+    inline const ReshapeParameter& reshape_param() const { 
+      CHECK_NOTNULL(reshape_param_);
+      return *reshape_param_;
+    }
+    inline bool has_reshape_param() const { return has_reshape_param_; }
+
+    //Bias
+    void setup_bias_param(const BiasParameter& other) {
+      has_bias_param_ = true;
+      if (bias_param_ == NULL) bias_param_ = new BiasParameter;
+      bias_param_->CopyFrom(other);
+    }
+    BiasParameter* mutable_bias_param() {
+      has_bias_param_ = true;
+      if (bias_param_ == NULL) bias_param_ = new BiasParameter;
+      return bias_param_;
+    }
+    inline const BiasParameter& bias_param() const { 
+      return bias_param_ != NULL ? *bias_param_ : BiasParameter::default_instance_;
+    }
+    inline bool has_bias_param() const { return has_bias_param_; }
+
+    //Reduction
+    void setup_reduction_param(const ReductionParameter& other) {
+      has_reduction_param_ = true;
+      if (reduction_param_ == NULL) reduction_param_ = new ReductionParameter;
+      reduction_param_->CopyFrom(other);
+    }
+    ReductionParameter* mutable_reduction_param() {
+      has_reduction_param_ = true;
+      if (reduction_param_ == NULL) reduction_param_ = new ReductionParameter;
+      return reduction_param_;
+    }
+    inline const ReductionParameter& reduction_param() const { 
+      return reduction_param_ != NULL ? *reduction_param_ : ReductionParameter::default_instance_;
+    }
+    inline bool has_reduction_param() const { return has_reduction_param_; }
+
   private:
     std::string name_;
     std::string type_;
@@ -511,6 +728,22 @@ class LayerParameter {
     bool has_loss_param_;
     AccuracyParameter* accuracy_param_;
     bool has_accuracy_param_;
+    RecurrentParameter* recurrent_param_;
+    bool has_recurrent_param_;
+    EltwiseParameter* eltwise_param_;
+    bool has_eltwise_param_;
+    ScaleParameter* scale_param_;
+    bool has_scale_param_;
+    SliceParameter* slice_param_;
+    bool has_slice_param_;
+    ConcatParameter* concat_param_;
+    bool has_concat_param_;
+    ReshapeParameter* reshape_param_;
+    bool has_reshape_param_;
+    BiasParameter* bias_param_;
+    bool has_bias_param_;
+    ReductionParameter* reduction_param_;
+    bool has_reduction_param_;
 };
 
 }//end caffe

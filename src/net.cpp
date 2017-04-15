@@ -53,7 +53,9 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
+  LOG(INFO)<<"before insert splits...";
   InsertSplits(filtered_param, &param);
+  LOG(INFO)<<"after insert splits...";
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
 
@@ -287,7 +289,6 @@ void Net<Dtype>::FilterNet(const NetParameter& param,
     if (layer_included) {
       param_filtered->add_layer()->CopyFrom(layer_param);
     }
-    LOG(INFO)<<"layer_size:"<<param_filtered->layer_size();
   }
 }
 

@@ -63,6 +63,10 @@ class NetParameter {
       this->CopyFrom(other);
     }
 
+    ~NetParameter(){
+      clear_layer();
+    }
+
     inline NetParameter& operator=(const NetParameter& other) {
       this->CopyFrom(other);
       return *this;
@@ -80,18 +84,22 @@ class NetParameter {
     inline NetState* mutable_state() { return &state_; }
     
     inline int layer_size() const { return layer_.size(); }
-    inline const LayerParameter& layer(int id) const { return layer_[id]; }
+    inline const LayerParameter& layer(int id) const { return *(layer_[id]); }
     inline void add_layer(const LayerParameter& l){
-      LayerParameter ll(l);
-      layer_.push_back(ll);
+      LayerParameter* lptr = new LayerParameter(l);
+      layer_.push_back(lptr);
     }
     inline LayerParameter* add_layer() {
-      LayerParameter layer;
+      LayerParameter* layer = new LayerParameter;
       layer_.push_back(layer);
-      return &layer_[layer_.size()-1];
+      return layer_[layer_.size()-1];
     }
-    inline LayerParameter* mutable_layer(int id) { return &layer_[id]; }
-    void clear_layer() { layer_.clear(); }
+    inline LayerParameter* mutable_layer(int id) { return layer_[id]; }
+    void clear_layer() {
+      for (int i=0; i<layer_.size(); i++)
+        delete layer_[i];
+      layer_.clear();
+    }
     
     std::string DebugString() const { return "TODO in NetParameter.hpp DebugString"; }
 
@@ -100,10 +108,13 @@ class NetParameter {
       force_backward_ = other.force_backward();
       debug_info_ = other.debug_info();
       state_.CopyFrom(other.state());
+      clear_layer();
       int layer_size = other.layer_size();
       layer_.resize(layer_size);
-      for( int i = 0; i < layer_size; ++i )
-        layer_[i].CopyFrom(other.layer(i));
+      for( int i = 0; i < layer_size; ++i ){
+        layer_[i] = new LayerParameter;
+        layer_[i]->CopyFrom(other.layer(i));
+      }
     }
 
   private:
@@ -112,7 +123,7 @@ class NetParameter {
     bool debug_info_;
 
     NetState state_;
-    std::vector<LayerParameter> layer_;
+    std::vector<LayerParameter*> layer_;
 };
 
 }

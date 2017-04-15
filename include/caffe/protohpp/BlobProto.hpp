@@ -14,6 +14,9 @@ public:
   void CopyFrom(const BlobShape& other) {
     dim_ = other.dim();
   }
+  void Clear() {
+    dim_.clear();
+  }
 private:
   std::vector<int> dim_;
 };
