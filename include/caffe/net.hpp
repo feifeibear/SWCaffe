@@ -116,6 +116,9 @@ class Net {
   inline const vector<shared_ptr<Blob<Dtype> > >& params() const {
     return params_;
   }
+  inline vector<shared_ptr<Blob<Dtype> > >& params_nc() {
+    return params_;
+  }
   inline const vector<Blob<Dtype>*>& learnable_params() const {
     return learnable_params_;
   }

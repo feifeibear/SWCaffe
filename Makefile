@@ -1,5 +1,9 @@
+CXX=mpic++
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
+FLAGS+=-DMPI
+
+LSTMFLAGS=-DSEQ_MNIST
 
 INC_FLAGS=-I../thirdparty/glog_install/include
 INC_FLAGS += -I../thirdparty/openblas_install/include
@@ -55,7 +59,8 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/solvers/rmsprop_solver.o\
 		./build/solvers/sgd_solver.o\
 		./build/util/benchmark.o\
-		./build/solver.o
+		./build/solver.o\
+		./build/util/mpi.o
 
 TEST_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
@@ -133,40 +138,40 @@ TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_fa
 		./swtest/obj/test_convolution_layer.o
 #		./swtest/obj/conv_layer_impl.o
 
-all: test_lstm 
+all: test_solver
 
 test_solver: test_solver.o $(OBJ)
-	g++ $^ $(LDFLAGS)  -o $@
+	$(CXX) $^ $(LDFLAGS)  -o $@
 #-lhdf5_cpp -lhdf5_hl_cpp  
 test_solver.o: test_solver.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_all: $(TEST_OBJ)
-	g++ -pthread $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
+	$(CXX) -pthread $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
 
 test_sw: $(TEST_sw_OBJ)
-	g++ $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
+	$(CXX) $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
 
 test_lstm: test_lstm.o $(OBJ)
-	g++ $^ $(LDFLAGS)  -o $@ 
+	$(CXX) $^ $(LDFLAGS)  -o $@ 
 test_lstm.o: test_lstm.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 ./swtest/obj/%.o: ./swtest/src/%.cpp
-	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -I ./swtest/include -o $@
+	$(CXX) -c $^ $(FLAGS) $(TEST_INC_FLAGS) -I ./swtest/include -o $@
 ./build/test/%.o: ./src/test/%.cpp
-	g++ -c $^ $(FLAGS) $(TEST_INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(TEST_INC_FLAGS) -o $@
 ./build/%.o: ./src/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/layers/%.o: ./src/layers/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/util/%.o: ./src/util/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/solvers/%.o: ./src/solvers/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 ./build/glog/%.o: ./src/glog/%.cpp
-	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 clean:
-	rm $(OBJ) test_solver 
+	rm $(OBJ) test_solver
 swclean:
 	rm swtest/obj/* && rm test_sw

@@ -17,6 +17,9 @@
 #include <vector>
 
 #include "caffe/util/device_alternate.hpp"
+#ifdef MPI
+#include <mpi.h>
+#endif
 
 // Convert macro to string
 #define STRINGIFY(m) #m

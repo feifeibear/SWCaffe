@@ -13,7 +13,6 @@
 //#include "caffe/proto/caffe.pb.h"
 //#include "caffe/util/db.hpp"
 
-#define SEQ_MNIST
 
 namespace caffe {
 
@@ -47,66 +46,8 @@ class DataLayer : public Layer<Dtype> {
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {}
 
-  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top){
-    //if(offset_ > number_of_images)
-    //  offset_ = 0;
-    #ifdef SEQ_MNIST
-      if (start){
-        start = false;
-        for (int i=0; i<n_rows*batch_size; i++)
-          top[1]->mutable_cpu_data()[i] = 0;
-      }
-      else
-        for (int i=0; i<n_rows*batch_size; i++)
-          top[1]->mutable_cpu_data()[i] = 1;
-    #endif
-
-    for( int img = 0; img < batch_size; ++img ){
-      for( int c = 0; c < n_cols; ++c )
-        for( int r = 0; r < n_rows; ++r ) {
-          unsigned char temp;
-          file.read((char*) &temp, sizeof(temp));
-          #ifdef SEQ_MNIST    // n_rows * batch_size * n_cols
-            int temp_offset = r * batch_size * n_cols + img * n_cols + c;
-          #else
-            int temp_offset = img * n_rows * n_cols + c * n_rows + r;
-          #endif
-          top[0]->mutable_cpu_data()[temp_offset] = 1.0/255 * static_cast<Dtype>(temp);
-        }
-
-      //read label
-      char tmp_label = 0;
-      label_file.read(&tmp_label, 1);
-      //TODO
-      //top[1]->mutable_cpu_data()[img*10+ static_cast<int>(tmp_label)] = static_cast<Dtype>(1);
-      #ifdef SEQ_MNIST
-        top[2]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
-      #else
-        top[1]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
-      #endif
-
-      offset_++;
-      if( offset_ >= number_of_images ) {
-        offset_ = 0;
-        file.clear();
-        file.seekg( 0, std::ios_base::beg );
-
-        int dump;
-        file.read((char*)&dump,sizeof(dump)); 
-        file.read((char*)&dump,sizeof(dump));
-        file.read((char*)&dump,sizeof(dump));
-        file.read((char*)&dump,sizeof(dump));
-        
-        label_file.clear();
-        label_file.seekg( 0, std::ios_base::beg );
-
-        label_file.read(reinterpret_cast<char*>(&dump), 4);
-        label_file.read(reinterpret_cast<char*>(&dump), 4);
-
-      }
-    }
-  }
+  void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
 
  protected:
 

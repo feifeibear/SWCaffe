@@ -2,6 +2,10 @@
 
 #include <string>
 #include <vector>
+#ifdef MPI
+#include "caffe/util/mpi.hpp"
+#include "caffe/util/math_functions.hpp"
+#endif
 
 #include "caffe/solver.hpp"
 #include "caffe/util/format.hpp"
@@ -205,11 +209,102 @@ void Solver<Dtype>::Step(int iters) {
     }
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
+
+#ifdef MPI
+    vector<shared_ptr<Blob<Dtype> > >& my_net_params = this->net_->params_nc();
+    DLOG(INFO) << " in Solver rank " << Caffe::solver_rank() << " " << my_net_params.size();
+    for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
+      if(Caffe::solver_rank() == 0)
+      DLOG(INFO) << " rank " << Caffe::solver_rank() << " count is " << my_net_params[param_id]->count();
+        MPI_Barrier(MPI_COMM_WORLD);
+        if(Caffe::solver_rank() == 0) {
+
+          for( int proc = 1; proc < Caffe::solver_count(); proc++) {
+
+              //MPI_Bcast(
+              //     my_net_params[param_id]->mutable_cpu_data(), 
+              //     my_net_params[param_id]->count(), 
+              //     MPI_DOUBLE, 0, MPI_COMM_WORLD);
+              caffe_mpi_send<Dtype>(
+                   my_net_params[param_id]->mutable_cpu_data(), 
+                   my_net_params[param_id]->count(), 
+                   proc,
+                   1,
+                   MPI_COMM_WORLD);
+          }//for
+
+        } else {
+          caffe_mpi_recv<Dtype>(
+               my_net_params[param_id]->mutable_cpu_data(), 
+               my_net_params[param_id]->count(), 
+               0,
+               1,
+               MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+      if(Caffe::solver_rank() == 0)
+        DLOG(INFO) << " rank recv " << Caffe::solver_rank() << " count is " << my_net_params[param_id]->count();
+    }
+#endif
+
     // accumulate the loss and gradient
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
     }
+
+#ifdef MPI
+    Dtype reduce_loss = 0;
+    caffe_mpi_reduce<Dtype>( &loss, &reduce_loss, 1, MPI_SUM, 0, MPI_COMM_WORLD );
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(Caffe::solver_rank() == 0)
+      loss = reduce_loss;
+
+    DLOG(INFO) << "FJR begin reduce params";
+    for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
+      Dtype* temp_reduce_params;
+      if(Caffe::solver_rank() == 0){
+        temp_reduce_params = new Dtype [my_net_params[param_id]->count()];
+      }
+/*
+      MPI_Barrier(MPI_COMM_WORLD);
+      caffe_mpi_reduce<Dtype>(
+                   my_net_params[param_id]->mutable_cpu_data(), 
+                   temp_reduce_params,
+                   my_net_params[param_id]->count(), 
+                   MPI_SUM,
+                   0,
+                   MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      if(Caffe::solver_rank() == 0){
+        caffe_copy<Dtype>(my_net_params[param_id]->count(), temp_reduce_params, my_net_params[param_id]->mutable_cpu_data());
+      }
+      */
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      caffe_mpi_reduce<Dtype>(
+                   my_net_params[param_id]->mutable_cpu_diff(), 
+                   temp_reduce_params,
+                   my_net_params[param_id]->count(), 
+                   MPI_SUM,
+                   0,
+                   MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      if(Caffe::solver_rank() == 0){
+        caffe_copy<Dtype>(my_net_params[param_id]->count(),
+            temp_reduce_params,
+            my_net_params[param_id]->mutable_cpu_diff());
+        delete [] temp_reduce_params;
+      }
+
+    }
+
+#endif
+
+    if(Caffe::solver_rank() == 0){
     loss /= param_.iter_size();
     // average the loss across iterations for smoothed reporting
     UpdateSmoothedLoss(loss, start_iter, average_loss);
@@ -265,12 +360,14 @@ void Solver<Dtype>::Step(int iters) {
       // Break out of training loop.
       break;
     }
+
+    }//if rank == 0;
   }
 }
 
 template <typename Dtype>
 void Solver<Dtype>::Solve(const char* resume_file) {
-  CHECK(Caffe::root_solver());
+//CHECK(Caffe::root_solver());
   LOG(INFO) << "Solving " << net_->name();
   LOG(INFO) << "Learning Rate Policy: " << param_.lr_policy();
 
@@ -312,7 +409,9 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     LOG(INFO) << "Iteration " << iter_ << ", loss = " << smoothed_loss_;
   }
   if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
-    TestAll();
+    if (Caffe::root_solver()) {
+      TestAll();
+    }
   }
   LOG(INFO) << "Optimization Done.";
 }
