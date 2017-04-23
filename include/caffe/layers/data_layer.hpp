@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "caffe/layer.hpp"
+#include "caffe/util/mpi.hpp"
 //#include "caffe/layers/base_data_layer.hpp"
 //#include "caffe/proto/caffe.pb.h"
 //#include "caffe/util/db.hpp"

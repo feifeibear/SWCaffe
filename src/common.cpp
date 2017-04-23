@@ -57,16 +57,16 @@ void GlobalInit(int* pargc, char*** pargv) {
 
 Caffe::Caffe()
     : random_generator_(), mode_(Caffe::CPU) {
-#ifdef MPI
-      MPI_Comm_size(MPI_COMM_WORLD, &solver_count_);
-      MPI_Comm_rank(MPI_COMM_WORLD, & solver_rank_);
-      multiprocess_ = true;
+#ifdef MYMPI
+    MPI_Comm_size(MPI_COMM_WORLD, &solver_count_);
+    MPI_Comm_rank(MPI_COMM_WORLD, &solver_rank_);
+    multiprocess_ = true;
 #else
     solver_count_ = 1;
     solver_rank_ = 0;
     multiprocess_ = false;
 #endif
-    }
+}
 
 Caffe::~Caffe() { }
 
@@ -120,7 +120,7 @@ void* Caffe::RNG::generator() {
 Caffe::Caffe()
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
     mode_(Caffe::CPU) {
-#ifdef MPI
+#ifdef MYMPI
       MPI_Comm_size(MPI_COMM_WORLD, &solver_count_);
       MPI_Comm_rank(MPI_COMM_WORLD, & solver_rank_);
       multiprocess_ = true;

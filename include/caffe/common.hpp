@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "caffe/util/device_alternate.hpp"
-#ifdef MPI
+#ifdef MYMPI
 #include <mpi.h>
 #endif
 

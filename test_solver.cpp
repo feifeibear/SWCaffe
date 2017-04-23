@@ -1,11 +1,11 @@
 #include "caffe/caffe.hpp"
-#ifdef MPI
+#ifdef MYMPI
 #include <mpi.h>
 #endif
 using namespace caffe;
 
 int main (int argc, char ** argv) {
-#ifdef MPI
+#ifdef MYMPI
   MPI_Init(&argc, &argv);
 #endif
 
@@ -22,7 +22,8 @@ int main (int argc, char ** argv) {
   NetStateRule train_include;
   train_include.set_phase(TRAIN);
   data_train.add_include(train_include);
-  DLOG(INFO) <<  "Train data layer paramter is OK!";
+  LOG_IF(INFO, Caffe::root_solver())
+    <<  "Train data layer paramter is OK!";
 
   DataParameter data_param_label;
   data_param_label.set_source("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte");
@@ -36,7 +37,6 @@ int main (int argc, char ** argv) {
   NetStateRule test_include;
   test_include.set_phase(TEST);
   data_test.add_include(test_include);
-  DLOG(INFO) <<  "Test data layer paramter is OK!";
 
   /********
    * define convolution layer (10,1,28,28) -> (10, 20, 24, 24)
@@ -163,7 +163,8 @@ int main (int argc, char ** argv) {
   accuracy.setup_accuracy_param(accuracy_param);
   accuracy.add_include(test_include);
 
-  DLOG(INFO) <<  "layer paramter Initialization is OK!";
+  LOG_IF(INFO, Caffe::root_solver())
+    <<  "layer paramter Initialization is OK!";
 
   NetParameter net_param;
   net_param.set_name("lenet");
@@ -179,21 +180,22 @@ int main (int argc, char ** argv) {
   net_param.add_layer(loss);
   net_param.add_layer(accuracy);
 
-  DLOG(INFO) <<  "net paramter Initialization is OK!";
+  LOG_IF(INFO, Caffe::root_solver())
+   <<  "net paramter Initialization is OK!";
 
   //Net<float> net(net_param);
   //net.set_debug_info(true);
 
-  DLOG(INFO) << "Init solver_param...";
   SolverParameter solver_param;
-  DLOG(INFO) << "Set net_param...";
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(100);
   //solver_param.set_test_interval(500);
   solver_param.set_test_interval(1);
   solver_param.set_base_lr(0.01);
-  solver_param.set_display(100);
-  solver_param.set_max_iter(10000);
+  //solver_param.set_display(100);
+  solver_param.set_display(1);
+  //solver_param.set_max_iter(10000);
+  solver_param.set_max_iter(5);
   solver_param.set_lr_policy("inv");
   solver_param.set_gamma(0.0001);
   solver_param.set_power(0.75);
@@ -201,14 +203,15 @@ int main (int argc, char ** argv) {
   solver_param.set_weight_decay(0.0005);
   solver_param.set_type("SGD");
 
-  DLOG(INFO) << "Init solver...";
+  LOG_IF(INFO, Caffe::root_solver()) << "Init solver...";
   shared_ptr<Solver<float> >
       solver(SolverRegistry<float>::CreateSolver(solver_param));
-  DLOG(INFO) << "Begin solve...";
   solver->Solve(NULL);
-
-  DLOG(INFO) << "test end";
-#ifdef MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+  //LOG_IF(INFO, Caffe::root_solver())
+  //  << "test end";
+  DLOG(INFO) << " rank is end " << Caffe::solver_rank();
+#ifdef MYMPI
   MPI_Finalize();
 #endif
   return 0;

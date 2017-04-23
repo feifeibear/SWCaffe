@@ -53,9 +53,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
-  LOG(INFO)<<"before insert splits...";
   InsertSplits(filtered_param, &param);
-  LOG(INFO)<<"after insert splits...";
   LOG_IF(INFO, Caffe::root_solver())
       << "Begin Initializing :" << std::endl;
 
@@ -732,7 +730,7 @@ void Net<Dtype>::ShareTrainedLayersWith(const Net* other) {
       LOG(INFO) << "Ignoring source layer " << source_layer_name;
       continue;
     }
-    DLOG(INFO) << "Copying source layer " << source_layer_name;
+    //DLOG(INFO) << "Copying source layer " << source_layer_name;
     vector<shared_ptr<Blob<Dtype> > >& target_blobs =
         layers_[target_layer_id]->blobs();
     CHECK_EQ(target_blobs.size(), source_layer->blobs().size())

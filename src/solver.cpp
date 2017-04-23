@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#ifdef MPI
+#ifdef MYMPI
 #include "caffe/util/mpi.hpp"
 #include "caffe/util/math_functions.hpp"
 #endif
@@ -54,6 +54,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
     Caffe::set_random_seed(param_.random_seed() + Caffe::solver_rank());
   }
   // Scaffolding code
+  
   InitTrainNet();
   LOG(INFO)<<"init train net done...";
   if (Caffe::root_solver()) {
@@ -107,7 +108,7 @@ void Solver<Dtype>::InitTrainNet() {
 
 template <typename Dtype>
 void Solver<Dtype>::InitTestNets() {
-  CHECK(Caffe::root_solver());
+  //CHECK(Caffe::root_solver());
   const bool has_net_param = param_.has_net_param();
   const bool has_net_file = param_.has_net();
   const int num_generic_nets = has_net_param + has_net_file;
@@ -210,79 +211,44 @@ void Solver<Dtype>::Step(int iters) {
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
 
-#ifdef MPI
+#ifdef MYMPI
+    double comm_begin_time = MPI_Wtime();
     vector<shared_ptr<Blob<Dtype> > >& my_net_params = this->net_->params_nc();
-    DLOG(INFO) << " in Solver rank " << Caffe::solver_rank() << " " << my_net_params.size();
+    DLOG(INFO) << " fjrdebug in Solver rank " << Caffe::solver_rank(); 
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
-      if(Caffe::solver_rank() == 0)
-      DLOG(INFO) << " rank " << Caffe::solver_rank() << " count is " << my_net_params[param_id]->count();
-        MPI_Barrier(MPI_COMM_WORLD);
-        if(Caffe::solver_rank() == 0) {
-
-          for( int proc = 1; proc < Caffe::solver_count(); proc++) {
-
-              //MPI_Bcast(
-              //     my_net_params[param_id]->mutable_cpu_data(), 
-              //     my_net_params[param_id]->count(), 
-              //     MPI_DOUBLE, 0, MPI_COMM_WORLD);
-              caffe_mpi_send<Dtype>(
-                   my_net_params[param_id]->mutable_cpu_data(), 
-                   my_net_params[param_id]->count(), 
-                   proc,
-                   1,
-                   MPI_COMM_WORLD);
-          }//for
-
-        } else {
-          caffe_mpi_recv<Dtype>(
-               my_net_params[param_id]->mutable_cpu_data(), 
-               my_net_params[param_id]->count(), 
-               0,
-               1,
-               MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-      if(Caffe::solver_rank() == 0)
-        DLOG(INFO) << " rank recv " << Caffe::solver_rank() << " count is " << my_net_params[param_id]->count();
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Bcast(
+           my_net_params[param_id]->mutable_cpu_data(),
+           my_net_params[param_id]->count(),
+           MPI_FLOAT,
+           0,
+           MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
     }
+    double comm_end_time = MPI_Wtime();
+    double comm_lapse = comm_end_time - comm_begin_time;
 #endif
-
-    // accumulate the loss and gradient
+      // accumulate the loss and gradient
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
     }
 
-#ifdef MPI
+#ifdef MYMPI
+    comm_begin_time = MPI_Wtime();
     Dtype reduce_loss = 0;
+    MPI_Barrier(MPI_COMM_WORLD);
     caffe_mpi_reduce<Dtype>( &loss, &reduce_loss, 1, MPI_SUM, 0, MPI_COMM_WORLD );
     MPI_Barrier(MPI_COMM_WORLD);
     if(Caffe::solver_rank() == 0)
       loss = reduce_loss;
 
-    DLOG(INFO) << "FJR begin reduce params";
+    //DLOG(INFO) << "FJR begin reduce params";
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
       Dtype* temp_reduce_params;
       if(Caffe::solver_rank() == 0){
         temp_reduce_params = new Dtype [my_net_params[param_id]->count()];
       }
-/*
-      MPI_Barrier(MPI_COMM_WORLD);
-      caffe_mpi_reduce<Dtype>(
-                   my_net_params[param_id]->mutable_cpu_data(), 
-                   temp_reduce_params,
-                   my_net_params[param_id]->count(), 
-                   MPI_SUM,
-                   0,
-                   MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      if(Caffe::solver_rank() == 0){
-        caffe_copy<Dtype>(my_net_params[param_id]->count(), temp_reduce_params, my_net_params[param_id]->mutable_cpu_data());
-      }
-      */
-
       MPI_Barrier(MPI_COMM_WORLD);
       caffe_mpi_reduce<Dtype>(
                    my_net_params[param_id]->mutable_cpu_diff(), 
@@ -292,76 +258,80 @@ void Solver<Dtype>::Step(int iters) {
                    0,
                    MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
-
       if(Caffe::solver_rank() == 0){
         caffe_copy<Dtype>(my_net_params[param_id]->count(),
             temp_reduce_params,
             my_net_params[param_id]->mutable_cpu_diff());
         delete [] temp_reduce_params;
       }
-
+      MPI_Barrier(MPI_COMM_WORLD);
     }
+    comm_end_time = MPI_Wtime();
+    comm_lapse += comm_end_time - comm_begin_time;
 
 #endif
 
     if(Caffe::solver_rank() == 0){
-    loss /= param_.iter_size();
-    // average the loss across iterations for smoothed reporting
-    UpdateSmoothedLoss(loss, start_iter, average_loss);
-    if (display) {
-      float lapse = iteration_timer_.Seconds();
-      float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
-      //zzy
-      LOG(INFO) << "Iteration " << iter_
-          << " (" << per_s << " iter/s, " << lapse << "s/"
-          << param_.display() << " iters), loss = " << smoothed_loss_;
-      iteration_timer_.Start();
-      iterations_last_ = iter_;
-      const vector<Blob<Dtype>*>& result = net_->output_blobs();
-      int score_index = 0;
-      for (int j = 0; j < result.size(); ++j) {
-        const Dtype* result_vec = result[j]->cpu_data();
-        const string& output_name =
-            net_->blob_names()[net_->output_blob_indices()[j]];
-        const Dtype loss_weight =
-            net_->blob_loss_weights()[net_->output_blob_indices()[j]];
-        for (int k = 0; k < result[j]->count(); ++k) {
-          ostringstream loss_msg_stream;
-          if (loss_weight) {
-            loss_msg_stream << " (* " << loss_weight
-                            << " = " << loss_weight * result_vec[k] << " loss)";
+      loss /= param_.iter_size();
+      // average the loss across iterations for smoothed reporting
+      UpdateSmoothedLoss(loss, start_iter, average_loss);
+      if (display) {
+        float lapse = iteration_timer_.Seconds();
+        float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
+        //zzy
+        LOG(INFO) << "Communication time is " << comm_lapse << "sec";
+        LOG(INFO) << "Iteration " << iter_
+            << " (" << per_s << " iter/s, " << lapse << "s/"
+            << param_.display() << " iters), loss = " << smoothed_loss_;
+        iteration_timer_.Start();
+        iterations_last_ = iter_;
+        const vector<Blob<Dtype>*>& result = net_->output_blobs();
+        int score_index = 0;
+        for (int j = 0; j < result.size(); ++j) {
+          const Dtype* result_vec = result[j]->cpu_data();
+          const string& output_name =
+              net_->blob_names()[net_->output_blob_indices()[j]];
+          const Dtype loss_weight =
+              net_->blob_loss_weights()[net_->output_blob_indices()[j]];
+          for (int k = 0; k < result[j]->count(); ++k) {
+            ostringstream loss_msg_stream;
+            if (loss_weight) {
+              loss_msg_stream << " (* " << loss_weight
+                              << " = " << loss_weight * result_vec[k] << " loss)";
+            }
+            //zzy
+            LOG(INFO) << "    Train net output #"
+                << score_index++ << ": " << output_name << " = "
+                << result_vec[k] << loss_msg_stream.str();
           }
-          //zzy
-          LOG(INFO) << "    Train net output #"
-              << score_index++ << ": " << output_name << " = "
-              << result_vec[k] << loss_msg_stream.str();
         }
       }
+      for (int i = 0; i < callbacks_.size(); ++i) {
+        callbacks_[i]->on_gradients_ready();
+      }
+      ApplyUpdate();
     }
-    for (int i = 0; i < callbacks_.size(); ++i) {
-      callbacks_[i]->on_gradients_ready();
-    }
-    ApplyUpdate();
-    // Increment the internal iter_ counter -- its value should always indicate
-    // the number of times the weights have been updated.
+      // Increment the internal iter_ counter -- its value should always indicate
+      // the number of times the weights have been updated.
     ++iter_;
 
-    SolverAction::Enum request = GetRequestedAction();
+    if(Caffe::solver_rank() == 0){
+      SolverAction::Enum request = GetRequestedAction();
 
-    // Save a snapshot if needed.
-    if ((param_.snapshot()
-         && iter_ % param_.snapshot() == 0
-         && Caffe::root_solver()) ||
-         (request == SolverAction::SNAPSHOT)) {
-      Snapshot();
-    }
-    if (SolverAction::STOP == request) {
-      requested_early_exit_ = true;
-      // Break out of training loop.
-      break;
-    }
-
+      // Save a snapshot if needed.
+      if ((param_.snapshot()
+           && iter_ % param_.snapshot() == 0
+           && Caffe::root_solver()) ||
+           (request == SolverAction::SNAPSHOT)) {
+        Snapshot();
+      }
+      if (SolverAction::STOP == request) {
+        requested_early_exit_ = true;
+        // Break out of training loop.
+        break;
+      }
     }//if rank == 0;
+    MPI_Barrier(MPI_COMM_WORLD);
   }
 }
 
@@ -399,13 +369,11 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   // training, for the train net we only run a forward pass as we've already
   // updated the parameters "max_iter" times -- this final pass is only done to
   // display the loss, which is computed in the forward pass.
-  if (param_.display() && iter_ % param_.display() == 0) {
+  if ( param_.display() && iter_ % param_.display() == 0) {
     int average_loss = this->param_.average_loss();
     Dtype loss;
-    net_->Forward(&loss);
-
-    UpdateSmoothedLoss(loss, start_iter, average_loss);
-
+    //net_->Forward(&loss);
+    //UpdateSmoothedLoss(loss, start_iter, average_loss);
     LOG(INFO) << "Iteration " << iter_ << ", loss = " << smoothed_loss_;
   }
   if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
@@ -413,6 +381,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
       TestAll();
     }
   }
+  MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO) << "Optimization Done.";
 }
 
@@ -504,6 +473,7 @@ void Solver<Dtype>::Test(const int test_net_id) {
 
 template <typename Dtype>
 void Solver<Dtype>::Snapshot() {
+  /*
   CHECK(Caffe::root_solver());
   string model_filename;
   switch (param_.snapshot_format()) {
@@ -518,6 +488,7 @@ void Solver<Dtype>::Snapshot() {
   }
 
   SnapshotSolverState(model_filename);
+  */
 }
 
 template <typename Dtype>
@@ -556,10 +527,13 @@ string Solver<Dtype>::SnapshotToBinaryProto() {
 
 template <typename Dtype>
 string Solver<Dtype>::SnapshotToHDF5() {
+  /*
   string model_filename = SnapshotFilename(".caffemodel.h5");
   LOG(INFO) << "Snapshotting to HDF5 file " << model_filename;
   net_->ToHDF5(model_filename, param_.snapshot_diff());
   return model_filename;
+  */
+  return "";
 }
 
 template <typename Dtype>
