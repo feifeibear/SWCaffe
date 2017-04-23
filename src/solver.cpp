@@ -191,6 +191,10 @@ void Solver<Dtype>::Step(int iters) {
   losses_.clear();
   smoothed_loss_ = 0;
   iteration_timer_.Start();
+#ifdef MYMPI
+  double comm_begin_time = 0.0, calc_lapse = 0.0;
+  double comm_end_time = 0.0, comm_lapse = 0.0;
+#endif
 
   while (iter_ < stop_iter) {
     // zero-init the params
@@ -212,34 +216,34 @@ void Solver<Dtype>::Step(int iters) {
     net_->set_debug_info(display && param_.debug_info());
 
 #ifdef MYMPI
-    double comm_begin_time = MPI_Wtime();
+
+    comm_begin_time = MPI_Wtime();
     vector<shared_ptr<Blob<Dtype> > >& my_net_params = this->net_->params_nc();
-    DLOG(INFO) << " fjrdebug in Solver rank " << Caffe::solver_rank(); 
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
-      MPI_Barrier(MPI_COMM_WORLD);
       MPI_Bcast(
            my_net_params[param_id]->mutable_cpu_data(),
            my_net_params[param_id]->count(),
            MPI_FLOAT,
            0,
            MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
     }
-    double comm_end_time = MPI_Wtime();
-    double comm_lapse = comm_end_time - comm_begin_time;
+    MPI_Barrier(MPI_COMM_WORLD);
+    comm_end_time = MPI_Wtime();
+    comm_lapse += comm_end_time - comm_begin_time;
 #endif
-      // accumulate the loss and gradient
+    comm_begin_time = MPI_Wtime();
+    // accumulate the loss and gradient
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
     }
+    comm_end_time = MPI_Wtime();
+    calc_lapse += comm_end_time - comm_begin_time;
 
 #ifdef MYMPI
     comm_begin_time = MPI_Wtime();
     Dtype reduce_loss = 0;
-    MPI_Barrier(MPI_COMM_WORLD);
     caffe_mpi_reduce<Dtype>( &loss, &reduce_loss, 1, MPI_SUM, 0, MPI_COMM_WORLD );
-    MPI_Barrier(MPI_COMM_WORLD);
     if(Caffe::solver_rank() == 0)
       loss = reduce_loss;
 
@@ -249,7 +253,6 @@ void Solver<Dtype>::Step(int iters) {
       if(Caffe::solver_rank() == 0){
         temp_reduce_params = new Dtype [my_net_params[param_id]->count()];
       }
-      MPI_Barrier(MPI_COMM_WORLD);
       caffe_mpi_reduce<Dtype>(
                    my_net_params[param_id]->mutable_cpu_diff(), 
                    temp_reduce_params,
@@ -257,15 +260,14 @@ void Solver<Dtype>::Step(int iters) {
                    MPI_SUM,
                    0,
                    MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
       if(Caffe::solver_rank() == 0){
         caffe_copy<Dtype>(my_net_params[param_id]->count(),
             temp_reduce_params,
             my_net_params[param_id]->mutable_cpu_diff());
         delete [] temp_reduce_params;
       }
-      MPI_Barrier(MPI_COMM_WORLD);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
     comm_end_time = MPI_Wtime();
     comm_lapse += comm_end_time - comm_begin_time;
 
@@ -279,7 +281,10 @@ void Solver<Dtype>::Step(int iters) {
         float lapse = iteration_timer_.Seconds();
         float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
         //zzy
-        LOG(INFO) << "Communication time is " << comm_lapse << "sec";
+        LOG(INFO) << "Weight + Bias Communication time is " << comm_lapse << "sec";
+        LOG(INFO) << "Calculation   time is " << calc_lapse << "sec";
+        comm_lapse = 0.0;
+        calc_lapse = 0.0;
         LOG(INFO) << "Iteration " << iter_
             << " (" << per_s << " iter/s, " << lapse << "s/"
             << param_.display() << " iters), loss = " << smoothed_loss_;
@@ -331,7 +336,6 @@ void Solver<Dtype>::Step(int iters) {
         break;
       }
     }//if rank == 0;
-    MPI_Barrier(MPI_COMM_WORLD);
   }
 }
 
@@ -381,7 +385,6 @@ void Solver<Dtype>::Solve(const char* resume_file) {
       TestAll();
     }
   }
-  MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO) << "Optimization Done.";
 }
 

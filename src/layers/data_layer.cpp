@@ -110,6 +110,8 @@ void DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       << top[0]->width();
 }
 
+static double comm_lapes = 0.0;
+static int times = 0;
 template <typename Dtype>
 void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top){
@@ -170,6 +172,9 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     }
     else {
 
+    double begin_time = 0;
+    double end_time   = 0;
+    begin_time = MPI_Wtime();
     if(Caffe::root_solver()){
         #ifdef SEQ_MNIST
           if (start){
@@ -278,16 +283,13 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           }
         }//img
 
-        DLOG(INFO) << "To proc " << proc << " send_data_buff_count is " << send_data_buff_count << " " << batch_size << " " << n_cols << " " << n_rows;
         caffe_mpi_send<Dtype>(send_data_buff, send_data_buff_count, proc, 0, MPI_COMM_WORLD);
         caffe_mpi_send<Dtype>(top1buff,       top1buff_size,        proc, 0, MPI_COMM_WORLD);
-        DLOG(INFO) << "end To proc " << proc << " send_data_buff_count is " << send_data_buff_count << " " << batch_size << " " << n_cols << " " << n_rows;
       }//for proc
       free(send_data_buff);
       free(top1buff);
 
     } else {
-      DLOG(INFO) << " rank: " << Caffe::solver_rank() <<" recv data";
       int send_data_buff_count = batch_size*n_cols*n_rows;
       int top1buff_size = batch_size;
       MPI_Status status;
@@ -296,6 +298,14 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
+    end_time = MPI_Wtime();
+    comm_lapes += end_time - begin_time;
+    times++;
+    if(times == 100) {
+      DLOG_IF(INFO, Caffe::root_solver()) << " DataLayer Commmunication Time is " << comm_lapes;
+      comm_lapes = 0.0;
+      times = 0;
+    }
   }
 }
 

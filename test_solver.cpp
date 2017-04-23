@@ -12,7 +12,8 @@ int main (int argc, char ** argv) {
   //mnist input 10, 1, 28, 28
   DataParameter data_param_data;
   data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
-  data_param_data.set_batch_size(64);
+  data_param_data.set_batch_size(64/Caffe::solver_count());
+  //data_param_data.set_batch_size(64);
   LayerParameter data_train;
   data_train.set_name("data_train");
   data_train.set_type("Data");
@@ -189,13 +190,13 @@ int main (int argc, char ** argv) {
   SolverParameter solver_param;
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(100);
-  //solver_param.set_test_interval(500);
-  solver_param.set_test_interval(1);
+  solver_param.set_test_interval(500);
+  //solver_param.set_test_interval(1);
   solver_param.set_base_lr(0.01);
-  //solver_param.set_display(100);
-  solver_param.set_display(1);
-  //solver_param.set_max_iter(10000);
-  solver_param.set_max_iter(5);
+  solver_param.set_display(100);
+  //solver_param.set_display(1);
+  solver_param.set_max_iter(10000);
+  //solver_param.set_max_iter(5);
   solver_param.set_lr_policy("inv");
   solver_param.set_gamma(0.0001);
   solver_param.set_power(0.75);
@@ -207,10 +208,8 @@ int main (int argc, char ** argv) {
   shared_ptr<Solver<float> >
       solver(SolverRegistry<float>::CreateSolver(solver_param));
   solver->Solve(NULL);
-  MPI_Barrier(MPI_COMM_WORLD);
-  //LOG_IF(INFO, Caffe::root_solver())
-  //  << "test end";
-  DLOG(INFO) << " rank is end " << Caffe::solver_rank();
+  LOG_IF(INFO, Caffe::root_solver())
+    << "test end";
 #ifdef MYMPI
   MPI_Finalize();
 #endif
