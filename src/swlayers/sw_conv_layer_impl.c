@@ -4,6 +4,11 @@
 //typedef double Type;
 //#include "util.h"
 #include "caffe/swlayers/sw_conv_layer_impl.h"
+#include "caffe/util/acc_transpose.h"
+
+//#ifndef ACC_TRANS
+//#define ACC_TRANS
+//#endif
 
 extern SLAVE_FUN(conv_valid)();
 extern SLAVE_FUN(conv_full)();
@@ -46,7 +51,7 @@ typedef struct ConvData_st{
 }ConvData;
 
 
-static int init_flag = 0;
+static int init_flag = 1; 
 void sw_conv_forward_impl_d(
         const Type* in, 
         const Type* weight, 
@@ -59,6 +64,7 @@ void sw_conv_forward_impl_d(
         int No,
         int B)
 {
+    int i;
     int cKr, cKc, cNo;
     int cRo, cCo, cB;
     int cRi, cCi, cNi;
@@ -66,21 +72,49 @@ void sw_conv_forward_impl_d(
     Type* my_in   = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
     Type* my_out  = (Type*)malloc(sizeof(Type)*Ro*Co*No*B);
     Type* my_weight = (Type*)malloc(sizeof(Type)*K*K*No*Ni);
+    //Type* my_weight_ref = (Type*)malloc(sizeof(Type)*K*K*No*Ni);
+    Type* my_in_ref = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
 
+#ifndef ACC_TRANS
     for(cRi = 0; cRi < Ri; ++cRi)
       for(cCi = 0; cCi < Ci; ++cCi)
         for(cNi = 0; cNi < Ni; ++cNi)
           for(cB = 0; cB < B; ++cB)
             my_in[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
               in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
+#else
+    printf("begin");
+    int shape_ori[4] = {Ci, Ri, Ni, B};
+    int shape_new[4] = {4, 3, 1, 2};
+    acc_transpose(in, my_in, sizeof(double), 4, shape_ori, shape_new);
+    printf("trans in over");
 
+/*
+    Type sum1 = 0, sum2 = 0;
+    for( i = 0; i < Ci*Ri*Ni*B; ++i ) {
+      if( fabs(my_in_ref[i] - my_in[i]) > 1e-4) {
+       printf("%lf vs %lf\n", my_in_ref[i], my_in[i]);
+      }
+      sum1 += my_in_ref[i]; sum2 += my_in[i];
+    }
+    printf("check over! sum1 %lf and sum2 %lf\n", sum1, sum2);
+    free(my_in_ref);
+    */
+#endif
+
+
+#ifndef ACC_TRANS
     for(cNi = 0; cNi < Ni; ++cNi)
       for(cNo = 0; cNo < No; ++cNo)
         for(cKr = 0; cKr < K; ++cKr)
           for(cKc = 0; cKc < K; ++cKc)
               my_weight[weight_swdnn_offset(cNo, cNi, cKr, cKc, No, Ni, K)] = 
                 weight[weight_caffe_offset(cNo, cNi, cKr, cKc, No, Ni, K)];
-	  //printf("after copy data forward OK\n");
+#else
+    int shape_ori_w[4] = {K, K, Ni, No};
+    int shape_new_w[4] = {3, 4, 1, 2};
+    acc_transpose(weight, my_weight, sizeof(double), 4, shape_ori_w, shape_new_w);
+#endif
 
     ConvData* param = (ConvData*)malloc(sizeof(ConvData));
     param->input =  my_in;
@@ -112,24 +146,40 @@ void sw_conv_forward_impl_d(
       int rtcode = athread_init();
       if( rtcode != 1)
 	      printf("thread init error, return code %d\n", rtcode);
-      init_flag++ ;
+      init_flag = 1 ;
     }
 	  athread_spawn(conv_valid, param);
 	  athread_join();
-    //if(athread_halt() != 0)
-	  //  printf("thread halt error\n");
+
+#ifndef ACC_TRANS
     for(cRo = 0; cRo < Ro; ++cRo)
       for(cCo = 0; cCo < Co; ++cCo)
         for(cNo = 0; cNo < No; ++cNo)
           for(cB = 0; cB < B; ++cB)
             out[image_caffe_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)] =
               my_out[image_swdnn_offset(cB, cNo, cRo, cCo, B, No, Ro, Co)];
+#else
+    int shape_ori_o[4] = {B, No, Co, Ro};
+    int shape_new_o[4] = {3, 4, 2, 1};
+    acc_transpose(my_out, out, sizeof(double), 4, shape_ori_o, shape_new_o);
+#endif
+/*
+    Type sum1 = 0, sum2 = 0;
+    for( i = 0; i < Ni*No*K*K; ++i ) {
+      if( fabs(my_weight_ref[i] - my_weight[i]) > 1e-4) {
+       printf("%lf vs %lf\n", my_weight_ref[i], my_weight[i]);
+      }
+      sum1 += my_weight_ref[i]; sum2 += my_weight[i];
+    }
+    printf("check over! sum1 %lf and sum2 %lf\n", sum1, sum2);
+    exit(0);
+    */
 
     free(my_in);
     free(my_weight);
     free(my_out);
     free(param);
-	  //printf("forward OK\n");
+	  printf("forward OK\n");
 }
 
 void sw_conv_backward_impl_d(
@@ -207,6 +257,7 @@ void sw_conv_backward_impl_d(
       int rtcode = athread_init();
       if( rtcode != 1 )
         printf("init error");
+      init_flag = 1;
     }
 	  athread_spawn(conv_valid, param);
 	  athread_join();

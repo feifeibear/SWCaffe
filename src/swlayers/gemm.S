@@ -682,6 +682,7 @@ $ng..gemm:
 
 	vldd	$14, 96($0)
 		vmad	$2,$7,$12,$12
+  #bug for acc_trans
 	vldr	$4, 96($5)              	# [3] id:218
 		vextw	$29,3,$6			# Mld
 	getc	$10                       	# [1] 
