@@ -12,6 +12,7 @@ http://www.netlib.org/blas/
 3. No database for data storage, read from binary file
 4. Support swBLAS and swDNN
 https://github.com/THUHPGC/swDNN.git
+large image channels, swDNN is used and small channels swBLAS is used
 
 ### Usage
 1. Please install openBLAS into 
@@ -24,8 +25,11 @@ http://yann.lecun.com/exdb/mnist/
 git checkout sunway
 
 ### Bugs
-DataLayer is customized for mnist
-MPI DataLayer do not support LSTM
+1. DataLayer is customized for mnist
+2. MPI DataLayer do not support LSTM
+3. Only support double for Sunway
+4. Still depends google glog, problem with checknotnull
+5. acc_trans is waiting to be ingegreted with code from Li Liandeng
 
 ### Developer
 Jiaui Fang, Zheyu Zhang

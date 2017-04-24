@@ -58,16 +58,6 @@ void conv_forward_impl(
   //DLOG(INFO) << "Ci " << Ci << "Ri " << Ri << "K " << K 
   //  << "Ni " << Ni << "No " << No << "B " << B;
 
-  /*
-  //bias is (No)
-  for(cRo = 0; cRo < Ro; cRo++)
-    for(cCo=0; cCo<Co; cCo++)
-      for(cNo=0; cNo<No; cNo++)
-        for(cB = 0; cB<B; cB++)
-          *(output + outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co)) = 
-            *(bias + cNo);
-  */
-
   memset(output, (Type)0, sizeof(Type)*No*B*Co*Ro);
   for(cRo=0; cRo<Ro; cRo++)
     for(cCo=0; cCo<Co; cCo++){
@@ -134,17 +124,6 @@ void conv_backward_impl(
                 *(in_grad+inGetIdx(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)) += sum;
             }//cRi
     }//cB
-  
-    /*
-    memset(bias_grad, 0, No*sizeof(Type));
-//TODO bias_grad = out_grad(B, No, :, :)
-    for(cRo = 0; cRo < Ro; cRo++)
-      for(cCo=0; cCo<Co; cCo++)
-        for( cB = 0; cB < B; cB++ )
-          for( cNo = 0; cNo < No; cNo++ )    
-              *(bias_grad + cNo) += *(out_grad + 
-                outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co));
-     */
 
 // weight_diff = conv(rot180(in), out_grad, 'valid')
     memset(weight_diff, 0, sizeof(Type)*Ni*No*K*K);

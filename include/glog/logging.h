@@ -118,57 +118,68 @@ class FILELog: public Log<Output2FILE> {
 #endif
 
 #define FILE_LOG(level) \
-    if (level > FILELOG_MAX_LEVEL) ;\
-    else if (level > FILELog::ReportingLevel() || !Output2FILE::TerminalStream()) ; \
-    else FILELog().Get(level)
+    FILELog().Get(level)
 
-#define TRACE() FILE_LOG(logDEBUG1)
-#define DEBUG() FILE_LOG(logDEBUG)
-#define INFO() FILE_LOG(logINFO)
-#define WARNING() FILE_LOG(logWARNING)
-#define ERROR() FILE_LOG(logERROR)
+//#define FILE_LOG(level) \
+//    if (level > FILELOG_MAX_LEVEL){}\
+//    else if (level > FILELog::ReportingLevel() || !Output2FILE::TerminalStream()) {} \
+//    else FILELog().Get(level)
+
+//#define TRACE() FILE_LOG(logDEBUG1)
+//#define DEBUG() FILE_LOG(logDEBUG)
+//#define INFO() FILE_LOG(logINFO)
+//#define WARNING() FILE_LOG(logWARNING)
+//#define ERROR() FILE_LOG(logERROR)
 
 #define LOG(_cond)  \
-  INFO() 
+  FILE_LOG(logINFO) << __FILE__ << " : line " << __LINE__<< " : "
 
+#define INFO 0
 #define LOG_IF(val1, _cond)  \
-  if(false) std::cout
+  if(_cond) \
+   FILE_LOG(logINFO) << __FILE__ << " : line " << __LINE__<< " : "
+
 
 #define DLOG(_cond)  \
-  INFO()
+  FILE_LOG(logINFO) << __FILE__<< " : line " << __LINE__<< " : "
 
 #define CHECK_LE(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 <= val2)) \
+  FILE_LOG(logINFO) << __FILE__<< " : line " << __LINE__<< " : "
+
 
 #define CHECK_GE(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 >= val2)) std::cout  
 
 #define DCHECK_GE(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 >= val2)) std::cout  
 
 #define CHECK_EQ(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 == val2)) std::cout  
+
+#define DCHECK_EQ(val1, val2) \
+  if(!(val1 == val2)) std::cout  
 
 #define CHECK(cond_) \
-  if(false) std::cout  
+  if(!(cond_)) std::cout  
 
 #define DCHECK(cond_) \
-  if(false) std::cout  
+  if(! (cond_)) std::cout  
 
 #define CHECK_GT(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 > val2)) std::cout  
 
 #define DCHECK_GT(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 > val2)) std::cout  
 
 #define CHECK_LT(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 < val2)) std::cout  
 
 #define DCHECK_LT(val1, val2) \
-  if(false) std::cout  
+  if(!(val1 < val2)) std::cout  
 
 #define CHECK_NE(val1, val2) \
-  if(false) std::cout  
+  if(val1 == val2) std::cout  
 
 //#define CHECK_NOTNULL(val)
 
@@ -176,6 +187,6 @@ class FILELog: public Log<Output2FILE> {
   if(false) std::cout  
 
 #define CHECK_NOTNULL(val)\
-  std::cout
+  (val)
 
 #endif //__LOG_H__
