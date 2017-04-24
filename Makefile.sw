@@ -1,15 +1,18 @@
 CXX 	=  	mpiCC -host
+LINK = swacc -hybrid -L/usr/sw-mpp/lib -L/usr/sw-mpp/lib /usr/sw-mpp/mpi2/lib/__slave_dma.o -L/usr/sw-mpp/mpi2/lib -lmpicxx -lmpi -L/usr/sw-mpp/lib -lswtm -libverbs_wd -Wl,-zmuldefs -lrt -ldl -lpthread -lm -los_master_isp -lstdc++
 SWCXX = 	sw5cc.new -slave
-LINK 	=   mpiCC -hybrid
+#LINK 	=   mpiCC -hybrid
 FLAGS = 	-O3
-FLAGS += 	-DCPU_ONLY
+FLAGS += 	-DSW_CODE -DCPU_ONLY
 
 THIRD_PARTY_DIR = ../thirdparty
-SWINC_FLAGS = -I ./include
-SWINC_FLAGS += -I $(THIRD_PARTY_DIR)/CBLAS/include
+SWINC_FLAGS = -I ./include -I $(THIRD_PARTY_DIR)/CBLAS/include
 
 SWLIBOBJ = $(THIRD_PARTY_DIR)/swblas/SWCBLAS/lib/cblas_LINUX0324.a
 SWLIBOBJ += $(THIRD_PARTY_DIR)/swblas/SWCBLAS/libswblas0324.a
+
+#SWLIBOBJ = $(THIRD_PARTY_DIR)/CBLAS/lib/cblas_SW.a
+#SWLIBOBJ += $(THIRD_PARTY_DIR)/BLAS-3.6.0/blas_SW_.a
 
 #SWLIBOBJ = ../../tools/swblas/BLAS-3.6.0/blas_LINUX.a
 #SWLIBOBJ += ../../tools/swblas/CBLAS/lib/cblas_LINUX.a
@@ -40,7 +43,8 @@ SWOBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.
 	  ./build/swlayers/sw_slave_conv_valid.o\
 	  ./build/swlayers/sw_slave_conv_full.o\
 	  ./build/swlayers/gemm_asm.o\
-		./build/swlayers/sw_conv_layer_impl.o
+		./build/swlayers/sw_conv_layer_impl.o\
+		./build/util/acc_transpose.o
 
 all: test_solver 
 
@@ -66,6 +70,8 @@ test_solver: test_solver.o $(SWOBJ) $(SWLIBOBJ)
 test_solver.o: test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
+./build/util/acc_transpose.o: ./src/util/acc_transpose.c
+	swacc -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 ./build/swlayers/sw_conv_layer_impl.o: ./src/swlayers/sw_conv_layer_impl.c
 	sw5cc.new -host $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
 ./build/swlayers/sw_slave_conv_valid.o: ./src/swlayers/sw_slave_conv_valid.c
