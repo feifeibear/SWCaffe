@@ -13,7 +13,7 @@ int main (int argc, char ** argv) {
   DataParameter data_param_data;
   data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
   data_param_data.set_batch_size(64/Caffe::solver_count());
-  //data_param_data.set_batch_size(64);
+  //data_param_data.set_batch_size(8);
   LayerParameter data_train;
   data_train.set_name("data_train");
   data_train.set_type("Data");
@@ -23,8 +23,6 @@ int main (int argc, char ** argv) {
   NetStateRule train_include;
   train_include.set_phase(TRAIN);
   data_train.add_include(train_include);
-  LOG_IF(INFO, Caffe::root_solver())
-    <<  "Train data layer paramter is OK!";
 
   DataParameter data_param_label;
   data_param_label.set_source("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte");
@@ -190,8 +188,8 @@ int main (int argc, char ** argv) {
   SolverParameter solver_param;
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(100);
-  solver_param.set_test_interval(500);
-  //solver_param.set_test_interval(1);
+  //solver_param.set_test_interval(500);
+  solver_param.set_test_interval(1);
   solver_param.set_base_lr(0.01);
   solver_param.set_display(100);
   //solver_param.set_display(1);
