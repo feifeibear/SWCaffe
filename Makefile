@@ -4,6 +4,7 @@ FLAGS+=-DCPU_ONLY
 FLAGS+=-DMYMPI
 
 LSTMFLAGS=-DSEQ_MNIST
+SWFLAGS=-DSWCODE
 
 INC_FLAGS=-I../thirdparty/glog_install/include
 INC_FLAGS += -I../thirdparty/openblas_install/include
@@ -61,6 +62,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/solver.o\
 		./build/util/mpi.o
 		#./build/util/hdf5.o \
+		#./build/glog/logging.o\
 
 TEST_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
@@ -172,6 +174,6 @@ test_lstm.o: test_lstm.cpp
 ./build/glog/%.o: ./src/glog/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 clean:
-	rm $(OBJ) test_solver
+	rm $(OBJ) *.o test_solver
 swclean:
 	rm swtest/obj/* && rm test_sw

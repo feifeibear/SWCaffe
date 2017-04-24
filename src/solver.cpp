@@ -223,7 +223,7 @@ void Solver<Dtype>::Step(int iters) {
       MPI_Bcast(
            my_net_params[param_id]->mutable_cpu_data(),
            my_net_params[param_id]->count(),
-           MPI_FLOAT,
+           MPI_DOUBLE,
            0,
            MPI_COMM_WORLD);
     }

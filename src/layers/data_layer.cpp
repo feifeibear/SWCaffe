@@ -302,7 +302,7 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     comm_lapes += end_time - begin_time;
     times++;
     if(times == 100) {
-      DLOG_IF(INFO, Caffe::root_solver()) << " DataLayer Commmunication Time is " << comm_lapes;
+      LOG_IF(INFO, Caffe::root_solver()) << " DataLayer Commmunication Time is " << comm_lapes;
       comm_lapes = 0.0;
       times = 0;
     }

@@ -26,7 +26,7 @@ int main (int argc, char ** argv) {
 
   DataParameter data_param_label;
   data_param_label.set_source("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte");
-  data_param_label.set_batch_size(100);
+  data_param_label.set_batch_size(128);
   LayerParameter data_test;
   data_test.set_name("data_test");
   data_test.set_type("Data");
@@ -41,7 +41,7 @@ int main (int argc, char ** argv) {
    * define convolution layer (10,1,28,28) -> (10, 20, 24, 24)
    *******/
   ConvolutionParameter conv_param1;
-  conv_param1.set_num_output(20);
+  conv_param1.set_num_output(128);
   conv_param1.set_pad_h(0);
   conv_param1.set_pad_w(0);
   conv_param1.set_kernel_h(5);
@@ -76,7 +76,7 @@ int main (int argc, char ** argv) {
    * define convolution layer (10,20,12,12) -> (10, 50, 8, 8)
    *******/
   ConvolutionParameter conv_param2;
-  conv_param2.set_num_output(50);
+  conv_param2.set_num_output(128);
   conv_param2.set_pad_h(0);
   conv_param2.set_pad_w(0);
   conv_param2.set_kernel_h(5);
@@ -203,8 +203,8 @@ int main (int argc, char ** argv) {
   solver_param.set_type("SGD");
 
   LOG_IF(INFO, Caffe::root_solver()) << "Init solver...";
-  shared_ptr<Solver<float> >
-      solver(SolverRegistry<float>::CreateSolver(solver_param));
+  shared_ptr<Solver<double> >
+      solver(SolverRegistry<double>::CreateSolver(solver_param));
   solver->Solve(NULL);
   LOG_IF(INFO, Caffe::root_solver())
     << "test end";
