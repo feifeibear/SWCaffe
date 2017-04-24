@@ -120,9 +120,9 @@ class SolverRegisterer {
 };
 
 
-  //static SolverRegisterer<float> g_creator_f_##type(#type, creator<float>); 
 #define REGISTER_SOLVER_CREATOR(type, creator)                                 \
-  static SolverRegisterer<double> g_creator_d_##type(#type, creator<double>)   \
+  static SolverRegisterer<float> g_creator_f_##type(#type, creator<float>);    \
+  static SolverRegisterer<double> g_creator_d_##type(#type, creator<double>)
 
 #define REGISTER_SOLVER_CLASS(type)                                            \
   template <typename Dtype>                                                    \

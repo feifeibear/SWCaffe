@@ -46,8 +46,11 @@ int caffe_mpi_allreduce( void *sendbuf, void *recvbuf, int count,
 template <typename Dtype>
 int caffe_mpi_reduce( void *sendbuf, void *recvbuf, int count,
     MPI_Op op, int root, MPI_Comm comm  );
+
+
+template <typename Dtype>
+int caffe_mpi_bcast( void *buffer, int count, int root,
+                   MPI_Comm comm );
 }  // namespace caffe
-
-
 
 #endif  // CAFFE_UTIL_MPI_H_

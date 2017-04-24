@@ -220,10 +220,17 @@ void Solver<Dtype>::Step(int iters) {
     comm_begin_time = MPI_Wtime();
     vector<shared_ptr<Blob<Dtype> > >& my_net_params = this->net_->params_nc();
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
+      /*
       MPI_Bcast(
            my_net_params[param_id]->mutable_cpu_data(),
            my_net_params[param_id]->count(),
            MPI_DOUBLE,
+           0,
+           MPI_COMM_WORLD);
+           */
+      caffe_mpi_bcast<Dtype>(
+           my_net_params[param_id]->mutable_cpu_data(),
+           my_net_params[param_id]->count(),
            0,
            MPI_COMM_WORLD);
     }

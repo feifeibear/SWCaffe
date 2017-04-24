@@ -121,5 +121,16 @@ int caffe_mpi_reduce<double>( void *sendbuf, void *recvbuf, int count,
   return MPI_Reduce(sendbuf, recvbuf, count, MPI_DOUBLE, op, root, comm);
 }
 
+template <>
+int caffe_mpi_bcast<float>( void *buffer, int count, int root,
+    MPI_Comm comm ) {
+  return MPI_Bcast(buffer, count, MPI_FLOAT, root, comm);
+}
+
+template <>
+int caffe_mpi_bcast<double>( void *buffer, int count, int root,
+    MPI_Comm comm ) {
+  return MPI_Bcast(buffer, count, MPI_DOUBLE, root, comm);
+}
 
 }  // namespace caffe

@@ -182,19 +182,14 @@ int main (int argc, char ** argv) {
   LOG_IF(INFO, Caffe::root_solver())
    <<  "net paramter Initialization is OK!";
 
-  //Net<float> net(net_param);
-  //net.set_debug_info(true);
-
   SolverParameter solver_param;
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(100);
-  //solver_param.set_test_interval(500);
-  solver_param.set_test_interval(1);
+  solver_param.set_test_interval(500);
+  //solver_param.set_test_interval(1);
   solver_param.set_base_lr(0.01);
   solver_param.set_display(100);
-  //solver_param.set_display(1);
   solver_param.set_max_iter(10000);
-  //solver_param.set_max_iter(5);
   solver_param.set_lr_policy("inv");
   solver_param.set_gamma(0.0001);
   solver_param.set_power(0.75);
@@ -203,8 +198,8 @@ int main (int argc, char ** argv) {
   solver_param.set_type("SGD");
 
   LOG_IF(INFO, Caffe::root_solver()) << "Init solver...";
-  shared_ptr<Solver<double> >
-      solver(SolverRegistry<double>::CreateSolver(solver_param));
+  shared_ptr<Solver<float> >
+      solver(SolverRegistry<float>::CreateSolver(solver_param));
   solver->Solve(NULL);
   LOG_IF(INFO, Caffe::root_solver())
     << "test end";

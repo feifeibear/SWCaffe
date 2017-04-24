@@ -1,8 +1,9 @@
 /*************************************************************************
-	> File Name: ConvLayer_impl.h
-	> Author: THU Code Farmer
-	> mail: thu@thu.thu
-	> Created Time: Fri 30 Dec 2016 10:24:37 AM CST
+	> File Name: conv_layer_impl.h
+	> Author: Jiarui Fang 
+	> mail: fang_jiarui@163.com
+  > Created Time: Fri 30 Dec 2016 10:24:37 AM CST
+  > This file provide a MPE version for correctness check for SPE version on Sunway
  ************************************************************************/
 #ifndef CONVLAYER_IMPL
 #define CONVLAYER_IMPL

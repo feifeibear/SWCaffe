@@ -37,6 +37,7 @@ template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
 #ifdef SW_CODE
+  assert(typeid(Dtype) == typeid(double));
   const Dtype* weight       = this->blobs_[0]->cpu_data();
   const Dtype* bias_data    = this->blobs_[1]->cpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
@@ -176,7 +177,7 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 #endif
 
 #ifdef SW_CODE
-
+    assert(typeid(Dtype) == typeid(double));
     const Dtype* weight    = this->blobs_[0]->cpu_data();
     Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();
     Dtype* bias_diff       = this->blobs_[1]->mutable_cpu_diff();
