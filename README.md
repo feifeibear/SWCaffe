@@ -19,12 +19,13 @@ https://github.com/THUHPGC/swDNN.git
 2. please download mnist data into ../data/
 http://yann.lecun.com/exdb/mnist/
 2. Make
-3. ./test_solver for test mnist LeNet Training
+3. mpirun -n X ./test_solver for test mnist LeNet Training
 4. To use Sunway version please
 git checkout sunway
 
 ### Bugs
 DataLayer is customized for mnist
+MPI DataLayer do not support LSTM
 
 ### Developer
 Jiaui Fang, Zheyu Zhang
