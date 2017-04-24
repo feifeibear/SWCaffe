@@ -5,14 +5,14 @@
 #include <utility>
 #include <vector>
 
-#include "hdf5.h"
+//#include "hdf5.h"
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/net.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/insert_splits.hpp"
-#include "caffe/util/hdf5.hpp"
+//#include "caffe/util/hdf5.hpp"
 
 namespace caffe {
 
@@ -805,6 +805,7 @@ void Net<Dtype>::CopyTrainedLayersFromBinaryProto(
 
 template <typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromHDF5(const string trained_filename) {
+  /*
   hid_t file_hid = H5Fopen(trained_filename.c_str(), H5F_ACC_RDONLY,
                            H5P_DEFAULT);
   CHECK_GE(file_hid, 0) << "Couldn't open " << trained_filename;
@@ -851,6 +852,7 @@ void Net<Dtype>::CopyTrainedLayersFromHDF5(const string trained_filename) {
   }
   H5Gclose(data_hid);
   H5Fclose(file_hid);
+  */
 }
 /*
 template <typename Dtype>
@@ -867,6 +869,7 @@ void Net<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
 */
 template <typename Dtype>
 void Net<Dtype>::ToHDF5(const string& filename, bool write_diff) const {
+  /*
   hid_t file_hid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
       H5P_DEFAULT);
   CHECK_GE(file_hid, 0)
@@ -920,6 +923,7 @@ void Net<Dtype>::ToHDF5(const string& filename, bool write_diff) const {
     H5Gclose(diff_hid);
   }
   H5Fclose(file_hid);
+  */
 }
 
 template <typename Dtype>

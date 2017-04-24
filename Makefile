@@ -24,7 +24,6 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
 		./build/util/insert_splits.o \
 		./build/util/im2col.o \
-		./build/util/hdf5.o \
 		./build/layers/inner_product_layer.o \
 		./build/layers/input_layer.o \
 		./build/layers/base_conv_layer.o \
@@ -61,6 +60,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/benchmark.o\
 		./build/solver.o\
 		./build/util/mpi.o
+		#./build/util/hdf5.o \
 
 TEST_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
