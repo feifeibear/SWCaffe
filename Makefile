@@ -2,8 +2,8 @@ CXX=mpic++
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
 FLAGS+=-DMYMPI
+FLAGS+=-DSEQ_MNIST
 
-LSTMFLAGS=-DSEQ_MNIST
 SWFLAGS=-DSWCODE
 
 INC_FLAGS=-I../thirdparty/glog_install/include
@@ -140,7 +140,7 @@ TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_fa
 		./swtest/obj/test_convolution_layer.o
 #		./swtest/obj/conv_layer_impl.o
 
-all: test_solver
+all: test_lstm
 
 test_solver: test_solver.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@

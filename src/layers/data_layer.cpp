@@ -234,8 +234,13 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       // read data for remote node
       int send_data_buff_count = batch_size*n_cols*n_rows;
       Dtype* send_data_buff = (Dtype*)malloc(sizeof(Dtype)*send_data_buff_count);
+#ifdef SEQ_MNIST
+      int top2buff_size = batch_size;
+      Dtype* top2buff = (Dtype*)malloc(sizeof(Dtype)*top2buff_size);
+#else
       int top1buff_size = batch_size;
       Dtype* top1buff = (Dtype*)malloc(sizeof(Dtype)*top1buff_size);
+#endif
 
       for( int proc = 1; proc < Caffe::solver_count(); proc++ ){
         for( int img = 0; img < batch_size; ++img ){
@@ -256,7 +261,8 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           char tmp_label = 0;
           label_file.read(&tmp_label, 1);
           #ifdef SEQ_MNIST
-            top[2]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
+            //top[2]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
+            top2buff[img] = static_cast<Dtype>(tmp_label);
           #else
             //top[1]->mutable_cpu_data()[img] = static_cast<Dtype>(tmp_label);
             top1buff[img] = static_cast<Dtype>(tmp_label);
@@ -284,18 +290,68 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         }//img
 
         caffe_mpi_send<Dtype>(send_data_buff, send_data_buff_count, proc, 0, MPI_COMM_WORLD);
+#ifdef SEQ_MNIST
+        caffe_mpi_send<Dtype>(top2buff,       top2buff_size,        proc, 0, MPI_COMM_WORLD);
+#else
         caffe_mpi_send<Dtype>(top1buff,       top1buff_size,        proc, 0, MPI_COMM_WORLD);
+#endif
       }//for proc
+      MPI_Barrier(MPI_COMM_WORLD);
       free(send_data_buff);
+#ifdef SEQ_MNIST
+      free(top2buff);
+#else
       free(top1buff);
+#endif
 
     } else {
+      #ifdef SEQ_MNIST
+          if (start){
+            start = false;
+            for (int i=0; i<n_rows*batch_size; i++)
+              top[1]->mutable_cpu_data()[i] = 0;
+          }
+          else
+            for (int i=0; i<n_rows*batch_size; i++)
+              top[1]->mutable_cpu_data()[i] = 1;
+      #endif
+
       int send_data_buff_count = batch_size*n_cols*n_rows;
-      int top1buff_size = batch_size;
       MPI_Status status;
       caffe_mpi_recv<Dtype>(top[0]->mutable_cpu_data(), send_data_buff_count, 0, 0, MPI_COMM_WORLD, &status);
+#ifdef SEQ_MNIST
+      int top2buff_size = batch_size;
+      caffe_mpi_recv<Dtype>(top[2]->mutable_cpu_data(), top2buff_size,        0, 0, MPI_COMM_WORLD, &status);
+#else
+      int top1buff_size = batch_size;
       caffe_mpi_recv<Dtype>(top[1]->mutable_cpu_data(), top1buff_size,        0, 0, MPI_COMM_WORLD, &status);
+#endif
+      MPI_Barrier(MPI_COMM_WORLD);
     }
+
+#if 0
+    int bugcount = 0;
+    for(int i = 0; i < top[0]->count(); ++i) {
+          if(std::isnan(top[0]->mutable_cpu_data()[i])){
+            LOG(INFO) << "[BUG] top[0]: " << i <<
+              " cpu value: " << top[0]->mutable_cpu_data()[i];
+            bugcount++;
+            if(bugcount == 100)
+              exit(0);
+          }
+      }
+
+    bugcount = 0;
+    for(int i = 0; i < top[1]->count(); ++i) {
+          if(std::isnan(top[1]->mutable_cpu_data()[i])){
+            LOG(INFO) << "[BUG] top[1]: " << i <<
+              " cpu value: " << top[0]->mutable_cpu_data()[i];
+            bugcount++;
+            if(bugcount == 100)
+              exit(0);
+          }
+      }
+#endif
 
     MPI_Barrier(MPI_COMM_WORLD);
     end_time = MPI_Wtime();

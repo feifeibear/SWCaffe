@@ -1,8 +1,10 @@
 #include "caffe/caffe.hpp"
 using namespace caffe;
 
-int main()
-{
+int main (int argc, char ** argv) {
+#ifdef MYMPI
+  MPI_Init(&argc, &argv);
+#endif
   DataParameter data_param_data;
   data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
   data_param_data.set_batch_size(100);
@@ -136,5 +138,9 @@ int main()
   solver->Solve(NULL);
 
   DLOG(INFO) << "test end";
+
+#ifdef MYMPI
+  MPI_Finalize();
+#endif
   return 0;
 }
