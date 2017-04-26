@@ -1,4 +1,5 @@
 #include "caffe/caffe.hpp"
+#include <string>
 using namespace caffe;
 
 int main () {
@@ -193,11 +194,14 @@ int main () {
   solver_param.set_momentum(0.9);
   solver_param.set_weight_decay(0.0005);
   solver_param.set_type("SGD");
+  solver_param.set_snapshot(100);
+  solver_param.set_snapshot_prefix("lenet");
 
   DLOG(INFO) << "Init solver...";
   shared_ptr<Solver<float> >
       solver(SolverRegistry<float>::CreateSolver(solver_param));
   DLOG(INFO) << "Begin solve...";
+  solver->net()->CopyTrainedLayersFrom("_iter_700.caffemodel");
   solver->Solve(NULL);
 
   DLOG(INFO) << "test end";

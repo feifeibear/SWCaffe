@@ -13,7 +13,7 @@
 //#include "caffe/proto/caffe.pb.h"
 //#include "caffe/util/db.hpp"
 
-#define SEQ_MNIST
+//#define SEQ_MNIST
 
 namespace caffe {
 

@@ -47,6 +47,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/layers/reduction_layer.o\
 		./build/layers/euclidean_loss_layer.o\
 		./build/layers/silence_layer.o\
+		./build/layers/dropout_layer.o\
 		./build/net.o\
 		./build/solvers/adadelta_solver.o\
 		./build/solvers/adagrad_solver.o\
@@ -137,8 +138,12 @@ all: test_solver
 
 test_solver: test_solver.o $(OBJ)
 	g++ $^ $(LDFLAGS)  -o $@
-#-lhdf5_cpp -lhdf5_hl_cpp  
 test_solver.o: test_solver.cpp
+	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+vggnet: vggnet.o $(OBJ)
+	g++ $^ $(LDFLAGS)  -o $@
+vggnet.o: vggnet.cpp
 	g++ -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_all: $(TEST_OBJ)

@@ -134,7 +134,7 @@ public:
   inline void add_stepvalue(int x) { stepvalue_.push_back(x); }
   inline void set_clip_gradients(float x) { clip_gradients_ = x; }
   inline void set_snapshot(int x) { snapshot_ = x; }
-  inline void set_snapshot_prefix(std::string x) { snapshot_prefix_ = x; }
+  inline void set_snapshot_prefix(std::string x) { snapshot_prefix_ = x; has_snapshot_prefix_ = true; }
   inline void set_snapshot_diff(bool x) { snapshot_diff_ = x; }
   inline void set_snapshot_format(SolverParameter_SnapshotFormat x) { snapshot_format_ = x; }
   inline void set_solver_mode(SolverParameter_SolverMode x) { solver_mode_ = x; }
