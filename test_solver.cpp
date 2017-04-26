@@ -12,7 +12,7 @@ int main (int argc, char ** argv) {
   //mnist input 10, 1, 28, 28
   DataParameter data_param_data;
   data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
-  data_param_data.set_batch_size(64/Caffe::solver_count());
+  data_param_data.set_batch_size(1024/Caffe::solver_count());
   //data_param_data.set_batch_size(8);
   LayerParameter data_train;
   data_train.set_name("data_train");
@@ -198,8 +198,8 @@ int main (int argc, char ** argv) {
   solver_param.set_type("SGD");
 
   LOG_IF(INFO, Caffe::root_solver()) << "Init solver...";
-  shared_ptr<Solver<float> >
-      solver(SolverRegistry<float>::CreateSolver(solver_param));
+  shared_ptr<Solver<double> >
+      solver(SolverRegistry<double>::CreateSolver(solver_param));
   solver->Solve(NULL);
   LOG_IF(INFO, Caffe::root_solver())
     << "test end";
