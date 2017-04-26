@@ -6,7 +6,6 @@
 //#define SW_CODE
 //#define TEST
 //#ifdef SW_CODE
-//#include "caffe/swlayers/conv_layer_impl.hpp"
 
 extern "C" {
 #include "caffe/swlayers/sw_conv_layer_impl.h"
@@ -51,9 +50,9 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
       if(sizeof(Dtype) == sizeof(double))
         sw_conv_forward_impl_d(
-          bottom_data,
-          weight,
-          top_data,
+          (double*)bottom_data,
+          (double*)weight,
+          (double*)top_data,
           //bias_data,
           //int Ci,
           bottom[0]->width(),
@@ -147,15 +146,15 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         if(sizeof(Dtype)== sizeof(double))
         conv_backward_impl_d(
           //const Type* in,
-          mybottom_data,
+          (double*)mybottom_data,
           //const Type* out_grad,
-          mytop_diff,
+          (double*)mytop_diff,
           //Type* weight,
-          myweight,
+          (double*)myweight,
           //Type* in_grad,
-          mybottom_diff,
+          (double*)mybottom_diff,
           //Type* weight_diff,
-          myweight_diff,
+          (double*)myweight_diff,
           //Type* bias_grad,
           //mybias_diff,
           //int Ci,
@@ -203,15 +202,15 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         if(sizeof(Dtype)== sizeof(double))
         sw_conv_backward_impl_d(
             //const Type* in,
-            bottom_data,
+            (double*)bottom_data,
             //const Type* out_grad,
-            top_diff,
+            (double*)top_diff,
             //Type* weight,
-            weight,
+            (double*)weight,
             //Type* in_grad,
-            bottom_diff,
+            (double*)bottom_diff,
             //Type* weight_diff,
-            weight_diff,
+            (double*)weight_diff,
             //Type* bias_grad,
             //bias_diff,
             //int Ci,

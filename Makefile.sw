@@ -1,9 +1,10 @@
 CXX 	=  	mpiCC -host
-LINK = swacc -hybrid -L/usr/sw-mpp/lib -L/usr/sw-mpp/lib /usr/sw-mpp/mpi2/lib/__slave_dma.o -L/usr/sw-mpp/mpi2/lib -lmpicxx -lmpi -L/usr/sw-mpp/lib -lswtm -libverbs_wd -Wl,-zmuldefs -lrt -ldl -lpthread -lm -los_master_isp -lstdc++
+#LINK = swacc -hybrid -L/usr/sw-mpp/lib -L/usr/sw-mpp/lib /usr/sw-mpp/mpi2/lib/__slave_dma.o -L/usr/sw-mpp/mpi2/lib -lmpicxx -lmpi -L/usr/sw-mpp/lib -lswtm -libverbs_wd -Wl,-zmuldefs -lrt -ldl -lpthread -lm -los_master_isp -lstdc++
+LINK = mpiCC
 SWCXX = 	sw5cc.new -slave
-#LINK 	=   mpiCC -hybrid
-FLAGS = 	-O3
-FLAGS += 	-DSW_CODE -DCPU_ONLY
+FLAGS = 	-O2 -OPT:IEEE_arith=2
+FLAGS += 	-DMYMPI -DCPU_ONLY
+#-DSW_CODE 
 
 THIRD_PARTY_DIR = ../thirdparty
 SWINC_FLAGS = -I ./include -I $(THIRD_PARTY_DIR)/CBLAS/include
@@ -11,13 +12,51 @@ SWINC_FLAGS = -I ./include -I $(THIRD_PARTY_DIR)/CBLAS/include
 SWLIBOBJ = $(THIRD_PARTY_DIR)/swblas/SWCBLAS/lib/cblas_LINUX0324.a
 SWLIBOBJ += $(THIRD_PARTY_DIR)/swblas/SWCBLAS/libswblas0324.a
 
-#SWLIBOBJ = $(THIRD_PARTY_DIR)/CBLAS/lib/cblas_SW.a
-#SWLIBOBJ += $(THIRD_PARTY_DIR)/BLAS-3.6.0/blas_SW_.a
-
-#SWLIBOBJ = ../../tools/swblas/BLAS-3.6.0/blas_LINUX.a
-#SWLIBOBJ += ../../tools/swblas/CBLAS/lib/cblas_LINUX.a
-
 SWOBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
+		./build/util/math_functions.o \
+		./build/util/insert_splits.o \
+		./build/util/im2col.o \
+		./build/layers/inner_product_layer.o \
+		./build/layers/input_layer.o \
+		./build/layers/base_conv_layer.o \
+		./build/layers/conv_layer.o \
+		./build/layers/pooling_layer.o \
+		./build/layers/data_layer.o \
+		./build/layers/neuron_layer.o\
+		./build/layers/relu_layer.o\
+		./build/layers/softmax_layer.o\
+		./build/layers/softmax_loss_layer.o\
+		./build/layers/loss_layer.o\
+		./build/layers/accuracy_layer.o\
+		./build/layers/split_layer.o\
+		./build/layers/default_instance.o\
+		./build/layers/lstm_layer.o\
+		./build/layers/lstm_unit_layer.o\
+		./build/layers/recurrent_layer.o\
+		./build/layers/eltwise_layer.o\
+		./build/layers/scale_layer.o\
+		./build/layers/slice_layer.o\
+		./build/layers/concat_layer.o\
+		./build/layers/reshape_layer.o\
+		./build/layers/bias_layer.o\
+		./build/layers/reduction_layer.o\
+		./build/layers/euclidean_loss_layer.o\
+		./build/layers/silence_layer.o\
+		./build/net.o\
+		./build/solvers/rmsprop_solver.o\
+		./build/solvers/sgd_solver.o\
+		./build/util/benchmark.o\
+		./build/solver.o\
+		./build/util/mpi.o\
+	  ./build/swlayers/sw_slave_conv_valid.o\
+	  ./build/swlayers/sw_slave_conv_full.o\
+	  ./build/swlayers/gemm_asm.o\
+		./build/swlayers/sw_conv_layer_impl.o\
+		./build/glog/logging.o\
+		./build/util/matrix_trans.o\
+		./build/util/swmatrix_trans.o
+
+OLDSWOBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
 		./build/util/insert_splits.o \
 		./build/util/im2col.o \
@@ -44,12 +83,11 @@ SWOBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.
 	  ./build/swlayers/sw_slave_conv_full.o\
 	  ./build/swlayers/gemm_asm.o\
 		./build/swlayers/sw_conv_layer_impl.o\
-		./build/util/acc_transpose.o
 
 all: test_solver 
 
 run: test_solver
-	bsub -b -I -m 1 -p -q q_sw_expr -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./test_solver
+	bsub -b -I -m 1 -p -q q_sw_expr -host_stack 1024 -share_size 6000 -n 16 -cgsp 64 ./test_solver
 run_test: athread_test
 	bsub -b -I -m 1 -p -q q_sw_expr -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./athread_test
 
@@ -70,8 +108,12 @@ test_solver: test_solver.o $(SWOBJ) $(SWLIBOBJ)
 test_solver.o: test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-./build/util/acc_transpose.o: ./src/util/acc_transpose.c
-	swacc -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+#./build/util/acc_transpose.o: ./src/util/acc_transpose.c
+#	swacc -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+./build/util/swmatrix_trans.o: ./src/util/swmaxtrix_trans.c
+	sw5cc.new -slave -msimd $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
+./build/util/matrix_trans.o: ./src/util/matrix_trans.c
+	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 ./build/swlayers/sw_conv_layer_impl.o: ./src/swlayers/sw_conv_layer_impl.c
 	sw5cc.new -host $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
 ./build/swlayers/sw_slave_conv_valid.o: ./src/swlayers/sw_slave_conv_valid.c

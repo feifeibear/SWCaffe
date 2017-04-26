@@ -4,7 +4,8 @@
 //typedef double Type;
 //#include "util.h"
 #include "caffe/swlayers/sw_conv_layer_impl.h"
-#include "caffe/util/acc_transpose.h"
+#include "caffe/util/matrix_trans.h"
+//
 
 //#ifndef ACC_TRANS
 //#define ACC_TRANS
@@ -40,7 +41,7 @@ inline int weight_swdnn_offset_back(int no, int ni, int kr, int kc, int No, int 
 }
 
 
-typedef double Type;
+//typedef double Type;
 
 typedef struct ConvData_st{
   Type* input; //0
@@ -75,21 +76,18 @@ void sw_conv_forward_impl_d(
     //Type* my_weight_ref = (Type*)malloc(sizeof(Type)*K*K*No*Ni);
     Type* my_in_ref = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
 
-#ifndef ACC_TRANS
+//#if 0
     for(cRi = 0; cRi < Ri; ++cRi)
       for(cCi = 0; cCi < Ci; ++cCi)
         for(cNi = 0; cNi < Ni; ++cNi)
           for(cB = 0; cB < B; ++cB)
             my_in[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
               in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
-#else
+//#else
     printf("begin");
-    int shape_ori[4] = {Ci, Ri, Ni, B};
-    int shape_new[4] = {4, 3, 1, 2};
-    acc_transpose(in, my_in, sizeof(double), 4, shape_ori, shape_new);
+    MatrixInvert(in, my_in_ref, B, Ni, Ri, Ci);
     printf("trans in over");
 
-/*
     Type sum1 = 0, sum2 = 0;
     for( i = 0; i < Ci*Ri*Ni*B; ++i ) {
       if( fabs(my_in_ref[i] - my_in[i]) > 1e-4) {
@@ -99,8 +97,7 @@ void sw_conv_forward_impl_d(
     }
     printf("check over! sum1 %lf and sum2 %lf\n", sum1, sum2);
     free(my_in_ref);
-    */
-#endif
+//#endif
 
 
 #ifndef ACC_TRANS
