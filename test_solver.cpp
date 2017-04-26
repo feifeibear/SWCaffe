@@ -2,6 +2,7 @@
 #ifdef MYMPI
 #include <mpi.h>
 #endif
+#include <string>
 using namespace caffe;
 
 int main (int argc, char ** argv) {
@@ -196,10 +197,15 @@ int main (int argc, char ** argv) {
   solver_param.set_momentum(0.9);
   solver_param.set_weight_decay(0.0005);
   solver_param.set_type("SGD");
+  //solver_param.set_snapshot(100);
+  //solver_param.set_snapshot_prefix("lenet");
 
-  LOG_IF(INFO, Caffe::root_solver()) << "Init solver...";
-  shared_ptr<Solver<double> >
-      solver(SolverRegistry<double>::CreateSolver(solver_param));
+
+  DLOG(INFO) << "Init solver...";
+  shared_ptr<Solver<float> >
+      solver(SolverRegistry<float>::CreateSolver(solver_param));
+  DLOG(INFO) << "Begin solve...";
+  //solver->net()->CopyTrainedLayersFrom("_iter_700.caffemodel");
   solver->Solve(NULL);
   LOG_IF(INFO, Caffe::root_solver())
     << "test end";

@@ -14,7 +14,6 @@
 //#include "caffe/proto/caffe.pb.h"
 //#include "caffe/util/db.hpp"
 
-
 namespace caffe {
 
 

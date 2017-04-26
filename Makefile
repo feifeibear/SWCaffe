@@ -2,7 +2,7 @@ CXX=mpic++
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
 FLAGS+=-DMYMPI
-FLAGS+=-DSEQ_MNIST
+#FLAGS+=-DSEQ_MNIST
 
 SWFLAGS=-DSWCODE
 
@@ -51,6 +51,7 @@ OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/layers/reduction_layer.o\
 		./build/layers/euclidean_loss_layer.o\
 		./build/layers/silence_layer.o\
+		./build/layers/dropout_layer.o\
 		./build/net.o\
 		./build/solvers/adadelta_solver.o\
 		./build/solvers/adagrad_solver.o\
@@ -140,12 +141,16 @@ TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_fa
 		./swtest/obj/test_convolution_layer.o
 #		./swtest/obj/conv_layer_impl.o
 
-all: test_lstm
+all: vggnet 
 
 test_solver: test_solver.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
-#-lhdf5_cpp -lhdf5_hl_cpp  
 test_solver.o: test_solver.cpp
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+vggnet: vggnet.o $(OBJ)
+	$(CXX) $^ $(LDFLAGS)  -o $@
+vggnet.o: vggnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_all: $(TEST_OBJ)

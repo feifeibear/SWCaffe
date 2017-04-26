@@ -20,6 +20,7 @@
 #include <caffe/protohpp/ReshapeParameter.hpp>
 #include <caffe/protohpp/BiasParameter.hpp>
 #include <caffe/protohpp/ReductionParameter.hpp>
+#include <caffe/protohpp/DropoutParameter.hpp>
 #include <caffe/common.hpp>
 
 namespace caffe {
@@ -166,6 +167,7 @@ class LayerParameter {
       has_reshape_param_ = false;
       has_bias_param_ = false;
       has_reduction_param_ = false;
+      has_dropout_param_ = false;
 
       data_param_ = NULL;
       input_param_ = NULL;
@@ -184,6 +186,7 @@ class LayerParameter {
       reshape_param_ = NULL;
       bias_param_ = NULL;
       reduction_param_ = NULL;
+      dropout_param_ = NULL;
     }
 
     LayerParameter(const LayerParameter& other) {
@@ -204,6 +207,7 @@ class LayerParameter {
       reshape_param_ = NULL;
       bias_param_ = NULL;
       reduction_param_ = NULL;
+      dropout_param_ = NULL;
       this->CopyFrom(other);
     }
 
@@ -252,6 +256,7 @@ class LayerParameter {
       has_reshape_param_ = other.has_reshape_param();
       has_bias_param_ = other.has_bias_param();
       has_reduction_param_ = other.has_reduction_param();
+      has_dropout_param_ = other.has_dropout_param();
 
       if(has_input_param_)
         this->mutable_input_param()->CopyFrom(other.input_param());
@@ -303,6 +308,9 @@ class LayerParameter {
 
       if(has_reduction_param_)
         this->mutable_reduction_param()->CopyFrom(other.reduction_param());
+
+      if(has_dropout_param_)
+        this->mutable_dropout_param()->CopyFrom(other.dropout_param());
     }
 
     void Clear() {
@@ -330,6 +338,7 @@ class LayerParameter {
       has_reshape_param_ = false;
       has_bias_param_ = false;
       has_reduction_param_ = false;
+      has_dropout_param_ = false;
     }
 
     ~LayerParameter() { 
@@ -350,6 +359,7 @@ class LayerParameter {
       if (reshape_param_ != NULL) delete reshape_param_;
       if (bias_param_ != NULL) delete bias_param_;
       if (reduction_param_ != NULL) delete reduction_param_;
+      if (dropout_param_ != NULL) delete dropout_param_;
     }
 
     inline const std::string name() const { return name_; }
@@ -691,6 +701,23 @@ class LayerParameter {
     }
     inline bool has_reduction_param() const { return has_reduction_param_; }
 
+    //Dropout
+    void setup_dropout_param(const DropoutParameter& other) {
+      has_dropout_param_ = true;
+      if (dropout_param_ == NULL) dropout_param_ = new DropoutParameter;
+      dropout_param_->CopyFrom(other);
+    }
+    DropoutParameter* mutable_dropout_param() {
+      has_dropout_param_ = true;
+      if (dropout_param_ == NULL) dropout_param_ = new DropoutParameter;
+      return dropout_param_;
+    }
+    inline const DropoutParameter& dropout_param() const { 
+      CHECK_NOTNULL(dropout_param_);
+      return *dropout_param_;
+    }
+    inline bool has_dropout_param() const { return has_dropout_param_; }
+
   private:
     std::string name_;
     std::string type_;
@@ -744,6 +771,8 @@ class LayerParameter {
     bool has_bias_param_;
     ReductionParameter* reduction_param_;
     bool has_reduction_param_;
+    DropoutParameter* dropout_param_;
+    bool has_dropout_param_;
 };
 
 }//end caffe
