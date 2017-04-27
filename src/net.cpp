@@ -755,11 +755,21 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
   int num_source_layers = net.layers.size();
   for (int i = 0; i < num_source_layers; ++i) {
     const Serial_Layer& source_layer = net.layers[i];
-    DLOG(INFO) << "Copying source layer " << i;
+    const string& source_layer_name = source_layer.name;
+    int target_layer_id = 0;
+    while (target_layer_id != layer_names_.size() &&
+        layer_names_[target_layer_id] != source_layer_name) {
+      ++target_layer_id;
+    }
+    if (target_layer_id == layer_names_.size()) {
+      LOG(ERROR) << "Ignoring source layer " << source_layer_name;
+      continue;
+    }
+    DLOG(INFO) << "Copying source layer " << source_layer_name;
     vector<shared_ptr<Blob<Dtype> > >& target_blobs =
-        layers_[i]->blobs();
+        layers_[target_layer_id]->blobs();
     CHECK_EQ(target_blobs.size(), source_layer.blobs.size())
-        << "Incompatible number of blobs for layer " << i;
+        << "Incompatible number of blobs for layer " << source_layer_name;
     for (int j = 0; j < target_blobs.size(); ++j) {
       Dtype* data = target_blobs[j]->mutable_cpu_data();
       int num_data = source_layer.blobs[j].data.size();

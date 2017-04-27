@@ -24,6 +24,7 @@ public:
 class Serial_Layer
 {
 public:
+  std::string name;
   std::vector<Serial_Blob> blobs;
 
   friend class boost::serialization::access;
@@ -31,6 +32,7 @@ public:
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {
+    ar & name;
     ar & blobs;
   }
 };
