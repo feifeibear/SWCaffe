@@ -749,6 +749,30 @@ void Net<Dtype>::ShareTrainedLayersWith(const Net* other) {
   }
 }
 
+//zzy edited
+template <typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
+  int num_source_layers = net.layers.size();
+  for (int i = 0; i < num_source_layers; ++i) {
+    const Serial_Layer& source_layer = net.layers[i];
+    DLOG(INFO) << "Copying source layer " << i;
+    vector<shared_ptr<Blob<Dtype> > >& target_blobs =
+        layers_[i]->blobs();
+    CHECK_EQ(target_blobs.size(), source_layer.blobs.size())
+        << "Incompatible number of blobs for layer " << i;
+    for (int j = 0; j < target_blobs.size(); ++j) {
+      Dtype* data = target_blobs[j]->mutable_cpu_data();
+      int num_data = source_layer.blobs[j].data.size();
+      for (int k=0; k<num_data; k++)
+        data[k] = source_layer.blobs[j].data[k];
+      Dtype* diff = target_blobs[j]->mutable_cpu_diff();
+      int num_diff = source_layer.blobs[j].diff.size();
+      for (int k=0; k<num_diff; k++)
+        diff[k] = source_layer.blobs[j].diff[k];
+    }
+  }
+}
+
 template <typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
   int num_source_layers = param.layer_size();

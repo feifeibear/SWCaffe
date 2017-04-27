@@ -1,4 +1,5 @@
 #include "caffe/caffe.hpp"
+#include "caffe/util/serialize.hpp"
 using namespace caffe;
 
 LayerParameter vgg_conv(int num_output, std::string name, std::string bottom, std::string top) {
@@ -177,9 +178,17 @@ int main() {
   solver_param.set_weight_decay(0.0005);
   solver_param.set_type("SGD");
 
+  Serial_Net net;
+  {
+    std::ifstream ifs("../data/serialized_caffemodel");
+    boost::archive::text_iarchive ia(ifs);
+    ia >> net;
+  }
+
   shared_ptr<Solver<float> >
       solver(SolverRegistry<float>::CreateSolver(solver_param));
-  solver->net()->CopyTrainedLayersFrom("VGG_ILSVRC_16_layers.caffemodel");
+  
+  solver->net()->CopyTrainedLayersFrom(net);
   solver->Solve(NULL);
 
   return 0;

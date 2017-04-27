@@ -4,6 +4,7 @@ FLAGS+=-DCPU_ONLY
 INC_FLAGS=-I../thirdparty/glog_install/include
 INC_FLAGS += -I../thirdparty/openblas_install/include
 INC_FLAGS += -I../thirdparty/hdf5_install/include
+INC_FLAGS += -I../thirdparty/boost_install/include
 INC_FLAGS += -I./include
 
 TEST_INC_FLAGS=-I../thirdparty/glog_install/include
@@ -11,6 +12,7 @@ TEST_INC_FLAGS += -I../thirdparty/openblas_install/include
 TEST_INC_FLAGS += -I../thirdparty/hdf5_install/include
 TEST_INC_FLAGS += -I./include
 TEST_INC_FLAGS += -I../thirdparty/googletest/include
+LDFLAGS += -L ../thirdparty/boost_install/lib -lboost_serialization
 
 LDFLAGS += -L ../thirdparty/glog_install/lib/ -lglog
 LDFLAGS += -L ../thirdparty/openblas_install/lib -lopenblas

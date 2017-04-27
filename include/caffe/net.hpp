@@ -12,6 +12,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/protohpp/LayerParameter.hpp"
 #include "caffe/protohpp/NetParameter.hpp"
+#include "caffe/util/serialize.hpp"
 
 namespace caffe {
 
@@ -71,6 +72,7 @@ class Net {
   
 
   void ShareTrainedLayersWith(const Net* other);
+  void CopyTrainedLayersFrom(const Serial_Net& net);
   void CopyTrainedLayersFrom(const NetParameter& param);
   void CopyTrainedLayersFrom(const string trained_filename);
   //void CopyTrainedLayersFromBinaryProto(const string trained_filename);
