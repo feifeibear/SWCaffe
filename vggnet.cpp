@@ -185,6 +185,9 @@ int main() {
     ia >> net;
   }
 
+  for (int i=0; i<net.layers.size(); i++)
+    LOG(INFO) << "layer " << net.layers[i].name;
+
   shared_ptr<Solver<float> >
       solver(SolverRegistry<float>::CreateSolver(solver_param));
   
