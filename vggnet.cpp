@@ -68,7 +68,7 @@ LayerParameter vgg_dropout(std::string name, std::string bottom, std::string top
 int main() {
 
   DataParameter data_param_data;
-  data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
+  data_param_data.set_source("../data/imagenet_bin/train_data.bin", "../data/imagenet_bin/train_label.bin");
   data_param_data.set_batch_size(100);
   LayerParameter data_train;
   data_train.set_name("data_train");
@@ -81,7 +81,7 @@ int main() {
   data_train.add_include(train_include);
 
   DataParameter data_param_label;
-  data_param_label.set_source("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte");
+  data_param_label.set_source("../data/imagenet_bin/test_data.bin", "../data/imagenet_bin/test_label.bin");
   data_param_label.set_batch_size(100);
   LayerParameter data_test;
   data_test.set_name("data_test");
@@ -119,7 +119,7 @@ int main() {
   net_param.add_layer(data_train);
   net_param.add_layer(data_test);
 
-  net_param.add_layer(vgg_conv(64, "conv1_1_mnist", "data", "conv1_1"));
+  net_param.add_layer(vgg_conv(64, "conv1_1", "data", "conv1_1"));
   net_param.add_layer(vgg_relu("relu1_1", "conv1_1", "conv1_1"));
   net_param.add_layer(vgg_conv(64, "conv1_2", "conv1_1", "conv1_2"));
   net_param.add_layer(vgg_relu("relu1_2", "conv1_2", "conv1_2"));
@@ -154,15 +154,15 @@ int main() {
   net_param.add_layer(vgg_relu("relu5_3", "conv5_3", "conv5_3"));
   net_param.add_layer(vgg_pool("pool5", "conv5_3", "pool5"));
 
-  net_param.add_layer(vgg_ip(4096, "fc6_mnist", "pool5", "fc6"));
+  net_param.add_layer(vgg_ip(4096, "fc6", "pool5", "fc6"));
   net_param.add_layer(vgg_relu("relu6", "fc6", "fc6"));
   net_param.add_layer(vgg_dropout("drop6", "fc6", "fc6"));
   
-  net_param.add_layer(vgg_ip(4096, "fc7_mnist", "fc6", "fc7"));
+  net_param.add_layer(vgg_ip(4096, "fc7", "fc6", "fc7"));
   net_param.add_layer(vgg_relu("relu7", "fc7", "fc7"));
   net_param.add_layer(vgg_dropout("drop7", "fc7", "fc7"));
 
-  net_param.add_layer(vgg_ip(10, "fc8_mnist", "fc7", "fc8"));
+  net_param.add_layer(vgg_ip(16, "fc8_mnist", "fc7", "fc8"));
   net_param.add_layer(loss);
   net_param.add_layer(accuracy);
 
