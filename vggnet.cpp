@@ -119,7 +119,7 @@ int main() {
   net_param.add_layer(data_train);
   net_param.add_layer(data_test);
 
-  net_param.add_layer(vgg_conv(64, "conv1_1", "data", "conv1_1"));
+  net_param.add_layer(vgg_conv(64, "conv1_1_mnist", "data", "conv1_1"));
   net_param.add_layer(vgg_relu("relu1_1", "conv1_1", "conv1_1"));
   net_param.add_layer(vgg_conv(64, "conv1_2", "conv1_1", "conv1_2"));
   net_param.add_layer(vgg_relu("relu1_2", "conv1_2", "conv1_2"));
@@ -154,15 +154,15 @@ int main() {
   net_param.add_layer(vgg_relu("relu5_3", "conv5_3", "conv5_3"));
   net_param.add_layer(vgg_pool("pool5", "conv5_3", "pool5"));
 
-  net_param.add_layer(vgg_ip(4096, "fc6", "pool5", "fc6"));
+  net_param.add_layer(vgg_ip(4096, "fc6_mnist", "pool5", "fc6"));
   net_param.add_layer(vgg_relu("relu6", "fc6", "fc6"));
   net_param.add_layer(vgg_dropout("drop6", "fc6", "fc6"));
   
-  net_param.add_layer(vgg_ip(4096, "fc7", "fc6", "fc7"));
+  net_param.add_layer(vgg_ip(4096, "fc7_mnist", "fc6", "fc7"));
   net_param.add_layer(vgg_relu("relu7", "fc7", "fc7"));
   net_param.add_layer(vgg_dropout("drop7", "fc7", "fc7"));
 
-  net_param.add_layer(vgg_ip(10, "fc8", "fc7", "fc8"));
+  net_param.add_layer(vgg_ip(10, "fc8_mnist", "fc7", "fc8"));
   net_param.add_layer(loss);
   net_param.add_layer(accuracy);
 

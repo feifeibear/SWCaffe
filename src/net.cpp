@@ -762,7 +762,7 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
       ++target_layer_id;
     }
     if (target_layer_id == layer_names_.size()) {
-      LOG(ERROR) << "Ignoring source layer " << source_layer_name;
+      LOG(INFO) << "Ignoring source layer " << source_layer_name;
       continue;
     }
     DLOG(INFO) << "Copying source layer " << source_layer_name;
@@ -779,6 +779,7 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
       int num_diff = source_layer.blobs[j].diff.size();
       for (int k=0; k<num_diff; k++)
         diff[k] = source_layer.blobs[j].diff[k];
+      LOG(INFO)<<source_layer_name<<", "<<num_data<<", "<<num_diff;
     }
   }
 }
