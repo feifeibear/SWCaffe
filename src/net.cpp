@@ -14,6 +14,8 @@
 #include "caffe/util/insert_splits.hpp"
 //#include "caffe/util/hdf5.hpp"
 
+#include "caffe/util/mpi.hpp"
+
 namespace caffe {
 
 template <typename Dtype>
@@ -743,6 +745,54 @@ void Net<Dtype>::ShareTrainedLayersWith(const Net* other) {
           << source_blob->shape_string() << "; target param shape is "
           << target_blobs[j]->shape_string();
       target_blobs[j]->ShareData(*source_blob);
+    }
+  }
+}
+
+//zzy edited
+template <typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
+  if (Caffe::root_solver()){
+    int num_source_layers = net.layers.size();
+    for (int i = 0; i < num_source_layers; ++i) {
+      const Serial_Layer& source_layer = net.layers[i];
+      const string& source_layer_name = source_layer.name;
+      int target_layer_id = 0;
+      while (target_layer_id != layer_names_.size() &&
+          layer_names_[target_layer_id] != source_layer_name) {
+        ++target_layer_id;
+      }
+      if (target_layer_id == layer_names_.size()) {
+        LOG(INFO) << "Ignoring source layer " << source_layer_name;
+        continue;
+      }
+      DLOG(INFO) << "Copying source layer " << source_layer_name;
+      vector<shared_ptr<Blob<Dtype> > >& target_blobs =
+          layers_[target_layer_id]->blobs();
+      CHECK_EQ(target_blobs.size(), source_layer.blobs.size())
+          << "Incompatible number of blobs for layer " << source_layer_name;
+      for (int j = 0; j < target_blobs.size(); ++j) {
+        Dtype* data = target_blobs[j]->mutable_cpu_data();
+        int num_data = source_layer.blobs[j].data.size();
+        for (int k=0; k<num_data; k++)
+          data[k] = source_layer.blobs[j].data[k];
+        Dtype* diff = target_blobs[j]->mutable_cpu_diff();
+        int num_diff = source_layer.blobs[j].diff.size();
+        for (int k=0; k<num_diff; k++)
+          diff[k] = source_layer.blobs[j].diff[k];
+      }
+    }
+  }
+  for (int i = 0; i < layers_.size(); ++i) {
+    vector<shared_ptr<Blob<Dtype> > >& target_blobs =
+        layers_[i]->blobs();
+    for (int j = 0; j < target_blobs.size(); ++j) {
+      Dtype* data = target_blobs[j]->mutable_cpu_data();
+      caffe_mpi_bcast<Dtype>(data, target_blobs[j]->count(), 0, MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+      Dtype* diff = target_blobs[j]->mutable_cpu_diff();
+      caffe_mpi_bcast<Dtype>(diff, target_blobs[j]->count(), 0, MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
     }
   }
 }

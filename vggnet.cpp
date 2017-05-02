@@ -1,7 +1,6 @@
 #include "caffe/caffe.hpp"
-#ifdef MYMPI
 #include <mpi.h>
-#endif
+#include "caffe/util/serialize.hpp"
 using namespace caffe;
 
 LayerParameter vgg_conv(int num_output, std::string name, std::string bottom, std::string top) {
@@ -73,8 +72,8 @@ int main (int argc, char ** argv) {
 #endif
 
   DataParameter data_param_data;
-  data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte");
-  data_param_data.set_batch_size(256/Caffe::solver_count());
+  data_param_data.set_source("../data/imagenet_bin/train_data.bin", "../data/imagenet_bin/train_label.bin", "../data/imagenet/train_mean.bin");
+  data_param_data.set_batch_size(100);
   LayerParameter data_train;
   data_train.set_name("data_train");
   data_train.set_type("Data");
@@ -86,7 +85,7 @@ int main (int argc, char ** argv) {
   data_train.add_include(train_include);
 
   DataParameter data_param_label;
-  data_param_label.set_source("../data/t10k-images-idx3-ubyte", "../data/t10k-labels-idx1-ubyte");
+  data_param_label.set_source("../data/imagenet_bin/test_data.bin", "../data/imagenet_bin/test_label.bin", "../data/imagenet/test_mean.bin");
   data_param_label.set_batch_size(100);
   LayerParameter data_test;
   data_test.set_name("data_test");
@@ -167,7 +166,7 @@ int main (int argc, char ** argv) {
   net_param.add_layer(vgg_relu("relu7", "fc7", "fc7"));
   net_param.add_layer(vgg_dropout("drop7", "fc7", "fc7"));
 
-  net_param.add_layer(vgg_ip(10, "fc8", "fc7", "fc8"));
+  net_param.add_layer(vgg_ip(16, "fc8_mnist", "fc7", "fc8"));
   net_param.add_layer(loss);
   net_param.add_layer(accuracy);
 
@@ -176,16 +175,26 @@ int main (int argc, char ** argv) {
   solver_param.add_test_iter(100);
   solver_param.set_test_interval(500);
   solver_param.set_base_lr(0.01);
-  solver_param.set_display(100);
+  solver_param.set_display(10);
   solver_param.set_max_iter(10000);
   solver_param.set_lr_policy("fixed");
   solver_param.set_momentum(0.9);
   solver_param.set_weight_decay(0.0005);
   solver_param.set_type("SGD");
 
+  Serial_Net net;
+  if(Caffe::root_solver()) {
+    std::ifstream ifs("../data/serialized_caffemodel");
+    boost::archive::text_iarchive ia(ifs);
+    ia >> net;
+  }
+
+  for (int i=0; i<net.layers.size(); i++)
+    LOG(INFO) << "layer " << net.layers[i].name;
+
   shared_ptr<Solver<float> >
       solver(SolverRegistry<float>::CreateSolver(solver_param));
-  //solver->net()->CopyTrainedLayersFrom("VGG_ILSVRC_16_layers.caffemodel");
+  solver->net()->CopyTrainedLayersFrom(net);
   solver->Solve(NULL);
 #ifdef MYMPI
   MPI_Finalize();
