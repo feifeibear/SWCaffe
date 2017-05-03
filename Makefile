@@ -2,6 +2,7 @@ CXX=mpic++
 FLAGS=-O3
 FLAGS+=-DCPU_ONLY
 FLAGS+=-DMYMPI
+# must uncomment it for LSTM
 #FLAGS+=-DSEQ_MNIST
 
 SWFLAGS=-DSWCODE
@@ -106,7 +107,7 @@ TEST_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_facto
 		./build/solver.o\
 		./build/test/test_lstm_layer.o\
 		./build/test/test_caffe_main.o
-		
+
 
 TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
@@ -141,7 +142,7 @@ TEST_sw_OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_fa
 		./swtest/obj/test_convolution_layer.o
 #		./swtest/obj/conv_layer_impl.o
 
-all: vggnet 
+all: vggnet
 
 test_solver: test_solver.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
@@ -160,7 +161,7 @@ test_sw: $(TEST_sw_OBJ)
 	$(CXX) $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@
 
 test_lstm: test_lstm.o $(OBJ)
-	$(CXX) $^ $(LDFLAGS)  -o $@ 
+	$(CXX) $^ $(LDFLAGS)  -o $@
 test_lstm.o: test_lstm.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 

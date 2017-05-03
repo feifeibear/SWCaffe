@@ -65,17 +65,6 @@ void DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     CHECK_EQ(num_labels, number_of_images);
 
   //}
-/*
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(&n_rows,            1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(&n_cols,            1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(&number_of_images,  1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(&batch_size,        1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-*/
 	vector<int> top_shape;
 
 #ifdef SEQ_MNIST
