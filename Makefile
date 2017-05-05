@@ -4,8 +4,10 @@ FLAGS+=-DCPU_ONLY
 INC_FLAGS=-I../thirdparty/glog_install/include
 INC_FLAGS += -I../thirdparty/openblas_install/include
 INC_FLAGS += -I../thirdparty/hdf5_install/include
-INC_FLAGS += -I../thirdparty/boost_install/include
-INC_FLAGS += -I./include
+INC_FLAGS += -I../thirdparty/hdf5_install/include
+#INC_FLAGS += -I../thirdparty/boost_install/include
+INC_FLAGS += -I ./include
+#INC_FLAGS += -I /usr/local/include
 
 TEST_INC_FLAGS=-I../thirdparty/glog_install/include
 TEST_INC_FLAGS += -I../thirdparty/openblas_install/include
@@ -16,8 +18,11 @@ TEST_INC_FLAGS += -I../thirdparty/googletest/include
 LDFLAGS += -L ../thirdparty/glog_install/lib/ -lglog
 LDFLAGS += -L ../thirdparty/openblas_install/lib -lopenblas
 LDFLAGS += -L ../thirdparty/hdf5_install/lib -lhdf5 -lhdf5_hl
-LDFLAGS += -L ../thirdparty/boost_install/lib -lboost_system
-LDFLAGS += -L ../thirdparty/boost_install/lib -lboost_serialization
+LDFLAGS += -L /usr/local/lib/ -lprotobuf
+#LDFLAGS += -L ../thirdparty/boost_install/lib -lboost_system
+#LDFLAGS += -L ../thirdparty/boost_install/lib -lboost_serialization
+LDFLAGS += -lboost_system
+LDFLAGS += -lboost_serialization
 
 OBJ=./build/blob.o ./build/common.o ./build/syncedmem.o ./build/layer_factory.o\
 		./build/util/math_functions.o \
@@ -145,7 +150,7 @@ OBJ_INTEL=./build/common.o \
 
 
 
-all: test_solver
+all: net_param_serialize 
 
 test_solver: test_solver.o $(OBJ)
 	g++ $^ $(LDFLAGS)  -o $@
