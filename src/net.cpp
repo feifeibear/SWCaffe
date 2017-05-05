@@ -776,10 +776,6 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
         int num_data = source_layer.blobs[j].data.size();
         for (int k=0; k<num_data; k++)
           data[k] = source_layer.blobs[j].data[k];
-        Dtype* diff = target_blobs[j]->mutable_cpu_diff();
-        int num_diff = source_layer.blobs[j].diff.size();
-        for (int k=0; k<num_diff; k++)
-          diff[k] = source_layer.blobs[j].diff[k];
       }
     }
   }
@@ -789,9 +785,6 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
     for (int j = 0; j < target_blobs.size(); ++j) {
       Dtype* data = target_blobs[j]->mutable_cpu_data();
       caffe_mpi_bcast<Dtype>(data, target_blobs[j]->count(), 0, MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-      Dtype* diff = target_blobs[j]->mutable_cpu_diff();
-      caffe_mpi_bcast<Dtype>(diff, target_blobs[j]->count(), 0, MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     }
   }

@@ -218,7 +218,7 @@ void Solver<Dtype>::Step(int iters) {
 #ifdef MYMPI
 
     comm_begin_time = MPI_Wtime();
-    vector<shared_ptr<Blob<Dtype> > >& my_net_params = this->net_->params_nc();
+    vector<Blob<Dtype>* >& my_net_params = this->net_->learnable_params_nc();
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
       /*
       MPI_Bcast(

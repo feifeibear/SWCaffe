@@ -124,6 +124,9 @@ class Net {
   inline const vector<Blob<Dtype>*>& learnable_params() const {
     return learnable_params_;
   }
+  inline vector<Blob<Dtype>*>& learnable_params_nc() {
+    return learnable_params_;
+  }
   inline const vector<float>& params_lr() const { return params_lr_; }
   inline const vector<bool>& has_params_lr() const { return has_params_lr_; }
   inline const vector<float>& params_weight_decay() const {

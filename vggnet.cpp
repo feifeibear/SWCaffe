@@ -183,11 +183,9 @@ int main (int argc, char ** argv) {
   solver_param.set_type("SGD");
 
   Serial_Net net;
-  if(Caffe::root_solver()) {
-    std::ifstream ifs("../data/serialized_caffemodel");
-    boost::archive::text_iarchive ia(ifs);
-    ia >> net;
-  }
+  std::ifstream ifs("../data/serialized_caffemodel");
+  net.serialize_in(ifs);
+  ifs.close();
 
   for (int i=0; i<net.layers.size(); i++)
     LOG(INFO) << "layer " << net.layers[i].name;
