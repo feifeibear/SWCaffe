@@ -32,7 +32,6 @@ public:
       batch_size_ = other.batch_size();
       data_source_ = other.data_source();
       label_source_ = other.label_source();
-      mean_source_ = other.mean_source();
       rand_skip_ = other.rand_skip();
       backend_= other.backend();
       scale_ = other.scale();
@@ -44,16 +43,11 @@ public:
       for( int i = 0; i < other.mean_value_size(); ++i )
         mean_value_[i] = other.mean_value(i);
   }
-  void set_source(std::string dsource, std::string lsource, std::string msource) { 
-    data_source_ = dsource; 
-    label_source_ = lsource;
-    mean_source_ = msource;
-  }
+  void set_source(std::string dsource, std::string lsource) { data_source_ = dsource; label_source_ = lsource; }
   inline int batch_size() const { return batch_size_; }
   inline void set_batch_size( int value ) { batch_size_ = value; }
   inline const std::string data_source() const { return data_source_; }
   inline const std::string label_source() const { return label_source_; }
-  inline const std::string mean_source() const { return mean_source_; }
   inline int rand_skip() const { return rand_skip_; }
   inline DB backend() const { return backend_; }
   inline int scale() const { return scale_; }
@@ -66,7 +60,7 @@ public:
 
   private:
     int batch_size_;
-    std::string data_source_, label_source_, mean_source_;
+    std::string data_source_, label_source_;
     int rand_skip_;
     DB backend_;
     float scale_;

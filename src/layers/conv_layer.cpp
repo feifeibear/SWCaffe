@@ -6,10 +6,7 @@
 //#define SW_CODE
 //#define TEST
 //#ifdef SW_CODE
-
-extern "C" {
-#include "caffe/swlayers/sw_conv_layer_impl.h"
-}
+#include "caffe/swlayers/conv_layer_impl.hpp"
 //#endif
 
 static int times = 0;
@@ -36,23 +33,16 @@ template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
 #ifdef SW_CODE
-  assert(typeid(Dtype) == typeid(double));
   const Dtype* weight       = this->blobs_[0]->cpu_data();
   const Dtype* bias_data    = this->blobs_[1]->cpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
+    const Dtype* bottom_data  = bottom[i]->cpu_data();
+    Dtype* top_data           = top[i]->mutable_cpu_data();
 
-    if(bottom[0]->num() >= 128 
-        && bottom[0]->channels() >= 64 
-        && top[0]->channels() >= 64){
-
-      const Dtype* bottom_data  = bottom[i]->cpu_data();
-      Dtype* top_data           = top[i]->mutable_cpu_data();
-
-      if(sizeof(Dtype) == sizeof(double))
-        sw_conv_forward_impl_d(
-          (double*)bottom_data,
-          (double*)weight,
-          (double*)top_data,
+    conv_forward_impl<Dtype>(
+          bottom_data,
+          weight,
+          top_data,
           //bias_data,
           //int Ci,
           bottom[0]->width(),
@@ -66,30 +56,18 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           top[0]->channels(),
           //int B
           bottom[0]->num()
-        );
-    }
-    else {
-      const Dtype* bottom_data = bottom[i]->cpu_data();
-      Dtype* top_data = top[i]->mutable_cpu_data();
-      for (int n = 0; n < this->num_; ++n) {
-        this->forward_cpu_gemm(bottom_data
-            + n * this->bottom_dim_, weight,
-            top_data + n * this->top_dim_);
+          );
+
+      if (this->bias_term_) {
+        const Dtype* bias = this->blobs_[1]->cpu_data();
+        for (int n = 0; n < this->num_; ++n) {
+          this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
+        }
       }
-    }
-
-
-    if (this->bias_term_) {
-      Dtype* top_data = top[i]->mutable_cpu_data();
-      const Dtype* bias = this->blobs_[1]->cpu_data();
-      for (int n = 0; n < this->num_; ++n)
-        this->forward_cpu_bias(top_data
-            + n * this->top_dim_, bias);
-    }
-   }//for
+  }
 #else
-   const Dtype* weight = this->blobs_[0]->cpu_data();
-   for (int i = 0; i < bottom.size(); ++i) {
+    const Dtype* weight = this->blobs_[0]->cpu_data();
+    for (int i = 0; i < bottom.size(); ++i) {
       const Dtype* bottom_data = bottom[i]->cpu_data();
       Dtype* top_data = top[i]->mutable_cpu_data();
       for (int n = 0; n < this->num_; ++n) {
@@ -143,20 +121,19 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
 
       if (this->param_propagate_down_[0] || propagate_down[i]) {
-        if(sizeof(Dtype)== sizeof(double))
-        conv_backward_impl_d(
+        conv_backward_impl<Dtype>(
           //const Type* in,
-          (double*)mybottom_data,
+          mybottom_data,
           //const Type* out_grad,
-          (double*)mytop_diff,
+          mytop_diff,
           //Type* weight,
-          (double*)myweight,
+          myweight,
           //Type* in_grad,
-          (double*)mybottom_diff,
+          mybottom_diff,
           //Type* weight_diff,
-          (double*)myweight_diff,
+          myweight_diff,
           //Type* bias_grad,
-          //mybias_diff,
+          mybias_diff,
           //int Ci,
           bottom[0]->width(),
           //int Ri,
@@ -176,10 +153,10 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 #endif
 
 #ifdef SW_CODE
-    assert(typeid(Dtype) == typeid(double));
-    const Dtype* weight    = this->blobs_[0]->cpu_data();
-    Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();
-    Dtype* bias_diff       = this->blobs_[1]->mutable_cpu_diff();
+
+    const Dtype* weight       = this->blobs_[0]->cpu_data();
+    Dtype* weight_diff        = this->blobs_[0]->mutable_cpu_diff();
+    Dtype* bias_diff          = this->blobs_[1]->mutable_cpu_diff();
 
     for (int i = 0; i < top.size(); ++i) {
       const Dtype* bottom_data  = bottom[i]->cpu_data();
@@ -193,24 +170,18 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
           }
         }
 
-
-    if(bottom[0]->num() >= 128 
-        && bottom[0]->channels() >= 64 
-        && top[0]->channels() >= 64){
-
       if (this->param_propagate_down_[0] || propagate_down[i]) {
-        if(sizeof(Dtype)== sizeof(double))
-        sw_conv_backward_impl_d(
+        conv_backward_impl<Dtype>(
             //const Type* in,
-            (double*)bottom_data,
+            bottom_data,
             //const Type* out_grad,
-            (double*)top_diff,
+            top_diff,
             //Type* weight,
-            (double*)weight,
+            weight,
             //Type* in_grad,
-            (double*)bottom_diff,
+            bottom_diff,
             //Type* weight_diff,
-            (double*)weight_diff,
+            weight_diff,
             //Type* bias_grad,
             //bias_diff,
             //int Ci,
@@ -226,25 +197,8 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
             //int B
             bottom[0]->num()
             );
-        }
-    }
-    else {
-      if (this->param_propagate_down_[0] || propagate_down[i]) {
-        for (int n = 0; n < this->num_; ++n) {
-          // gradient w.r.t. weight. Note that we will accumulate diffs.
-          if (this->param_propagate_down_[0]) {
-            this->weight_cpu_gemm(bottom_data + n * this->bottom_dim_,
-                top_diff + n * this->top_dim_, weight_diff);
-          }
-          // gradient w.r.t. bottom data, if necessary.
-          if (propagate_down[i]) {
-            this->backward_cpu_gemm(top_diff + n * this->top_dim_, weight,
-                bottom_diff + n * this->bottom_dim_);
-          }
-        }
       }
-    }//else
-  }//for
+    }
 #else
 
   const Dtype* weight = this->blobs_[0]->cpu_data();

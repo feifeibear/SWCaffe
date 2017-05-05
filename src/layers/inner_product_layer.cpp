@@ -22,7 +22,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   K_ = bottom[0]->count(axis);
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
-    LOG_IF(INFO, Caffe::root_solver()) << "Skipping parameter initialization";
+    LOG(INFO) << "Skipping parameter initialization";
   } else {
     if (bias_term_) {
       this->blobs_.resize(2);
@@ -53,6 +53,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     }
   }  // parameter initialization
   this->param_propagate_down_.resize(this->blobs_.size(), true);
+  LOG(INFO) << " InnerProductLayer Setup Ok! ";
 }
 
 template <typename Dtype>

@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "caffe/sgd_solvers.hpp"
-//#include "caffe/util/hdf5.hpp"
+#include "caffe/util/hdf5.hpp"
 //#include "caffe/util/io.hpp"
 //#include "caffe/util/upgrade_proto.hpp"
 
@@ -279,7 +279,6 @@ void SGDSolver<Dtype>::SnapshotSolverStateToBinaryProto(
 template <typename Dtype>
 void SGDSolver<Dtype>::SnapshotSolverStateToHDF5(
     const string& model_filename) {
-  /*
   string snapshot_filename =
       Solver<Dtype>::SnapshotFilename(".solverstate.h5");
   LOG(INFO) << "Snapshotting solver state to HDF5 file " << snapshot_filename;
@@ -301,7 +300,6 @@ void SGDSolver<Dtype>::SnapshotSolverStateToHDF5(
   }
   H5Gclose(history_hid);
   H5Fclose(file_hid);
-  */
 }
 
 template <typename Dtype>
@@ -326,7 +324,6 @@ void SGDSolver<Dtype>::RestoreSolverStateFromBinaryProto(
 
 template <typename Dtype>
 void SGDSolver<Dtype>::RestoreSolverStateFromHDF5(const string& state_file) {
-  /*
   hid_t file_hid = H5Fopen(state_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
   CHECK_GE(file_hid, 0) << "Couldn't open solver state file " << state_file;
   this->iter_ = hdf5_load_int(file_hid, "iter");
@@ -348,7 +345,6 @@ void SGDSolver<Dtype>::RestoreSolverStateFromHDF5(const string& state_file) {
   }
   H5Gclose(history_hid);
   H5Fclose(file_hid);
-  */
 }
 
 INSTANTIATE_CLASS(SGDSolver);

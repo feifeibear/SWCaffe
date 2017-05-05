@@ -17,9 +17,6 @@
 #include <vector>
 
 #include "caffe/util/device_alternate.hpp"
-#ifdef MYMPI
-#include <mpi.h>
-#endif
 
 // Convert macro to string
 #define STRINGIFY(m) #m
@@ -43,8 +40,8 @@ private:\
 // Instantiate a class with float and double specifications.
 #define INSTANTIATE_CLASS(classname) \
   char gInstantiationGuard##classname; \
-  template class classname<double>; \
-  template class classname<float>
+  template class classname<float>; \
+  template class classname<double>
 
 #define INSTANTIATE_LAYER_GPU_FORWARD(classname) \
   template void classname<float>::Forward_gpu( \
@@ -52,8 +49,7 @@ private:\
       const std::vector<Blob<float>*>& top); \
   template void classname<double>::Forward_gpu( \
       const std::vector<Blob<double>*>& bottom, \
-      const std::vector<Blob<double>*>& top)
-
+      const std::vector<Blob<double>*>& top);
 
 #define INSTANTIATE_LAYER_GPU_BACKWARD(classname) \
   template void classname<float>::Backward_gpu( \

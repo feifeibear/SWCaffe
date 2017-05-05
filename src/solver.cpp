@@ -2,14 +2,10 @@
 
 #include <string>
 #include <vector>
-#ifdef MYMPI
-#include "caffe/util/mpi.hpp"
-#include "caffe/util/math_functions.hpp"
-#endif
 
 #include "caffe/solver.hpp"
 #include "caffe/util/format.hpp"
-//#include "caffe/util/hdf5.hpp"
+#include "caffe/util/hdf5.hpp"
 //#include "caffe/util/io.hpp"
 //#include "caffe/util/upgrade_proto.hpp"
 
@@ -54,7 +50,6 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
     Caffe::set_random_seed(param_.random_seed() + Caffe::solver_rank());
   }
   // Scaffolding code
-  
   InitTrainNet();
   LOG(INFO)<<"init train net done...";
   if (Caffe::root_solver()) {
@@ -108,7 +103,7 @@ void Solver<Dtype>::InitTrainNet() {
 
 template <typename Dtype>
 void Solver<Dtype>::InitTestNets() {
-  //CHECK(Caffe::root_solver());
+  CHECK(Caffe::root_solver());
   const bool has_net_param = param_.has_net_param();
   const bool has_net_file = param_.has_net();
   const int num_generic_nets = has_net_param + has_net_file;
@@ -191,10 +186,6 @@ void Solver<Dtype>::Step(int iters) {
   losses_.clear();
   smoothed_loss_ = 0;
   iteration_timer_.Start();
-#ifdef MYMPI
-  double comm_begin_time = 0.0, calc_lapse = 0.0;
-  double comm_end_time = 0.0, comm_lapse = 0.0;
-#endif
 
   while (iter_ < stop_iter) {
     // zero-init the params
@@ -214,141 +205,72 @@ void Solver<Dtype>::Step(int iters) {
     }
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
-
-#ifdef MYMPI
-
-    comm_begin_time = MPI_Wtime();
-    vector<Blob<Dtype>* >& my_net_params = this->net_->learnable_params_nc();
-    for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
-      /*
-      MPI_Bcast(
-           my_net_params[param_id]->mutable_cpu_data(),
-           my_net_params[param_id]->count(),
-           MPI_DOUBLE,
-           0,
-           MPI_COMM_WORLD);
-           */
-      caffe_mpi_bcast<Dtype>(
-           my_net_params[param_id]->mutable_cpu_data(),
-           my_net_params[param_id]->count(),
-           0,
-           MPI_COMM_WORLD);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    comm_end_time = MPI_Wtime();
-    comm_lapse += comm_end_time - comm_begin_time;
-#endif
-    comm_begin_time = MPI_Wtime();
     // accumulate the loss and gradient
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
     }
-    comm_end_time = MPI_Wtime();
-    calc_lapse += comm_end_time - comm_begin_time;
-
-#ifdef MYMPI
-    comm_begin_time = MPI_Wtime();
-    Dtype reduce_loss = 0;
-    caffe_mpi_reduce<Dtype>( &loss, &reduce_loss, 1, MPI_SUM, 0, MPI_COMM_WORLD );
-    if(Caffe::solver_rank() == 0)
-      loss = reduce_loss;
-
-    //DLOG(INFO) << "FJR begin reduce params";
-    for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
-      Dtype* temp_reduce_params;
-      if(Caffe::solver_rank() == 0){
-        temp_reduce_params = new Dtype [my_net_params[param_id]->count()];
-      }
-      caffe_mpi_reduce<Dtype>(
-                   my_net_params[param_id]->mutable_cpu_diff(), 
-                   temp_reduce_params,
-                   my_net_params[param_id]->count(), 
-                   MPI_SUM,
-                   0,
-                   MPI_COMM_WORLD);
-      if(Caffe::solver_rank() == 0){
-        caffe_copy<Dtype>(my_net_params[param_id]->count(),
-            temp_reduce_params,
-            my_net_params[param_id]->mutable_cpu_diff());
-        delete [] temp_reduce_params;
-      }
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    comm_end_time = MPI_Wtime();
-    comm_lapse += comm_end_time - comm_begin_time;
-
-#endif
-
-    if(Caffe::solver_rank() == 0){
-      loss /= param_.iter_size();
-      // average the loss across iterations for smoothed reporting
-      UpdateSmoothedLoss(loss, start_iter, average_loss);
-      if (display) {
-        float lapse = iteration_timer_.Seconds();
-        float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
-        //zzy
-        LOG(INFO) << "Weight + Bias Communication time is " << comm_lapse << "sec";
-        LOG(INFO) << "Calculation   time is " << calc_lapse << "sec";
-        comm_lapse = 0.0;
-        calc_lapse = 0.0;
-        LOG(INFO) << "Iteration " << iter_
-            << " (" << per_s << " iter/s, " << lapse << "s/"
-            << param_.display() << " iters), loss = " << smoothed_loss_;
-        iteration_timer_.Start();
-        iterations_last_ = iter_;
-        const vector<Blob<Dtype>*>& result = net_->output_blobs();
-        int score_index = 0;
-        for (int j = 0; j < result.size(); ++j) {
-          const Dtype* result_vec = result[j]->cpu_data();
-          const string& output_name =
-              net_->blob_names()[net_->output_blob_indices()[j]];
-          const Dtype loss_weight =
-              net_->blob_loss_weights()[net_->output_blob_indices()[j]];
-          for (int k = 0; k < result[j]->count(); ++k) {
-            ostringstream loss_msg_stream;
-            if (loss_weight) {
-              loss_msg_stream << " (* " << loss_weight
-                              << " = " << loss_weight * result_vec[k] << " loss)";
-            }
-            //zzy
-            LOG(INFO) << "    Train net output #"
-                << score_index++ << ": " << output_name << " = "
-                << result_vec[k] << loss_msg_stream.str();
+    loss /= param_.iter_size();
+    // average the loss across iterations for smoothed reporting
+    UpdateSmoothedLoss(loss, start_iter, average_loss);
+    if (display) {
+      float lapse = iteration_timer_.Seconds();
+      float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
+      //zzy
+      LOG(INFO) << "Iteration " << iter_
+          << " (" << per_s << " iter/s, " << lapse << "s/"
+          << param_.display() << " iters), loss = " << smoothed_loss_;
+      iteration_timer_.Start();
+      iterations_last_ = iter_;
+      const vector<Blob<Dtype>*>& result = net_->output_blobs();
+      int score_index = 0;
+      for (int j = 0; j < result.size(); ++j) {
+        const Dtype* result_vec = result[j]->cpu_data();
+        const string& output_name =
+            net_->blob_names()[net_->output_blob_indices()[j]];
+        const Dtype loss_weight =
+            net_->blob_loss_weights()[net_->output_blob_indices()[j]];
+        for (int k = 0; k < result[j]->count(); ++k) {
+          ostringstream loss_msg_stream;
+          if (loss_weight) {
+            loss_msg_stream << " (* " << loss_weight
+                            << " = " << loss_weight * result_vec[k] << " loss)";
           }
+          //zzy
+          LOG(INFO) << "    Train net output #"
+              << score_index++ << ": " << output_name << " = "
+              << result_vec[k] << loss_msg_stream.str();
         }
       }
-      for (int i = 0; i < callbacks_.size(); ++i) {
-        callbacks_[i]->on_gradients_ready();
-      }
-      ApplyUpdate();
     }
-      // Increment the internal iter_ counter -- its value should always indicate
-      // the number of times the weights have been updated.
+    for (int i = 0; i < callbacks_.size(); ++i) {
+      callbacks_[i]->on_gradients_ready();
+    }
+    ApplyUpdate();
+    // Increment the internal iter_ counter -- its value should always indicate
+    // the number of times the weights have been updated.
     ++iter_;
 
-    if(Caffe::solver_rank() == 0){
-      SolverAction::Enum request = GetRequestedAction();
+    SolverAction::Enum request = GetRequestedAction();
 
-      // Save a snapshot if needed.
-      if ((param_.snapshot()
-           && iter_ % param_.snapshot() == 0
-           && Caffe::root_solver()) ||
-           (request == SolverAction::SNAPSHOT)) {
-        Snapshot();
-      }
-      if (SolverAction::STOP == request) {
-        requested_early_exit_ = true;
-        // Break out of training loop.
-        break;
-      }
-    }//if rank == 0;
+    // Save a snapshot if needed.
+    if ((param_.snapshot()
+         && iter_ % param_.snapshot() == 0
+         && Caffe::root_solver()) ||
+         (request == SolverAction::SNAPSHOT)) {
+      Snapshot();
+    }
+    if (SolverAction::STOP == request) {
+      requested_early_exit_ = true;
+      // Break out of training loop.
+      break;
+    }
   }
 }
 
 template <typename Dtype>
 void Solver<Dtype>::Solve(const char* resume_file) {
-//CHECK(Caffe::root_solver());
+  CHECK(Caffe::root_solver());
   LOG(INFO) << "Solving " << net_->name();
   LOG(INFO) << "Learning Rate Policy: " << param_.lr_policy();
 
@@ -380,17 +302,17 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   // training, for the train net we only run a forward pass as we've already
   // updated the parameters "max_iter" times -- this final pass is only done to
   // display the loss, which is computed in the forward pass.
-  if ( param_.display() && iter_ % param_.display() == 0) {
+  if (param_.display() && iter_ % param_.display() == 0) {
     int average_loss = this->param_.average_loss();
     Dtype loss;
-    //net_->Forward(&loss);
-    //UpdateSmoothedLoss(loss, start_iter, average_loss);
+    net_->Forward(&loss);
+
+    UpdateSmoothedLoss(loss, start_iter, average_loss);
+
     LOG(INFO) << "Iteration " << iter_ << ", loss = " << smoothed_loss_;
   }
   if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
-    if (Caffe::root_solver()) {
-      TestAll();
-    }
+    TestAll();
   }
   LOG(INFO) << "Optimization Done.";
 }
@@ -483,7 +405,6 @@ void Solver<Dtype>::Test(const int test_net_id) {
 
 template <typename Dtype>
 void Solver<Dtype>::Snapshot() {
-  /*
   CHECK(Caffe::root_solver());
   string model_filename;
   switch (param_.snapshot_format()) {
@@ -498,7 +419,6 @@ void Solver<Dtype>::Snapshot() {
   }
 
   SnapshotSolverState(model_filename);
-  */
 }
 
 template <typename Dtype>
@@ -537,13 +457,10 @@ string Solver<Dtype>::SnapshotToBinaryProto() {
 
 template <typename Dtype>
 string Solver<Dtype>::SnapshotToHDF5() {
-  /*
   string model_filename = SnapshotFilename(".caffemodel.h5");
   LOG(INFO) << "Snapshotting to HDF5 file " << model_filename;
   net_->ToHDF5(model_filename, param_.snapshot_diff());
   return model_filename;
-  */
-  return "";
 }
 
 template <typename Dtype>

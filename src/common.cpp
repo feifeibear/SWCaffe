@@ -56,17 +56,8 @@ void GlobalInit(int* pargc, char*** pargv) {
 #ifdef CPU_ONLY  // CPU-only Caffe.
 
 Caffe::Caffe()
-    : random_generator_(), mode_(Caffe::CPU) {
-#ifdef MYMPI
-    MPI_Comm_size(MPI_COMM_WORLD, &solver_count_);
-    MPI_Comm_rank(MPI_COMM_WORLD, &solver_rank_);
-    multiprocess_ = true;
-#else
-    solver_count_ = 1;
-    solver_rank_ = 0;
-    multiprocess_ = false;
-#endif
-}
+    : random_generator_(), mode_(Caffe::CPU),
+      solver_count_(1), solver_rank_(0), multiprocess_(false) { }
 
 Caffe::~Caffe() { }
 
@@ -119,16 +110,8 @@ void* Caffe::RNG::generator() {
 
 Caffe::Caffe()
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
-    mode_(Caffe::CPU) {
-#ifdef MYMPI
-      MPI_Comm_size(MPI_COMM_WORLD, &solver_count_);
-      MPI_Comm_rank(MPI_COMM_WORLD, & solver_rank_);
-      multiprocess_ = true;
-#else
-    solver_count_ = 1;
-    solver_rank_ = 0;
-    multiprocess_ = false;
-#endif
+    mode_(Caffe::CPU),
+    solver_count_(1), solver_rank_(0), multiprocess_(false) {
   // Try to create a cublas handler, and report an error if failed (but we will
   // keep the program running as one might just want to run CPU code).
   if (cublasCreate(&cublas_handle_) != CUBLAS_STATUS_SUCCESS) {
