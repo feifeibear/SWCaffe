@@ -13,7 +13,7 @@ int main (int argc, char ** argv) {
   //mnist input 10, 1, 28, 28
   DataParameter data_param_data;
   data_param_data.set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte", "");
-  data_param_data.set_batch_size(64);
+  data_param_data.set_batch_size(128);
   //data_param_data.set_batch_size(8);
   LayerParameter data_train;
   data_train.set_name("data_train");

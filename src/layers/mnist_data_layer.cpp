@@ -219,16 +219,17 @@ void MNISTDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
         }
       }
+#ifdef MYMPI
       // read data for remote node
       int send_data_buff_count = batch_size*n_cols*n_rows;
       Dtype* send_data_buff = (Dtype*)malloc(sizeof(Dtype)*send_data_buff_count);
-#ifdef SEQ_MNIST
+      #ifdef SEQ_MNIST
       int top2buff_size = batch_size;
       Dtype* top2buff = (Dtype*)malloc(sizeof(Dtype)*top2buff_size);
-#else
+      #else
       int top1buff_size = batch_size;
       Dtype* top1buff = (Dtype*)malloc(sizeof(Dtype)*top1buff_size);
-#endif
+      #endif
 
       for( int proc = 1; proc < Caffe::solver_count(); proc++ ){
         for( int img = 0; img < batch_size; ++img ){
@@ -278,21 +279,23 @@ void MNISTDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         }//img
 
         caffe_mpi_send<Dtype>(send_data_buff, send_data_buff_count, proc, 0, MPI_COMM_WORLD);
-#ifdef SEQ_MNIST
+        #ifdef SEQ_MNIST
         caffe_mpi_send<Dtype>(top2buff,       top2buff_size,        proc, 0, MPI_COMM_WORLD);
-#else
+        #else
         caffe_mpi_send<Dtype>(top1buff,       top1buff_size,        proc, 0, MPI_COMM_WORLD);
-#endif
+        #endif
       }//for proc
       MPI_Barrier(MPI_COMM_WORLD);
       free(send_data_buff);
-#ifdef SEQ_MNIST
+      #ifdef SEQ_MNIST
       free(top2buff);
-#else
+      #else
       free(top1buff);
+      #endif
 #endif
-
-    } else {
+    } 
+#ifdef MYMPI
+    else {
       #ifdef SEQ_MNIST
           if (start){
             start = false;
@@ -307,13 +310,13 @@ void MNISTDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       int send_data_buff_count = batch_size*n_cols*n_rows;
       MPI_Status status;
       caffe_mpi_recv<Dtype>(top[0]->mutable_cpu_data(), send_data_buff_count, 0, 0, MPI_COMM_WORLD, &status);
-#ifdef SEQ_MNIST
+      #ifdef SEQ_MNIST
       int top2buff_size = batch_size;
       caffe_mpi_recv<Dtype>(top[2]->mutable_cpu_data(), top2buff_size,        0, 0, MPI_COMM_WORLD, &status);
-#else
+      #else
       int top1buff_size = batch_size;
       caffe_mpi_recv<Dtype>(top[1]->mutable_cpu_data(), top1buff_size,        0, 0, MPI_COMM_WORLD, &status);
-#endif
+      #endif
       MPI_Barrier(MPI_COMM_WORLD);
     }
 
@@ -350,6 +353,7 @@ void MNISTDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       comm_lapes = 0.0;
       times = 0;
     }
+#endif
   }
 }
 

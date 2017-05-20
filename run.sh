@@ -1,3 +1,4 @@
-export LD_LIBRARY_PATH=/home/fang/Code/thirdparty/openblas_install/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/home/fang/Code/thirdparty/glog_install/lib:$LD_LIBRARY_PATH
-mpirun -n 4 ./vggnet
+ROOT_DIR=/home/export/online1/swyf/swdnn/fjr/SWCaffe/thirdparty
+export LD_LIBRARY_PATH=$ROOT_DIR/openblas_install/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$ROOT_DIR/glog_install/lib:$LD_LIBRARY_PATH
+mpirun -n 1 ./test_solver

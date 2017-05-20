@@ -7,8 +7,8 @@
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/layer_factory.hpp"
-#include "caffe/util/db.hpp"
-#include "caffe/util/io.hpp"
+//#include "caffe/util/db.hpp"
+//#include "caffe/util/io.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
 
