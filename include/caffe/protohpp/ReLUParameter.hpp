@@ -28,8 +28,8 @@ public:
     engine_ = other.engine();
   }
 
-  inline const float negative_slope () const { return negative_slope_; }
-  inline const ReLUParameter_Engine engine () const { return engine_; }
+  inline float negative_slope () const { return negative_slope_; }
+  inline ReLUParameter_Engine engine () const { return engine_; }
   inline void set_negative_slop ( float value ) { negative_slope_ = value; }
   inline void set_engine (ReLUParameter_Engine value ) { engine_ = value; }
 

@@ -17,12 +17,18 @@ LDFLAGS += -L../thirdparty/openblas_install/lib -lopenblas
 
 src=$(wildcard ./src/*.cpp ./src/layers/*.cpp ./src/solvers/*.cpp ./src/util/*.cpp)
 OBJ=$(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(src)))
-TEST_OBJ= $(OBJ) $(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(wildcard ./src/test/*.cpp)))
+#TEST_OBJ= $(OBJ) $(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(wildcard ./src/test/*.cpp)))
+TEST_OBJ= $(OBJ) ./build/test/test_net.o \
+					./build/test/test_caffe_main.o
 
-
-all: test_solver 
+all: test 
 runlenet:
 	sh run.sh
+
+test_tiny_net: ./models/obj/test_tiny_net.o $(OBJ)
+	$(CXX) $^ $(LDFLAGS) -o $@
+./models/obj/test_tiny_net.o: ./models/src/test_tiny_net.cpp
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_solver: ./models/obj/test_solver.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@

@@ -13,7 +13,6 @@ class InnerProductParameter {
       transpose_ = false;
       axis_= 1;
     }
-    
     InnerProductParameter(const InnerProductParameter& other){
       this->CopyFrom(other);
     }
@@ -46,7 +45,6 @@ class InnerProductParameter {
     inline const FillerParameter& weight_filler() const { return weight_filler_; }
     inline FillerParameter* mutable_bias_filler() { return &bias_filler_; }
     inline FillerParameter* mutable_weight_filler() { return &weight_filler_; }
-    
   private:
     int num_output_;
     int axis_;

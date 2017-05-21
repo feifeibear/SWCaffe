@@ -21,6 +21,7 @@
 #include <caffe/protohpp/BiasParameter.hpp>
 #include <caffe/protohpp/ReductionParameter.hpp>
 #include <caffe/protohpp/DropoutParameter.hpp>
+#include <caffe/protohpp/DummyDataParameter.hpp>
 #include <caffe/common.hpp>
 
 namespace caffe {
@@ -168,6 +169,7 @@ class LayerParameter {
       has_bias_param_ = false;
       has_reduction_param_ = false;
       has_dropout_param_ = false;
+      has_dummy_param_ = false;
 
       data_param_ = NULL;
       input_param_ = NULL;
@@ -187,6 +189,7 @@ class LayerParameter {
       bias_param_ = NULL;
       reduction_param_ = NULL;
       dropout_param_ = NULL;
+      dummy_data_param_ = NULL;
     }
 
     LayerParameter(const LayerParameter& other) {
@@ -208,6 +211,7 @@ class LayerParameter {
       bias_param_ = NULL;
       reduction_param_ = NULL;
       dropout_param_ = NULL;
+      dummy_data_param_ = NULL;
       this->CopyFrom(other);
     }
 
@@ -311,6 +315,9 @@ class LayerParameter {
 
       if(has_dropout_param_)
         this->mutable_dropout_param()->CopyFrom(other.dropout_param());
+
+      if(has_dummy_param_)
+        this->mutable_dummy_data_param()->CopyFrom(other.dummy_data_param());
     }
 
     void Clear() {
@@ -360,6 +367,7 @@ class LayerParameter {
       if (bias_param_ != NULL) delete bias_param_;
       if (reduction_param_ != NULL) delete reduction_param_;
       if (dropout_param_ != NULL) delete dropout_param_;
+      if (dummy_data_param_ != NULL) delete dummy_data_param_;
     }
 
     inline const std::string name() const { return name_; }
@@ -401,7 +409,7 @@ class LayerParameter {
     inline int blobs_size() const { return blobs_.size(); }
     
     inline const std::vector<bool> propagate_down() const { return propagate_down_; }
-    inline const bool propagate_down(int i) const { return propagate_down_[i]; }
+    inline bool propagate_down(int i) const { return propagate_down_[i]; }
     inline int propagate_down_size() const { return propagate_down_.size(); }
     inline void add_propagate_down(bool x) { propagate_down_.push_back(x); }
 
@@ -438,12 +446,12 @@ class LayerParameter {
     inline bool has_input_param() const { return has_input_param_; }
 
     //inner_product
-    void setup_inner_product_param(const InnerProductParameter& other) {
+    inline void setup_inner_product_param(const InnerProductParameter& other) {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
       inner_product_param_->CopyFrom(other);
     }
-    InnerProductParameter* mutable_inner_product_param() {
+    inline InnerProductParameter* mutable_inner_product_param() {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
       return inner_product_param_;
@@ -453,6 +461,11 @@ class LayerParameter {
       return *inner_product_param_;
     }
     inline bool has_inner_product_param() const { return has_inner_product_param_; }
+    inline InnerProductParameter* add_inner_product_param() {
+      has_inner_product_param_ = true;
+      if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
+      return inner_product_param_;
+    }
 
     //convolution
     void setup_convolution_param(const ConvolutionParameter& other) {
@@ -718,6 +731,28 @@ class LayerParameter {
     }
     inline bool has_dropout_param() const { return has_dropout_param_; }
 
+    //DummyDataParameter
+    inline void set_dummy_data_param( const DummyDataParameter& other ) {
+      has_dummy_param_ = true;
+      if(dummy_data_param_ == NULL) dummy_data_param_ = new DummyDataParameter;
+      dummy_data_param_->CopyFrom(other);
+    }
+    inline DummyDataParameter* mutable_dummy_data_param() {
+      has_dummy_param_ = true;
+      if(dummy_data_param_ == NULL) dummy_data_param_ = new DummyDataParameter;
+      return dummy_data_param_;
+    }
+    inline const DummyDataParameter& dummy_data_param() const {
+      CHECK_NOTNULL(dummy_data_param_);
+      return *dummy_data_param_;
+    }
+    inline DummyDataParameter* add_dummy_data_param() {
+      has_dummy_param_ = true;
+      if(dummy_data_param_ == NULL) dummy_data_param_ = new DummyDataParameter;
+      return dummy_data_param_;
+    }
+    inline bool has_dummy_param() const { return has_dummy_param_; }
+
   private:
     std::string name_;
     std::string type_;
@@ -773,6 +808,8 @@ class LayerParameter {
     bool has_reduction_param_;
     DropoutParameter* dropout_param_;
     bool has_dropout_param_;
+    DummyDataParameter* dummy_data_param_;
+    bool has_dummy_param_;
 };
 
 }//end caffe

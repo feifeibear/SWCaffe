@@ -37,7 +37,7 @@ class PoolingParameter {
       return *this;
     }
     
-    inline const PoolMethod pool() const { return pool_; }
+    inline PoolMethod pool() const { return pool_; }
     inline int pad() const { return pad_; }
     inline int pad_h() const { return pad_h_; }
     inline int pad_w() const { return pad_w_; }
