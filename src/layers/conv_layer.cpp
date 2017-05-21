@@ -3,9 +3,9 @@
 #include "caffe/layers/conv_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 
-//#define SW_CODE
+//#define USE_SWDNN
 //#define TEST
-//#ifdef SW_CODE
+//#ifdef USE_SWDNN
 
 extern "C" {
 #include "caffe/swlayers/sw_conv_layer_impl.h"
@@ -35,7 +35,7 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-#ifdef SW_CODE
+#ifdef USE_SWDNN
   assert(typeid(Dtype) == typeid(double));
   const Dtype* weight       = this->blobs_[0]->cpu_data();
   const Dtype* bias_data    = this->blobs_[1]->cpu_data();
@@ -175,7 +175,7 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     DLOG(INFO) << "backward OK";
 #endif
 
-#ifdef SW_CODE
+#ifdef USE_SWDNN
     assert(typeid(Dtype) == typeid(double));
     const Dtype* weight    = this->blobs_[0]->cpu_data();
     Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();

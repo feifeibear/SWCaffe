@@ -74,16 +74,16 @@ void sw_conv_forward_impl_d(
     Type* my_out  = (Type*)malloc(sizeof(Type)*Ro*Co*No*B);
     Type* my_weight = (Type*)malloc(sizeof(Type)*K*K*No*Ni);
     //Type* my_weight_ref = (Type*)malloc(sizeof(Type)*K*K*No*Ni);
-    Type* my_in_ref = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
 
-//#if 0
+#if 1 
     for(cRi = 0; cRi < Ri; ++cRi)
       for(cCi = 0; cCi < Ci; ++cCi)
         for(cNi = 0; cNi < Ni; ++cNi)
           for(cB = 0; cB < B; ++cB)
             my_in[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
               in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
-//#else
+#else
+    Type* my_in_ref = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
     printf("begin");
     MatrixInvert(in, my_in_ref, B, Ni, Ri, Ci);
     printf("trans in over");
@@ -97,7 +97,7 @@ void sw_conv_forward_impl_d(
     }
     printf("check over! sum1 %lf and sum2 %lf\n", sum1, sum2);
     free(my_in_ref);
-//#endif
+#endif
 
 
 #ifndef ACC_TRANS
@@ -130,10 +130,10 @@ void sw_conv_forward_impl_d(
     assert(param->_Ni >= 64 && param->_Ni%32 == 0);
     assert(param->_No >= 64 && param->_No%32 == 0);
 
-	  int Costride = (64*55*1024/8-Ni*B*2-Ni*No*K*2)/(No*B)-(K-1);
+	  int Costride = (64*60*1024/8 - Ni*B*2-Ni*No*2)/(No*B);
 	  param->_Costride = Costride;
     assert(Costride > 0);
-	  int ldm_consume = 8*(Ni*No*K*2 + No*B*(Costride+K-1) + Ni*B*2);
+	  int ldm_consume = 8*(Ni*No*2 + No*B*(Costride) + Ni*B*2);
 	  //printf("ldm comsumption is %d\n", ldm_consume/64);
 	  assert(ldm_consume < 64*1024*64);
     //memset(param->output, (Type)0, sizeof(Type)*Ni*B*Ci*Ri);

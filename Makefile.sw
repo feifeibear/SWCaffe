@@ -5,7 +5,6 @@ FLAGS = 	-O2 -OPT:IEEE_arith=2
 #FLAGS +=  -OPT:Olimit=6020
 FLAGS += 	-DCPU_ONLY
 FLAGS +=  -DMYMPI
-#-DSW_CODE 
 
 SWBUILD_DIR=./swbuild
 THIRD_PARTY_DIR=../thirdparty
@@ -17,13 +16,18 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/swblas/SWCBLAS/libswblas0324.a
 
 src=$(wildcard ./src/*.cpp ./src/layers/*.cpp ./src/solvers/*.cpp ./src/util/*.cpp ./src/glog/*.cpp)
 SWOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cpp, %.o, $(src)))
-
+swdnnsrc=$(wildcard ./src/swlayers/*.c ./src/util/*.c)
+SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc)))
+SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
+# uncomment if use swDNN 
+FLAGS += -DUSE_SWDNN
+SWOBJ+=$(SWDNNOBJ)
 
 all: mk test_solver
 
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/util $(SWBUILD_DIR)/layers $(SWBUILD_DIR)/swlayers \
-		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog 
+		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog
 
 run:
 	bsub -b -I -m 1 -p -q q_sw_share -host_stack 2048 -share_size 5000 -n 1 -cgsp 64 ./vggnet
@@ -40,12 +44,12 @@ test_solver: ./models/swobj/test_solver.o $(SWOBJ) $(SWLIBOBJ)
 ./models/swobj/test_solver.o: ./models/src/test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-$(SWBUILD_DIR)/util/swmatrix_trans.o: ./src/util/swmaxtrix_trans.c
-	sw5cc.new -slave -msimd $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
+$(SWBUILD_DIR)/util/swmatrix_trans.o: ./src/util/swmatrix_trans.c
+	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/util/matrix_trans.o: ./src/util/matrix_trans.c
 	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/swlayers/sw_conv_layer_impl.o: ./src/swlayers/sw_conv_layer_impl.c
-	sw5cc.new -host $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
+	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_valid.o: ./src/swlayers/sw_slave_conv_valid.c
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_full.o: ./src/swlayers/sw_slave_conv_full.c

@@ -121,8 +121,6 @@ class NetTest : public MultiDeviceTest<TypeParam> {
     lossparam.add_top("top_loss");
     LOG(INFO) << "LOSS Layer Init OK";
 
-    
-
     NetParameter param;
     param.add_layer(datalayerparam);
     param.add_layer(iplayer);

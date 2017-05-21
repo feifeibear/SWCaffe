@@ -261,6 +261,7 @@ class LayerParameter {
       has_bias_param_ = other.has_bias_param();
       has_reduction_param_ = other.has_reduction_param();
       has_dropout_param_ = other.has_dropout_param();
+      has_dummy_param_ = other.has_dummy_param();
 
       if(has_input_param_)
         this->mutable_input_param()->CopyFrom(other.input_param());
@@ -446,12 +447,12 @@ class LayerParameter {
     inline bool has_input_param() const { return has_input_param_; }
 
     //inner_product
-    inline void setup_inner_product_param(const InnerProductParameter& other) {
+    void setup_inner_product_param(const InnerProductParameter& other) {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
       inner_product_param_->CopyFrom(other);
     }
-    inline InnerProductParameter* mutable_inner_product_param() {
+    InnerProductParameter* mutable_inner_product_param() {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
       return inner_product_param_;
@@ -461,7 +462,7 @@ class LayerParameter {
       return *inner_product_param_;
     }
     inline bool has_inner_product_param() const { return has_inner_product_param_; }
-    inline InnerProductParameter* add_inner_product_param() {
+    InnerProductParameter* add_inner_product_param() {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
       return inner_product_param_;
@@ -730,7 +731,6 @@ class LayerParameter {
       return *dropout_param_;
     }
     inline bool has_dropout_param() const { return has_dropout_param_; }
-
     //DummyDataParameter
     inline void set_dummy_data_param( const DummyDataParameter& other ) {
       has_dummy_param_ = true;
@@ -747,12 +747,12 @@ class LayerParameter {
       return *dummy_data_param_;
     }
     inline DummyDataParameter* add_dummy_data_param() {
+      LOG(INFO) << "fjrdebug add_dummy_data_param";
       has_dummy_param_ = true;
       if(dummy_data_param_ == NULL) dummy_data_param_ = new DummyDataParameter;
       return dummy_data_param_;
     }
     inline bool has_dummy_param() const { return has_dummy_param_; }
-
   private:
     std::string name_;
     std::string type_;

@@ -2,8 +2,6 @@ CXX  =mpiicxx
 FLAGS=-O2
 FLAGS+=-DCPU_ONLY
 #FLAGS+=-DMYMPI
-#FLAGS+=-DSEQ_MNIST
-#SWFLAGS=-DSWCODE
 
 BOOST_DIR=/home/export/online1/swyf/swdnn/softs/install
 INC_FLAGS =-I../thirdparty/glog_install/include
@@ -40,9 +38,9 @@ vggnet: ./models/obj/vggnet.o $(OBJ)
 ./models/obj/vggnet.o: ./models/src/vggnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
-test_lstm: test_lstm.o $(OBJ)
+test_lstm: ./models/obj/test_lstm.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@ 
-test_lstm.o: test_lstm.cpp
+./models/obj/test_lstm.o: ./models/src/test_lstm.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test: $(TEST_OBJ)

@@ -10,7 +10,7 @@ int main (int argc, char ** argv) {
   data_param_data.set_batch_size(100);
   LayerParameter data_train;
   data_train.set_name("data_train");
-  data_train.set_type("MNISTData");
+  data_train.set_type("MNISTSEQData");
   data_train.add_top("data");
   data_train.add_top("clip");
   data_train.add_top("label");
@@ -24,7 +24,7 @@ int main (int argc, char ** argv) {
   data_param_label.set_batch_size(100);
   LayerParameter data_test;
   data_test.set_name("data_test");
-  data_test.set_type("MNISTData");
+  data_test.set_type("MNISTSEQData");
   data_test.add_top("data");
   data_test.add_top("clip");
   data_test.add_top("label");
@@ -123,7 +123,7 @@ int main (int argc, char ** argv) {
   SolverParameter solver_param;
   DLOG(INFO) << "Set net_param...";
   solver_param.set_net_param(net_param);
-  solver_param.add_test_iter(100);
+  solver_param.add_test_iter(1);
   solver_param.set_test_interval(500);
   solver_param.set_base_lr(0.001);
   solver_param.set_display(100);
