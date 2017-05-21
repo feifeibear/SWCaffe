@@ -447,11 +447,18 @@ class LayerParameter {
     inline bool has_input_param() const { return has_input_param_; }
 
     //inner_product
-    void setup_inner_product_param(const InnerProductParameter& other) {
+    inline void setup_inner_product_param(const InnerProductParameter& other) {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
       inner_product_param_->CopyFrom(other);
     }
+
+    inline InnerProductParameter* add_inner_product_param() {
+      has_inner_product_param_ = true;
+      if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
+      return inner_product_param_;
+    }
+
     InnerProductParameter* mutable_inner_product_param() {
       has_inner_product_param_ = true;
       if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
@@ -462,19 +469,20 @@ class LayerParameter {
       return *inner_product_param_;
     }
     inline bool has_inner_product_param() const { return has_inner_product_param_; }
-    InnerProductParameter* add_inner_product_param() {
-      has_inner_product_param_ = true;
-      if (inner_product_param_ == NULL) inner_product_param_ = new InnerProductParameter;
-      return inner_product_param_;
-    }
 
     //convolution
-    void setup_convolution_param(const ConvolutionParameter& other) {
+    inline void setup_convolution_param(const ConvolutionParameter& other) {
       has_convolution_param_ = true;
       if (convolution_param_ == NULL) convolution_param_ = new ConvolutionParameter;
       convolution_param_->CopyFrom(other);
     }
-    ConvolutionParameter* mutable_convolution_param() {
+    inline ConvolutionParameter* add_convolution_param() {
+      has_convolution_param_ = true;
+      if (convolution_param_ == NULL) convolution_param_ = new ConvolutionParameter;
+      return convolution_param_;
+    }
+
+    inline ConvolutionParameter* mutable_convolution_param() {
       has_convolution_param_ = true;
       if (convolution_param_ == NULL) convolution_param_ = new ConvolutionParameter;
       return convolution_param_;
@@ -486,12 +494,17 @@ class LayerParameter {
     inline bool has_convolution_param() const { return has_convolution_param_; }
 
     //pooling
-    void setup_pooling_param(const PoolingParameter& other) {
+    inline void setup_pooling_param(const PoolingParameter& other) {
       has_pooling_param_ = true;
       if (pooling_param_ == NULL) pooling_param_ = new PoolingParameter;
       pooling_param_->CopyFrom(other);
     }
-    PoolingParameter* mutable_pooling_param() {
+    inline PoolingParameter* add_pooling_param() {
+      has_pooling_param_ = true;
+      if (pooling_param_ == NULL) pooling_param_ = new PoolingParameter;
+      return pooling_param_;
+    }
+    inline PoolingParameter* mutable_pooling_param() {
       has_pooling_param_ = true;
       if (pooling_param_ == NULL) pooling_param_ = new PoolingParameter;
       return pooling_param_;
@@ -508,7 +521,12 @@ class LayerParameter {
       if (data_param_ == NULL) data_param_ = new DataParameter;
       data_param_->CopyFrom(other);
     }
-    DataParameter* mutable_data_param() {
+    inline DataParameter* mutable_data_param() {
+      has_data_param_ = true;
+      if (data_param_ == NULL) data_param_ = new DataParameter;
+      return data_param_;
+    }
+    inline DataParameter* add_data_param() {
       has_data_param_ = true;
       if (data_param_ == NULL) data_param_ = new DataParameter;
       return data_param_;
@@ -520,17 +538,22 @@ class LayerParameter {
     inline bool has_data_param() const { return has_data_param_; }
 
     //relu
-    void setup_relu_param(const ReLUParameter& other) {
+    inline void setup_relu_param(const ReLUParameter& other) {
       has_relu_param_ = true;
       if (relu_param_ == NULL) relu_param_ = new ReLUParameter;
       relu_param_->CopyFrom(other);
+    }
+    inline ReLUParameter* add_relu_param() {
+      has_relu_param_ = true;
+      if (relu_param_ == NULL) relu_param_ = new ReLUParameter;
+      return relu_param_;
     }
     ReLUParameter* mutable_relu_param() {
       has_relu_param_ = true;
       if (relu_param_ == NULL) relu_param_ = new ReLUParameter;
       return relu_param_;
     }
-    inline const ReLUParameter& relu_param() const { 
+    inline const ReLUParameter& relu_param() const {
       CHECK_NOTNULL(relu_param_);
       return *relu_param_;
     }
@@ -558,6 +581,11 @@ class LayerParameter {
       if (loss_param_ == NULL) loss_param_ = new LossParameter;
       loss_param_->CopyFrom(other);
     }
+    inline LossParameter* add_loss_param() {
+      has_loss_param_ = true;
+      if (loss_param_ == NULL) loss_param_ = new LossParameter;
+      return loss_param_;
+    }
     LossParameter* mutable_loss_param() {
       has_loss_param_ = true;
       if (loss_param_ == NULL) loss_param_ = new LossParameter;
@@ -569,12 +597,17 @@ class LayerParameter {
     inline bool has_loss_param() const { return has_loss_param_; }
 
     //Accuracy
-    void setup_accuracy_param(const AccuracyParameter& other) {
+    inline AccuracyParameter* add_accuracy_param() {
+      has_accuracy_param_ = true;
+      if (accuracy_param_ == NULL) accuracy_param_ = new AccuracyParameter;
+      return accuracy_param_;
+    }
+    inline void setup_accuracy_param(const AccuracyParameter& other) {
       has_accuracy_param_ = true;
       if (accuracy_param_ == NULL) accuracy_param_ = new AccuracyParameter;
       accuracy_param_->CopyFrom(other);
     }
-    AccuracyParameter* mutable_accuracy_param() {
+    inline AccuracyParameter* mutable_accuracy_param() {
       has_accuracy_param_ = true;
       if (accuracy_param_ == NULL) accuracy_param_ = new AccuracyParameter;
       return accuracy_param_;

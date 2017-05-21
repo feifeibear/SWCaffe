@@ -19,13 +19,18 @@ OBJ=$(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(src)))
 TEST_OBJ= $(OBJ) ./build/test/test_net.o \
 					./build/test/test_caffe_main.o
 
-all: test 
+all: test_solver2 
 runlenet:
 	sh run.sh
 
 test_tiny_net: ./models/obj/test_tiny_net.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS) -o $@
 ./models/obj/test_tiny_net.o: ./models/src/test_tiny_net.cpp
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+test_solver2: ./models/obj/test_solver2.o $(OBJ)
+	$(CXX) $^ $(LDFLAGS)  -o $@
+./models/obj/test_solver2.o: ./models/src/test_solver2.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_solver: ./models/obj/test_solver.o $(OBJ)
