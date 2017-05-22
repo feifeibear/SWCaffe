@@ -216,7 +216,6 @@ void Solver<Dtype>::Step(int iters) {
     net_->set_debug_info(display && param_.debug_info());
 
 #ifdef MYMPI
-
     comm_begin_time = MPI_Wtime();
     vector<Blob<Dtype>* >& my_net_params = this->net_->learnable_params_nc();
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
@@ -242,7 +241,9 @@ void Solver<Dtype>::Step(int iters) {
     // accumulate the loss and gradient
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
+      LOG(INFO) << "i " << " beforwardbackward ";
       loss += net_->ForwardBackward();
+      LOG(INFO) << "i " << " endwardbackward ";
     }
 #ifdef MYMPI
     comm_end_time = MPI_Wtime();

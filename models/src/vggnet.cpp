@@ -72,6 +72,23 @@ LayerParameter vgg_ip(int num_output, std::string name, std::string bottom, std:
   return ip;
 }
 
+LayerParameter vgg_ip_f8(int num_output, std::string name, std::string bottom, std::string top) {
+  InnerProductParameter ip_param;
+  ip_param.set_num_output(num_output);
+  LayerParameter ip;
+  ip.set_name(name);
+  ip.set_type("InnerProduct");
+  ip.add_bottom(bottom);
+  ip.add_top(top);
+  ip.setup_inner_product_param(ip_param);
+  ParamSpec* ps1 = ip.add_param();
+  ps1->set_lr_mult(10);
+  ParamSpec* ps2 = ip.add_param();
+  ps2->set_lr_mult(10);
+  return ip;
+}
+
+
 LayerParameter vgg_dropout(std::string name, std::string bottom, std::string top) {
   DropoutParameter dropout_param;
   LayerParameter dropout;
@@ -183,15 +200,15 @@ int main (int argc, char ** argv) {
   net_param.add_layer(vgg_relu("relu7", "fc7", "fc7"));
   net_param.add_layer(vgg_dropout("drop7", "fc7", "fc7"));
 
-  net_param.add_layer(vgg_ip(16, "fc8_mnist", "fc7", "fc8"));
+  net_param.add_layer(vgg_ip_f8(16, "fc8_mnist", "fc7", "fc8"));
   net_param.add_layer(loss);
   net_param.add_layer(accuracy);
 
   SolverParameter solver_param;
   solver_param.set_net_param(net_param);
-  solver_param.add_test_iter(100);
+  solver_param.add_test_iter(1);
   solver_param.set_test_interval(500);
-  solver_param.set_base_lr(0.01);
+  solver_param.set_base_lr(0.002);
   solver_param.set_display(10);
   solver_param.set_max_iter(10000);
   solver_param.set_lr_policy("fixed");

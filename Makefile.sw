@@ -4,7 +4,7 @@ SWCXX = 	sw5cc.new -slave
 FLAGS = 	-O2 -OPT:IEEE_arith=2
 #FLAGS +=  -OPT:Olimit=6020
 FLAGS += 	-DCPU_ONLY
-FLAGS +=  -DMYMPI
+#FLAGS +=  -DMYMPI
 
 SWBUILD_DIR=./swbuild
 THIRD_PARTY_DIR=../thirdparty
@@ -20,8 +20,8 @@ swdnnsrc=$(wildcard ./src/swlayers/*.c ./src/util/*.c)
 SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc)))
 SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
 # uncomment if use swDNN 
-FLAGS += -DUSE_SWDNN
-SWOBJ+=$(SWDNNOBJ)
+#FLAGS += -DUSE_SWDNN
+#SWOBJ+=$(SWDNNOBJ)
 
 all: mk test_solver
 
@@ -30,11 +30,11 @@ mk:
 		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog
 
 run:
-	bsub -b -I -m 1 -p -q q_sw_share -host_stack 2048 -share_size 5000 -n 1 -cgsp 64 ./vggnet
+	bsub -b -I -m 1 -p -q q_sw_share -host_stack 2048 -share_size 5000 -n 1 -cgsp 64 ./vggnet_sw
 runlenet:
 	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./test_solver
 
-vggnet: ./models/swobj/vggnet.o $(SWOBJ) $(SWLIBOBJ)
+vggnet_sw: ./models/swobj/vggnet.o $(SWOBJ) $(SWLIBOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@
 ./models/swobj/vggnet.o: ./models/src/vggnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@

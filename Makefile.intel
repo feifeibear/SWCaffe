@@ -19,7 +19,7 @@ OBJ=$(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(src)))
 TEST_OBJ= $(OBJ) ./build/test/test_net.o \
 					./build/test/test_caffe_main.o
 
-all: test_solver2 
+all: vggnet_intel 
 runlenet:
 	sh run.sh
 
@@ -38,7 +38,7 @@ test_solver: ./models/obj/test_solver.o $(OBJ)
 ./models/obj/test_solver.o: ./models/src/test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
-vggnet: ./models/obj/vggnet.o $(OBJ)
+vggnet_intel: ./models/obj/vggnet.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS) -o $@
 ./models/obj/vggnet.o: ./models/src/vggnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
