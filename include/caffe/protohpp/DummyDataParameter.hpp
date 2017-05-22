@@ -17,10 +17,22 @@ namespace caffe {
       inline void CopyFrom( const DummyDataParameter& other ) {
         int data_filler_size = other.data_filler().size();
         for( int i = 0; i < data_filler_size; ++i )
-          data_filler_[i].CopyFrom(other.data_filler()[i]);
+          data_filler_.push_back(other.data_filler()[i]);
         int shape_size = other.shape().size();
         for( int i = 0; i < shape_size; ++i )
-          shape_[i].CopyFrom(other.shape()[i]);
+          shape_.push_back(other.shape()[i]);
+
+        for(int i = 0; i < other.num_size();++i)
+          num_.push_back(other.num(i));
+        for(int i = 0; i < other.channels_size();++i)
+          num_.push_back(other.channels(i));
+
+        for(int i = 0; i < other.height_size();++i)
+          num_.push_back(other.height(i));
+
+        for(int i = 0; i < other.width_size();++i)
+          num_.push_back(other.width(i));
+
       }
 
       inline int shape_size() const { return shape_.size(); }

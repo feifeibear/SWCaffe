@@ -208,7 +208,7 @@ int main (int argc, char ** argv) {
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(1);
   solver_param.set_test_interval(500);
-  solver_param.set_base_lr(0.002);
+  solver_param.set_base_lr(0.0002);
   solver_param.set_display(10);
   solver_param.set_max_iter(10000);
   solver_param.set_lr_policy("fixed");

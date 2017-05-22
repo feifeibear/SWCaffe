@@ -106,7 +106,7 @@ class NetTest : public MultiDeviceTest<TypeParam> {
     ParamSpec* ipps1 = iplayer.add_param();
     ipps1->set_lr_mult(1);
     ipps1->set_decay_mult(1);
-    ParamSpec* ipps2 = iplayer.add_param(); 
+    ParamSpec* ipps2 = iplayer.add_param();
     ipps2->set_lr_mult(2);
     ipps2->set_decay_mult(0);
     iplayer.add_bottom("data");
