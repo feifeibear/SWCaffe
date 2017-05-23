@@ -749,6 +749,11 @@ class LayerParameter {
     inline bool has_reduction_param() const { return has_reduction_param_; }
 
     //Dropout
+    inline DropoutParameter* add_dropout_param() {
+      has_dropout_param_ = true;
+      if (dropout_param_ == NULL) dropout_param_ = new DropoutParameter;
+      return dropout_param_;
+    }
     void setup_dropout_param(const DropoutParameter& other) {
       has_dropout_param_ = true;
       if (dropout_param_ == NULL) dropout_param_ = new DropoutParameter;

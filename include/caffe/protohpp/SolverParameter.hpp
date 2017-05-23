@@ -103,6 +103,9 @@ public:
   inline int test_net_size() const { return test_net_.size(); }
   inline int test_state_size() const { return test_state_.size(); }
 
+  inline NetParameter& mutable_net_param() {
+    return net_param_;
+  }
   inline void set_net_param(const NetParameter& net_param) {
     net_param_.CopyFrom(net_param);
     has_net_param_ = true;

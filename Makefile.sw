@@ -23,7 +23,7 @@ SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
 #FLAGS += -DUSE_SWDNN
 #SWOBJ+=$(SWDNNOBJ)
 
-all: mk test_solver
+all: mk alexnet_sw 
 
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/util $(SWBUILD_DIR)/layers $(SWBUILD_DIR)/swlayers \
@@ -33,6 +33,12 @@ run:
 	bsub -b -I -m 1 -p -q q_sw_share -host_stack 2048 -share_size 5000 -n 1 -cgsp 64 ./vggnet_sw
 runlenet:
 	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./test_solver
+
+
+alexnet_sw: ./models/swobj/alexnet.o $(SWOBJ) $(SWLIBOBJ)
+	$(LINK) $^ $(LDFLAGS)  -o $@
+./models/swobj/alexnet.o: ./models/src/vggnet.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
 vggnet_sw: ./models/swobj/vggnet.o $(SWOBJ) $(SWLIBOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@

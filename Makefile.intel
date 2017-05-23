@@ -19,9 +19,14 @@ OBJ=$(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(src)))
 TEST_OBJ= $(OBJ) ./build/test/test_net.o \
 					./build/test/test_caffe_main.o
 
-all: vggnet_intel 
+all: alexnet_intel
 runlenet:
 	sh run.sh
+
+alexnet_intel: ./models/obj/alexnet.o $(OBJ)
+	$(CXX) $^ $(LDFLAGS)  -o $@
+./models/obj/alexnet.o: ./models/src/vggnet.cpp
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test_tiny_net: ./models/obj/test_tiny_net.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS) -o $@

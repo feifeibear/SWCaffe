@@ -99,19 +99,27 @@ class ConvolutionParameter {
       num_output_ = other.num_output();
       axis_ = other.axis();
       bias_term_ = other.bias_term();
-      pad_ = other.pad();
+      //pad_ = other.pad();
+      for(int i = 0; i < other.pad_size(); ++i)
+        pad_.push_back(other.pad(i));
       pad_h_ = other.pad_h();
       pad_w_ = other.pad_w();
-      kernel_size_ = other.kernel_size();
+//      kernel_size_ = other.kernel_size();
+      for(int i = 0; i < other.kernel_size_size(); ++i)
+        kernel_size_.push_back(other.kernel_size(i));
       kernel_h_ = other.kernel_h();
       kernel_w_ = other.kernel_w();;
 
-      stride_ = other.stride();
+      //stride_ = other.stride();
+      for(int i = 0; i < other.stride_size(); ++i)
+        stride_.push_back(other.stride(i));
       stride_h_ = other.stride_h();
       stride_w_ = other.stride_w();
       weight_filler_.CopyFrom(other.weight_filler());
       bias_filler_.CopyFrom(other.bias_filler());
-      dilation_ = other.dilation();
+      //dilation_ = other.dilation();
+      for(int i = 0; i < other.dilation_size(); ++i)
+        dilation_.push_back(other.dilation(i));
       group_ = other.group();
       force_nd_im2col_ = other.force_nd_im2col();
       has_pad_h_ = other.has_pad_h();
