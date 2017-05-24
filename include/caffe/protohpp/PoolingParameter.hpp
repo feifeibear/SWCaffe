@@ -72,7 +72,7 @@ class PoolingParameter {
     inline void set_stride_w(int s) { stride_w_ = s; has_stride_w_ = true;}
     inline void set_engine(PoolingParameter_Engine e) { engine_ = e;}
     inline void set_global_pooling(bool g) { global_pooling_ = g; }
-    
+
     void CopyFrom( const PoolingParameter& other ) {
       pool_ = other.pool();
       pad_ = other.pad();

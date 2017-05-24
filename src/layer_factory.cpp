@@ -9,7 +9,7 @@
 #include "caffe/layer_factory.hpp"
 //FJR
 #include "caffe/layers/conv_layer.hpp"
-//#include "caffe/layers/lrn_layer.hpp"
+#include "caffe/layers/lrn_layer.hpp"
 #include "caffe/layers/pooling_layer.hpp"
 #include "caffe/layers/relu_layer.hpp"
 //#include "caffe/layers/sigmoid_layer.hpp"
@@ -116,7 +116,6 @@ shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
 
 REGISTER_LAYER_CREATOR(Pooling, GetPoolingLayer);
 
-/*
 // Get LRN layer according to engine
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
@@ -154,7 +153,6 @@ shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
 }
 
 REGISTER_LAYER_CREATOR(LRN, GetLRNLayer);
-*/
 
 // Get relu layer according to engine.
 template <typename Dtype>

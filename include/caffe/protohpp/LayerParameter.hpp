@@ -22,6 +22,7 @@
 #include <caffe/protohpp/ReductionParameter.hpp>
 #include <caffe/protohpp/DropoutParameter.hpp>
 #include <caffe/protohpp/DummyDataParameter.hpp>
+#include <caffe/protohpp/LRNParameter.hpp>
 #include <caffe/common.hpp>
 
 namespace caffe {
@@ -170,6 +171,7 @@ class LayerParameter {
       has_reduction_param_ = false;
       has_dropout_param_ = false;
       has_dummy_param_ = false;
+      has_lrn_param_ = false;
 
       data_param_ = NULL;
       input_param_ = NULL;
@@ -190,6 +192,7 @@ class LayerParameter {
       reduction_param_ = NULL;
       dropout_param_ = NULL;
       dummy_data_param_ = NULL;
+      lrn_param_ = NULL;
     }
 
     LayerParameter(const LayerParameter& other) {
@@ -212,6 +215,7 @@ class LayerParameter {
       reduction_param_ = NULL;
       dropout_param_ = NULL;
       dummy_data_param_ = NULL;
+      lrn_param_ = NULL;
       this->CopyFrom(other);
     }
 
@@ -262,6 +266,7 @@ class LayerParameter {
       has_reduction_param_ = other.has_reduction_param();
       has_dropout_param_ = other.has_dropout_param();
       has_dummy_param_ = other.has_dummy_param();
+      has_lrn_param_ = other.has_lrn_param();
 
       if(has_input_param_)
         this->mutable_input_param()->CopyFrom(other.input_param());
@@ -319,6 +324,9 @@ class LayerParameter {
 
       if(has_dummy_param_)
         this->mutable_dummy_data_param()->CopyFrom(other.dummy_data_param());
+
+      if(has_lrn_param_)
+        this->mutable_lrn_param()->CopyFrom(other.lrn_param());
     }
 
     void Clear() {
@@ -369,6 +377,7 @@ class LayerParameter {
       if (reduction_param_ != NULL) delete reduction_param_;
       if (dropout_param_ != NULL) delete dropout_param_;
       if (dummy_data_param_ != NULL) delete dummy_data_param_;
+      if (lrn_param_ != NULL ) delete lrn_param_; 
     }
 
     inline const std::string name() const { return name_; }
@@ -785,12 +794,33 @@ class LayerParameter {
       return *dummy_data_param_;
     }
     inline DummyDataParameter* add_dummy_data_param() {
-      LOG(INFO) << "fjrdebug add_dummy_data_param";
       has_dummy_param_ = true;
       if(dummy_data_param_ == NULL) dummy_data_param_ = new DummyDataParameter;
       return dummy_data_param_;
     }
     inline bool has_dummy_param() const { return has_dummy_param_; }
+
+
+    //LRNParameter
+    inline void set_lrn_param( const LRNParameter& other ) {
+      has_lrn_param_ = true;
+      if(lrn_param_ == NULL) lrn_param_ = new LRNParameter;
+      lrn_param_->CopyFrom(other);
+    }
+    inline LRNParameter* mutable_lrn_param() {
+      has_lrn_param_ = true;
+      if(lrn_param_ == NULL) lrn_param_ = new LRNParameter;
+      return lrn_param_;
+    } 
+    inline const LRNParameter& lrn_param() const {
+      return *lrn_param_;
+    }
+    inline LRNParameter* add_lrn_param() {
+      has_lrn_param_ = true;
+      if(lrn_param_ == NULL) has_lrn_param_ = new LRNParameter;
+      return lrn_param_;
+    }
+    inline bool has_lrn_param() const { return has_lrn_param_; }
   private:
     std::string name_;
     std::string type_;
@@ -848,6 +878,8 @@ class LayerParameter {
     bool has_dropout_param_;
     DummyDataParameter* dummy_data_param_;
     bool has_dummy_param_;
+    LRNParameter* lrn_param_;
+    bool has_lrn_param_;
 };
 
 }//end caffe
