@@ -23,6 +23,7 @@
 #include <caffe/protohpp/DropoutParameter.hpp>
 #include <caffe/protohpp/DummyDataParameter.hpp>
 #include <caffe/protohpp/LRNParameter.hpp>
+#include <caffe/protohpp/PowerParameter.hpp>
 #include <caffe/common.hpp>
 
 namespace caffe {
@@ -172,6 +173,7 @@ class LayerParameter {
       has_dropout_param_ = false;
       has_dummy_param_ = false;
       has_lrn_param_ = false;
+      has_power_param_ = false;
 
       data_param_ = NULL;
       input_param_ = NULL;
@@ -193,6 +195,7 @@ class LayerParameter {
       dropout_param_ = NULL;
       dummy_data_param_ = NULL;
       lrn_param_ = NULL;
+      power_param_ = NULL;
     }
 
     LayerParameter(const LayerParameter& other) {
@@ -216,6 +219,7 @@ class LayerParameter {
       dropout_param_ = NULL;
       dummy_data_param_ = NULL;
       lrn_param_ = NULL;
+      power_param_ = NULL;
       this->CopyFrom(other);
     }
 
@@ -267,6 +271,7 @@ class LayerParameter {
       has_dropout_param_ = other.has_dropout_param();
       has_dummy_param_ = other.has_dummy_param();
       has_lrn_param_ = other.has_lrn_param();
+      has_power_param_ = other.has_power_param();
 
       if(has_input_param_)
         this->mutable_input_param()->CopyFrom(other.input_param());
@@ -327,6 +332,10 @@ class LayerParameter {
 
       if(has_lrn_param_)
         this->mutable_lrn_param()->CopyFrom(other.lrn_param());
+
+      if(has_power_param_)
+        this->mutable_power_param()->CopyFrom(other.power_param());
+
     }
 
     void Clear() {
@@ -378,6 +387,7 @@ class LayerParameter {
       if (dropout_param_ != NULL) delete dropout_param_;
       if (dummy_data_param_ != NULL) delete dummy_data_param_;
       if (lrn_param_ != NULL ) delete lrn_param_; 
+      if (power_param_ != NULL) delete power_param_;
     }
 
     inline const std::string name() const { return name_; }
@@ -821,6 +831,31 @@ class LayerParameter {
       return lrn_param_;
     }
     inline bool has_lrn_param() const { return has_lrn_param_; }
+
+
+    //power
+    inline void set_power_param( const PowerParameter& other ) {
+      has_power_param_= true;
+      if(pooling_param_ == NULL) power_param_ = new PowerParameter;
+      power_param_->CopyFrom(other);
+    }
+    inline PowerParameter* mutable_power_param() {
+      has_power_param_ = true;
+      if(has_power_param_ == NULL) power_param_ = new PowerParameter;
+      return power_param_;
+    }
+    inline const PowerParameter& power_param() const {
+      CHECK_NOTNULL(power_param_);
+      return *power_param_;
+    }
+    inline PowerParameter* add_power_param() {
+      has_power_param_ = true;
+      if(has_power_param_ == NULL) power_param_ = new PowerParameter;
+      return power_param_;
+    }
+    inline bool has_power_param() const { return has_power_param_; }
+
+
   private:
     std::string name_;
     std::string type_;
@@ -880,6 +915,8 @@ class LayerParameter {
     bool has_dummy_param_;
     LRNParameter* lrn_param_;
     bool has_lrn_param_;
+    PowerParameter* power_param_;
+    bool has_power_param_;
 };
 
 }//end caffe

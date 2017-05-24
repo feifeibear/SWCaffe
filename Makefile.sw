@@ -27,9 +27,11 @@ all: mk alexnet_sw
 
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/util $(SWBUILD_DIR)/layers $(SWBUILD_DIR)/swlayers \
-		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog
+		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog ./models/swobj
 
-run:
+runalex:
+	bsub -b -I -m 1 -p -q q_sw_share -host_stack 2048 -share_size 5000 -n 1 -cgsp 64 ./alexnet_sw
+runvgg:
 	bsub -b -I -m 1 -p -q q_sw_share -host_stack 2048 -share_size 5000 -n 1 -cgsp 64 ./vggnet_sw
 runlenet:
 	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./test_solver

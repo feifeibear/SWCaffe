@@ -80,13 +80,20 @@ int main (int argc, char ** argv) {
   tmplp->add_bottom("conv1");
   tmplp->add_top("conv1");
 
-  //TODO wait for lrn implementation
+  tmplp = net_param.add_layer();
+  tmplp->set_name("norm1");
+  tmplp->set_type("LRN");
+  tmplp->add_bottom("conv1");
+  tmplp->add_top("norm1");
+  tmplp->set_local_size(5);
+  tmplp->set_alpha(0.0001);
+  tmplp->set_beta(0.75);
 
   PoolingParameter* tmppoolingp;
   tmplp = net_param.add_layer();
   tmplp->set_name("pool1");
   tmplp->set_type("Pooling");
-  tmplp->add_bottom("conv1");
+  tmplp->add_bottom("norm1");
   tmplp->add_top("pool1");
   tmppoolingp = tmplp->add_pooling_param();
   tmppoolingp->set_pool(MAX);
@@ -124,13 +131,21 @@ int main (int argc, char ** argv) {
   tmplp->add_bottom("conv2");
   tmplp->add_top("conv2");
 
-  //TODO wait for lrn implementation
+  //TODO
+  tmplp = net_param.add_layer();
+  tmplp->set_name("norm2");
+  tmplp->set_type("LRN");
+  tmplp->add_bottom("conv2");
+  tmplp->add_top("norm2");
+  tmplp->set_local_size(5);
+  tmplp->set_alpha(0.0001);
+  tmplp->set_beta(0.75);
 
   PoolingParameter* tmppoolingp;
   tmplp = net_param.add_layer();
   tmplp->set_name("pool2");
   tmplp->set_type("Pooling");
-  tmplp->add_bottom("conv2");
+  tmplp->add_bottom("norm1");
   tmplp->add_top("pool2");
   tmppoolingp = tmplp->add_pooling_param();
   tmppoolingp->set_pool(MAX);
