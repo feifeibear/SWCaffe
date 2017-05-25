@@ -827,7 +827,7 @@ class LayerParameter {
     }
     inline LRNParameter* add_lrn_param() {
       has_lrn_param_ = true;
-      if(lrn_param_ == NULL) has_lrn_param_ = new LRNParameter;
+      if(lrn_param_ == NULL) lrn_param_ = new LRNParameter;
       return lrn_param_;
     }
     inline bool has_lrn_param() const { return has_lrn_param_; }

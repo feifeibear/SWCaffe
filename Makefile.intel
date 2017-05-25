@@ -26,7 +26,7 @@ TEST_OBJ= $(OBJ) $(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(wildcar
 #
 #./build/test/test_layer_factory.o 
 
-all: mk test_solver_intel 
+all: mk alexnet_intel
 
 mk:
 	mkdir -p ./models/obj ./build/glog ./build/layers/ ./build/solvers/ ./build/test/ ./build/util/
