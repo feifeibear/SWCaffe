@@ -23,39 +23,45 @@ SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
 #FLAGS += -DUSE_SWDNN
 #SWOBJ+=$(SWDNNOBJ)
 
-all: mk vggnet_sw 
+BIN_DIR=./bin
+lenet: $(BIN_DIR)/test_lenet_sw
+vgg: $(BIN_DIR)/vggnet_sw
+alexnet: $(BIN_DIR)/alexnet_sw
+solver: $(BIN_DIR)/test_solver_sw
 
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/util $(SWBUILD_DIR)/layers $(SWBUILD_DIR)/swlayers \
-		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog ./models/swobj
+		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog ./models/swobj $(BIN_DIR)
 
 runalex:
-	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./alexnet_sw
+	sh ./scripts/runalex.sh 1
 runvgg:
-	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./vggnet_sw
+	sh ./scripts/runvgg.sh 1
 runlenet:
-	bsub -b -I -m 1 -p -q q_sw_share -host_stack 1024 -share_size 6000 -n 1 -cgsp 64 ./test_solver
+	sh ./scripts/runlenet.sh 1
+runsolver:
+	sh ./scripts/runsolver.sh 1
 
-
-alexnet_swdnn_sw: ./models/swobj/alexnet_swdnn.o $(SWOBJ) $(SWLIBOBJ)
-	$(LINK) $^ $(LDFLAGS)  -o $@
-./models/swobj/alexnet_swdnn.o: ./models/src/alexnet_swdnn.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-alexnet_sw: ./models/swobj/alexnet.o $(SWOBJ) $(SWLIBOBJ)
+$(BIN_DIR)/alexnet_sw: ./models/swobj/alexnet.o $(SWOBJ) $(SWLIBOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@
 ./models/swobj/alexnet.o: ./models/src/alexnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-vggnet_sw: ./models/swobj/vggnet.o $(SWOBJ) $(SWLIBOBJ)
+$(BIN_DIR)/vggnet_sw: ./models/swobj/vggnet.o $(SWOBJ) $(SWLIBOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@
 ./models/swobj/vggnet.o: ./models/src/vggnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-test_solver_sw: ./models/swobj/test_solver.o $(SWOBJ) $(SWLIBOBJ)
+$(BIN_DIR)/test_solver_sw: ./models/swobj/test_solver.o $(SWOBJ) $(SWLIBOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@
 ./models/swobj/test_solver.o: ./models/src/test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
+$(BIN_DIR)/test_lenet_sw: ./models/swobj/test_lenet.o $(SWOBJ) $(SWLIBOBJ)
+	$(LINK) $^ $(LDFLAGS)  -o $@
+./models/swobj/test_lenet.o: ./models/src/test_lenet.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
 
 $(SWBUILD_DIR)/util/swmatrix_trans.o: ./src/util/swmatrix_trans.c
 	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@

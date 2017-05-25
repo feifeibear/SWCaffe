@@ -161,7 +161,6 @@ void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           file.read((char*)&dump,sizeof(dump));
           file.read((char*)&dump,sizeof(dump));
           file.read((char*)&dump,sizeof(dump));
-          
           label_file.clear();
           label_file.seekg( 0, std::ios_base::beg );
 
@@ -202,7 +201,6 @@ void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             file.read((char*)&dump,sizeof(dump));
             file.read((char*)&dump,sizeof(dump));
             file.read((char*)&dump,sizeof(dump));
-            
             label_file.clear();
             label_file.seekg( 0, std::ios_base::beg );
 

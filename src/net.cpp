@@ -778,6 +778,7 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
           data[k] = source_layer.blobs[j].data[k];
       }
     }
+  }
   for (int i = 0; i < layers_.size(); ++i) {
     vector<shared_ptr<Blob<Dtype> > >& target_blobs =
         layers_[i]->blobs();
@@ -788,7 +789,6 @@ void Net<Dtype>::CopyTrainedLayersFrom(const Serial_Net& net) {
       MPI_Barrier(MPI_COMM_WORLD);
 #endif
     }
-  }
   }
 }
 

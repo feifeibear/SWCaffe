@@ -26,41 +26,45 @@ TEST_OBJ= $(OBJ) $(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(wildcar
 #
 #./build/test/test_layer_factory.o 
 
-all: mk alexnet_intel
+BIN_DIR=./bin
+BUILD_DIR=./build
+
+lenet: $(BIN_DIR)/test_lenet_intel
+vgg: $(BIN_DIR)/vggnet_intel
+alexnet: $(BIN_DIR)/alexnet_intel
+solver: $(BIN_DIR)/test_solver_intel
 
 mk:
-	mkdir -p ./models/obj ./build/glog ./build/layers/ ./build/solvers/ ./build/test/ ./build/util/
-runlenet:
-	sh run.sh
+	mkdir -p $(BUILD_DIR) $(BUILD_DIR)/util $(BUILD_DIR)/layers $(BUILD_DIR)/swlayers \
+		$(BUILD_DIR)/solvers $(BUILD_DIR)/glog ./models/obj $(BIN_DIR)
 
-alexnet_intel: ./models/obj/alexnet.o $(OBJ)
+runalex:
+	sh ./scripts/runalex.sh 1
+runvgg:
+	sh ./scripts/runvgg.sh 1
+runlenet:
+	sh ./scripts/runlenet.sh 1
+runsolver:
+	sh ./scripts/runsolver.sh 1
+
+$(BIN_DIR)/alexnet_intel: ./models/obj/alexnet.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
 ./models/obj/alexnet.o: ./models/src/alexnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
-test_tiny_net: ./models/obj/test_tiny_net.o $(OBJ)
-	$(CXX) $^ $(LDFLAGS) -o $@
-./models/obj/test_tiny_net.o: ./models/src/test_tiny_net.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
-
-test_solver2: ./models/obj/test_solver2.o $(OBJ)
+$(BIN_DIR)/vggnet_intel: ./models/obj/vggnet.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
-./models/obj/test_solver2.o: ./models/src/test_solver2.cpp
+./models/obj/vggnet.o: ./models/src/vggnet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
-test_solver_intel: ./models/obj/test_solver.o $(OBJ)
+$(BIN_DIR)/test_solver_intel: ./models/obj/test_solver.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
 ./models/obj/test_solver.o: ./models/src/test_solver.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
-vggnet_intel: ./models/obj/vggnet.o $(OBJ)
-	$(CXX) $^ $(LDFLAGS) -o $@
-./models/obj/vggnet.o: ./models/src/vggnet.cpp
-	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
-
-test_lstm: ./models/obj/test_lstm.o $(OBJ)
-	$(CXX) $^ $(LDFLAGS)  -o $@ 
-./models/obj/test_lstm.o: ./models/src/test_lstm.cpp
+$(BIN_DIR)/test_lenet_intel: ./models/obj/test_lenet.o $(OBJ)
+	$(CXX) $^ $(LDFLAGS)  -o $@
+./models/obj/test_lenet.o: ./models/src/test_lenet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
 
 test: $(TEST_OBJ)
