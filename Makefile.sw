@@ -34,13 +34,13 @@ mk:
 		$(SWBUILD_DIR)/solvers $(SWBUILD_DIR)/glog ./models/swobj $(BIN_DIR)
 
 runalex:
-	sh ./scripts/runalex.sh 1
+	sh ./scripts/sw_runalex.sh 1
 runvgg:
-	sh ./scripts/runvgg.sh 1
+	sh ./scripts/sw_runvgg.sh 1
 runlenet:
-	sh ./scripts/runlenet.sh 1
+	sh ./scripts/sw_runlenet.sh 1
 runsolver:
-	sh ./scripts/runsolver.sh 1
+	sh ./scripts/sw_runsolver.sh 1
 
 $(BIN_DIR)/alexnet_sw: ./models/swobj/alexnet.o $(SWOBJ) $(SWLIBOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@
