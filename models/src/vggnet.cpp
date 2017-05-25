@@ -3,14 +3,15 @@
 #include "caffe/util/serialize.hpp"
 using namespace caffe;
 
+
 #define net_param_add_layer_vgg_conv(num_output, name, bottom, top) \
   { \
     ConvolutionParameter conv_param; \
     conv_param.set_num_output(num_output); \
-    conv_param.set_pad_h(1); \
-    conv_param.set_pad_w(1); \
     conv_param.set_kernel_h(3); \
     conv_param.set_kernel_w(3); \
+    conv_param.set_pad_h(1); \
+    conv_param.set_pad_w(1); \
     LayerParameter conv; \
     conv.set_name(name); \
     conv.set_type("Convolution"); \

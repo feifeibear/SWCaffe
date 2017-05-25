@@ -841,7 +841,7 @@ class LayerParameter {
     }
     inline PowerParameter* mutable_power_param() {
       has_power_param_ = true;
-      if(has_power_param_ == NULL) power_param_ = new PowerParameter;
+      if(power_param_ == NULL) power_param_ = new PowerParameter;
       return power_param_;
     }
     inline const PowerParameter& power_param() const {
@@ -850,7 +850,7 @@ class LayerParameter {
     }
     inline PowerParameter* add_power_param() {
       has_power_param_ = true;
-      if(has_power_param_ == NULL) power_param_ = new PowerParameter;
+      if(power_param_ == NULL) power_param_ = new PowerParameter;
       return power_param_;
     }
     inline bool has_power_param() const { return has_power_param_; }

@@ -2,7 +2,7 @@
 #include <utility>
 #include <vector>
 
-//#include "google/protobuf/text_format.h"
+#include "google/protobuf/text_format.h"
 
 #include "gtest/gtest.h"
 
@@ -70,7 +70,6 @@ class NetTest : public MultiDeviceTest<TypeParam> {
   virtual void InitTinyNet(const bool force_backward = false,
                            const bool accuracy_layer = false) {
 
-    LOG(INFO) << "Begin InitTinyNet";
     LayerParameter datalayerparam;
     datalayerparam.set_name("data");
     datalayerparam.set_type("DummyData");
@@ -86,7 +85,7 @@ class NetTest : public MultiDeviceTest<TypeParam> {
     BlobShape* datashape2 = dummyparam->add_shape();
     datashape2->add_dim(5);
     FillerParameter* filler2 = dummyparam->add_data_filler();
-    filler2->set_type("gaussian");
+    filler2->set_type("constant");
     filler2->set_value(0);
     datalayerparam.add_top("data");
     datalayerparam.add_top("label");
@@ -211,12 +210,71 @@ class NetTest : public MultiDeviceTest<TypeParam> {
     }
     if (force_backward) {
       proto += "force_backward: true ";
+      //TODO
     }
     //InitNetFromProtoString(proto);
     LOG(INFO) << "InitTinyNet OK";
   }
 
   virtual void InitTinyNetEuclidean(const bool force_backward = false) {
+
+    LayerParameter datalayerparam;
+    datalayerparam.set_name("data");
+    datalayerparam.set_type("DummyData");
+    DummyDataParameter* dummyparam = datalayerparam.add_dummy_data_param();
+    dummyparam->add_num(5);
+    dummyparam->add_channels(2);
+    dummyparam->add_height(3);
+    dummyparam->add_width(4);
+    dummyparam->add_channels(1);
+    dummyparam->add_height(1);
+    dummyparam->add_width(1);
+    FillerParameter* filler1 = dummyparam->add_data_filler();
+    filler1->set_type("gaussian");
+    filler1->set_std(0.01);
+    datalayerparam.add_top("data");
+    datalayerparam.add_top("label");
+    LOG(INFO) << "Data Layer Init OK";
+
+    LayerParameter iplayer;
+    iplayer.set_name("innerproduct");
+    iplayer.set_type("InnerProduct");
+    InnerProductParameter* ipparam = iplayer.add_inner_product_param();
+    ipparam->set_num_output(1);
+    FillerParameter* ipwfiller = ipparam->mutable_weight_filler();
+    ipwfiller->set_type("gaussian");
+    ipwfiller->set_std(0.01);
+    FillerParameter* ipbfiller = ipparam->mutable_bias_filler();
+    ipbfiller->set_type("constant");
+    ipbfiller->set_value(0);
+    ParamSpec* ipps1 = iplayer.add_param();
+    ipps1->set_lr_mult(1);
+    ipps1->set_decay_mult(1);
+    ParamSpec* ipps2 = iplayer.add_param();
+    ipps2->set_lr_mult(2);
+    ipps2->set_decay_mult(0);
+    iplayer.add_bottom("data");
+    iplayer.add_top("innerproduct");
+    LOG(INFO) << "IP Layer Init OK";
+
+    LayerParameter lossparam;
+    lossparam.set_name("loss");
+    lossparam.set_type("EuclideanLoss");
+    lossparam.add_bottom("innerproduct");
+    lossparam.add_bottom("label");
+    lossparam.add_top("top_loss");
+    LOG(INFO) << "LOSS Layer Init OK";
+
+    NetParameter param;
+    param.add_layer(datalayerparam);
+    param.add_layer(iplayer);
+    param.add_layer(lossparam);
+    param.set_name("TinyTestEuclidLossNetwork");
+
+    //CHECK(google::protobuf::TextFormat::ParseFromString(proto, &param));
+    net_.reset(new Net<Dtype>(param));
+
+
     string proto =
         "name: 'TinyTestEuclidLossNetwork' "
         "layer { "
@@ -378,6 +436,78 @@ class NetTest : public MultiDeviceTest<TypeParam> {
     if (force_backward) {
       proto << "force_backward: true ";
     }
+
+    NetParameter net_param;
+    LayerParameter* layerparam;
+    FillerParameter* temp_fillerparam;
+    DummyDataParameter* temp_dummyparam;
+    InnerProductParameter* temp_ipparam;
+
+    layerparam = net_param.add_layer();
+    layerparam->set_name("data");
+    layerparam->set_type("DummyData");
+    temp_dummyparam = layerparam->add_dummy_data_param();
+    BlobShape* temp_blob_shape = temp_dummyparam->add_shape();
+    temp_blob_shape->add_dim(5);
+    temp_blob_shape->add_dim(2);
+    temp_blob_shape->add_dim(3);
+    temp_blob_shape->add_dim(4);
+    temp_fillerparam = temp_dummyparam->add_data_filler();
+    temp_fillerparam->set_type("gaussian");
+    temp_fillerparam->set_std(0.01);
+    layerparam->add_top("data");
+
+
+    layerparam = net_param.add_layer();
+    layerparam->set_name("innerproduct1");
+    layerparam->set_type("InnerProduct");
+    temp_ipparam = layerparam->add_inner_product_param();
+    temp_ipparam->set_num_output(10);
+    temp_ipparam->set_bias_term(bias_term);
+    temp_fillerparam = temp_ipparam->mutable_weight_filler();
+    temp_fillerparam->set_type("gaussian");
+    temp_fillerparam->set_std(10);
+    ParamSpec* temp_paramspec = layerparam->add_param();
+    temp_paramspec->set_name("unsharedweights1");
+    temp_paramspec->set_lr_mult(blobs_lr_w1);
+    if (bias_term) {
+      temp_paramspec = layerparam->add_param();
+      temp_paramspec->set_lr_mult(blobs_lr_b1);
+    }
+    layerparam->add_bottom("data");
+    layerparam->add_top("innerproduct1");
+    if(midnet_loss_weight) { layerparam->add_loss_weight(*midnet_loss_weight);}
+
+    layerparam = net_param.add_layer();
+    layerparam->set_name("innerproduct2");
+    layerparam->set_type("InnerProduct");
+    temp_ipparam = layerparam->add_inner_product_param();
+    temp_ipparam->set_bias_term(bias_term);
+    temp_ipparam->set_num_output(10);
+    temp_ipparam->set_bias_term(bias_term);
+    temp_fillerparam = temp_ipparam->mutable_weight_filler();
+    temp_fillerparam->set_type("gaussian");
+    temp_fillerparam->set_std(10);
+    temp_paramspec = layerparam->add_param();
+    temp_paramspec->set_name("unsharedweights2");
+    temp_paramspec->set_lr_mult(blobs_lr_w2);
+    if (bias_term) {
+      temp_paramspec = layerparam->add_param();
+      temp_paramspec->set_lr_mult(blobs_lr_b2);
+    }
+    layerparam->add_bottom("data");
+    layerparam->add_top("innerproduct2");
+
+    layerparam = net_param.add_layer();
+    layerparam->set_name("loss");
+    layerparam->set_type("EuclideanLoss");
+    if(loss_weight)
+      layerparam->add_loss_weight(*loss_weight);
+    layerparam->add_bottom("innerproduct1");
+    layerparam->add_bottom("innerproduct2");
+
+    net_.reset(new Net<Dtype>(net_param));
+
     proto <<
         "layer { "
         "  name: 'data' "
@@ -452,7 +582,8 @@ class NetTest : public MultiDeviceTest<TypeParam> {
         "  bottom: 'innerproduct1' "
         "  bottom: 'innerproduct2' "
         "} ";
-    InitNetFromProtoString(proto.str());
+    
+    //InitNetFromProtoString(proto.str());
   }
 
   virtual void InitSharedWeightsNet() {
@@ -977,7 +1108,7 @@ TYPED_TEST(NetTest, TestBottomNeedBackwardForce) {
   EXPECT_EQ(true, bottom_need_backward[2][0]);
   EXPECT_EQ(false, bottom_need_backward[2][1]);
 }
-/*
+
 TYPED_TEST(NetTest, TestBottomNeedBackwardEuclideanForce) {
   const bool force_backward = true;
   this->InitTinyNetEuclidean(force_backward);
@@ -992,6 +1123,7 @@ TYPED_TEST(NetTest, TestBottomNeedBackwardEuclideanForce) {
   EXPECT_EQ(true, bottom_need_backward[2][1]);
 }
 
+/*
 TYPED_TEST(NetTest, TestBottomNeedBackwardTricky) {
   this->InitTrickyNet();
   const vector<vector<bool> >& bottom_need_backward =
@@ -1009,6 +1141,7 @@ TYPED_TEST(NetTest, TestBottomNeedBackwardTricky) {
   // at training/test time.
   EXPECT_EQ(true, bottom_need_backward[3][1]);
 }
+*/
 
 TYPED_TEST(NetTest, TestLossWeight) {
   typedef typename TypeParam::Dtype Dtype;
@@ -1060,7 +1193,6 @@ TYPED_TEST(NetTest, TestLossWeight) {
     }
   }
 }
-
 TYPED_TEST(NetTest, TestLossWeightMidNet) {
   typedef typename TypeParam::Dtype Dtype;
   Caffe::set_random_seed(this->seed_);
@@ -1244,14 +1376,6 @@ TYPED_TEST(NetTest, TestUnsharedWeightsDataNet) {
   EXPECT_GT(loss, 0);
 }
 
-TYPED_TEST(NetTest, TestSharedWeightsDataNet) {
-  typedef typename TypeParam::Dtype Dtype;
-  this->InitSharedWeightsNet();
-  Dtype loss;
-  this->net_->Forward(&loss);
-  EXPECT_FLOAT_EQ(loss, 0);
-}
-
 TYPED_TEST(NetTest, TestUnsharedWeightsDiffNet) {
   typedef typename TypeParam::Dtype Dtype;
   this->InitUnsharedWeightsNet();
@@ -1268,6 +1392,16 @@ TYPED_TEST(NetTest, TestUnsharedWeightsDiffNet) {
     EXPECT_FLOAT_EQ(-1 * grad1[i], grad2[i]);
   }
 }
+/*
+TYPED_TEST(NetTest, TestSharedWeightsDataNet) {
+  typedef typename TypeParam::Dtype Dtype;
+  this->InitSharedWeightsNet();
+  Dtype loss;
+  this->net_->Forward(&loss);
+  EXPECT_FLOAT_EQ(loss, 0);
+}
+
+
 
 TYPED_TEST(NetTest, TestSharedWeightsDiffNet) {
   typedef typename TypeParam::Dtype Dtype;
@@ -1414,7 +1548,7 @@ TYPED_TEST(NetTest, TestSharedWeightsResume) {
     EXPECT_FLOAT_EQ(shared_params.cpu_data()[i], ip1_weights->cpu_data()[i]);
   }
 }
-
+*/
 TYPED_TEST(NetTest, TestParamPropagateDown) {
   typedef typename TypeParam::Dtype Dtype;
   const bool kBiasTerm = true, kForceBackward = false;
@@ -1529,7 +1663,6 @@ TYPED_TEST(NetTest, TestFromTo) {
     }
   }
 }
-*/
 
 class FilterNetTest : public ::testing::Test {
  protected:

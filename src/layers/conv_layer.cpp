@@ -40,10 +40,13 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* weight       = this->blobs_[0]->cpu_data();
   const Dtype* bias_data    = this->blobs_[1]->cpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
-
+    const int* stride_data = this->stride_.cpu_data();
+    const int* pad_data = this->pad_.cpu_data();
+    const int* dilation_data = this->dilation_.cpu_data();
     if(bottom[0]->num() >= 128 
         && bottom[0]->channels() >= 64 
-        && top[0]->channels() >= 64){
+        && top[0]->channels() >= 64 
+        ){
 
       const Dtype* bottom_data  = bottom[i]->cpu_data();
       Dtype* top_data           = top[i]->mutable_cpu_data();

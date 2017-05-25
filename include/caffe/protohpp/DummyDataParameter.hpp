@@ -25,13 +25,13 @@ namespace caffe {
         for(int i = 0; i < other.num_size();++i)
           num_.push_back(other.num(i));
         for(int i = 0; i < other.channels_size();++i)
-          num_.push_back(other.channels(i));
+          channels_.push_back(other.channels(i));
 
         for(int i = 0; i < other.height_size();++i)
-          num_.push_back(other.height(i));
+          height_.push_back(other.height(i));
 
         for(int i = 0; i < other.width_size();++i)
-          num_.push_back(other.width(i));
+          width_.push_back(other.width(i));
 
       }
 
@@ -73,7 +73,10 @@ namespace caffe {
       inline int channels(int idx) const {return channels_[idx];}
       inline int width(int idx) const {return width_[idx];}
 
-      
+      inline void add_height(int n) { height_.push_back(n); }
+      inline void add_num(int n) { num_.push_back(n); }
+      inline void add_width(int n) { width_.push_back(n); }
+      inline void add_channels(int n) { channels_.push_back(n); }
 
     private:
       std::vector<FillerParameter> data_filler_;

@@ -14,7 +14,7 @@ int main (int argc, char ** argv) {
   solver_param.add_test_iter(1);
   solver_param.set_test_interval(50);
   solver_param.set_base_lr(0.01);
-  solver_param.set_display(100);
+  solver_param.set_display(10);
   solver_param.set_max_iter(450000);
   solver_param.set_lr_policy("inv");
   solver_param.set_gamma(0.1);
@@ -30,11 +30,12 @@ int main (int argc, char ** argv) {
   tmplp->add_top("data");
   tmplp->add_top("label");
   //TODO I double not like write it this way, No mirror crop_size 
+  DataParameter* tmpdata_param = tmplp->add_data_param(); 
   NetStateRule train_include;
   train_include.set_phase(TRAIN);
   tmplp->add_include(train_include);
-  data_param_data->set_source("../data/imagenet_bin/train_data.bin", "../data/imagenet_bin/train_label.bin", "../data/imagenet/train_mean.bin");
-  data_param_data->set_batch_size(128);
+  tmpdata_param->set_source("../data/imagenet_bin/train_data.bin", "../data/imagenet_bin/train_label.bin", "../data/imagenet/train_mean.bin");
+  tmpdata_param->set_batch_size(128);
 
   tmplp = net_param.add_layer();
   tmplp->set_name("data");
@@ -42,11 +43,12 @@ int main (int argc, char ** argv) {
   tmplp->add_top("data");
   tmplp->add_top("label");
   //I double not like write it this way
+  DataParameter* tmpdata_param = tmplp->add_data_param(); 
   NetStateRule test_include;
   train_include.set_phase(TEST);
   tmplp->add_include(test_include);
-  data_param_label->set_source("../data/imagenet_bin/test_data.bin", "../data/imagenet_bin/test_label.bin", "../data/imagenet/test_mean.bin");
-  data_param_data->set_batch_size(50);
+  tmpdata_param->set_source("../data/imagenet_bin/test_data.bin", "../data/imagenet_bin/test_label.bin", "../data/imagenet/test_mean.bin");
+  tmpdata_param->set_batch_size(50);
 
   ParamSpec * tmpps;
   ConvolutionParameter* tmpconvp;
@@ -114,10 +116,10 @@ int main (int argc, char ** argv) {
   tmpps->set_lr_mult(2);
   tmpps->set_decay_mult(0);
   tmpconvp->set_num_output(256);
-  tmpconvp->set_pad(2);
+//tmpconvp->set_pad(2);
   tmpconvp->set_kernel_size(5);
-  tmpconvp->set_stride(14);
-  tmpconvp->set_group(2);
+//  tmpconvp->set_stride(14);
+//  tmpconvp->set_group(2);
   fillerp = tmpconvp->mutable_weight_filler();
   fillerp->set_type("gaussian");
   fillerp->set_std(0.01);
@@ -166,7 +168,7 @@ int main (int argc, char ** argv) {
   tmpps->set_lr_mult(2);
   tmpps->set_decay_mult(0);
   tmpconvp->set_num_output(384);
-  tmpconvp->set_pad(1);
+//  tmpconvp->set_pad(1);
   tmpconvp->set_kernel_size(3);
   fillerp = tmpconvp->mutable_weight_filler();
   fillerp->set_type("gaussian");
@@ -194,9 +196,9 @@ int main (int argc, char ** argv) {
   tmpps->set_lr_mult(2);
   tmpps->set_decay_mult(0);
   tmpconvp->set_num_output(384);
-  tmpconvp->set_pad(1);
+//  tmpconvp->set_pad(1);
   tmpconvp->set_kernel_size(3);
-  tmpconvp->set_group(2);
+//  tmpconvp->set_group(2);
   fillerp = tmpconvp->mutable_weight_filler();
   fillerp->set_type("gaussian");
   fillerp->set_std(0.01);
@@ -223,9 +225,9 @@ int main (int argc, char ** argv) {
   tmpps->set_lr_mult(2);
   tmpps->set_decay_mult(0);
   tmpconvp->set_num_output(256);
-  tmpconvp->set_pad(1);
+//  tmpconvp->set_pad(1);
   tmpconvp->set_kernel_size(3);
-  tmpconvp->set_group(2);
+//  tmpconvp->set_group(2);
   fillerp = tmpconvp->mutable_weight_filler();
   fillerp->set_type("gaussian");
   fillerp->set_std(0.01);
