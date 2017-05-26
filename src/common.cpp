@@ -48,7 +48,9 @@ void GlobalInit(int* pargc, char*** pargv) {
   //::gflags::ParseCommandLineFlags(pargc, pargv, true);
   // Google logging.
   // FJR delete for glog
-  //::google::InitGoogleLogging(*(pargv)[0]);
+#ifdef USE_INTEL
+  ::google::InitGoogleLogging(*(pargv)[0]);
+#endif
   // Provide a backtrace on segfault.
   //::google::InstallFailureSignalHandler();
 }

@@ -1,6 +1,7 @@
 CXX  =mpiicxx
 FLAGS=-O2
 FLAGS+=-DCPU_ONLY
+FLAGS+=-DUSE_INTEL
 #FLAGS+=-DMYMPI
 
 BOOST_DIR=/home/export/online1/swyf/swdnn/softs/install
@@ -33,6 +34,7 @@ lenet: $(BIN_DIR)/test_lenet_intel
 vgg: $(BIN_DIR)/vggnet_intel
 alexnet: $(BIN_DIR)/alexnet_intel
 solver: $(BIN_DIR)/test_solver_intel
+lstm: $(BIN_DIR)/test_lstm_intel
 
 mk:
 	mkdir -p $(BUILD_DIR) $(BUILD_DIR)/util $(BUILD_DIR)/layers $(BUILD_DIR)/swlayers \
@@ -46,6 +48,8 @@ runlenet:
 	sh ./scripts/intel_runlenet.sh 1
 runsolver:
 	sh ./scripts/intel_runsolver.sh 1
+runlstm:
+	sh ./scripts/intel_runlstm.sh 1
 
 $(BIN_DIR)/alexnet_intel: ./models/obj/alexnet.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
@@ -66,6 +70,13 @@ $(BIN_DIR)/test_lenet_intel: ./models/obj/test_lenet.o $(OBJ)
 	$(CXX) $^ $(LDFLAGS)  -o $@
 ./models/obj/test_lenet.o: ./models/src/test_lenet.cpp
 	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+$(BIN_DIR)/test_lstm_intel: ./models/obj/test_lstm.o $(OBJ)
+	$(CXX) $^ $(LDFLAGS)  -o $@
+./models/obj/test_lstm.o: ./models/src/test_lstm.cpp
+	$(CXX) -c $^ $(FLAGS) $(INC_FLAGS) -o $@
+
+
 
 test: $(TEST_OBJ)
 	$(CXX) -pthread $^ ../thirdparty/googletest/libgtest.a $(LDFLAGS) -o $@

@@ -63,28 +63,22 @@ int main (int argc, char ** argv) {
   tmplp->set_type("Convolution");
   tmplp->add_bottom("data");
   tmplp->add_top("conv1");
-  DLOG(INFO) << "CONV1 Setup 0.1 OK";
   tmpps = tmplp->add_param();
   tmpps->set_lr_mult(1);
   tmpps->set_decay_mult(1);
-  DLOG(INFO) << "CONV1 Setup 0.2 OK";
   tmpps = tmplp->add_param();
   tmpps->set_lr_mult(2);
   tmpps->set_decay_mult(0);
   tmpconvp = tmplp->add_convolution_param();
   tmpconvp->set_num_output(96);
-  DLOG(INFO) << "CONV1 Setup 0.3 OK";
   tmpconvp->add_kernel_size(11);
-  DLOG(INFO) << "CONV1 Setup 0.4 OK";
   tmpconvp->add_stride(4);
-  DLOG(INFO) << "CONV1 Setup 0.5 OK";
   fillerp = tmpconvp->mutable_weight_filler();
   fillerp->set_type("gaussian");
   fillerp->set_std(0.01);
   fillerp = tmpconvp->mutable_bias_filler();
   fillerp->set_type("constant");
   fillerp->set_value(0);
-  DLOG(INFO) << "CONV1 Setup 1 OK";
 
   tmplp = net_param.add_layer();
   tmplp->set_name("relu1");
@@ -134,7 +128,6 @@ int main (int argc, char ** argv) {
   tmpconvp->set_num_output(256);
   tmpconvp->add_pad(2);
   tmpconvp->add_kernel_size(5);
-  tmpconvp->add_stride(14);
   tmpconvp->set_group(2);
   fillerp = tmpconvp->mutable_weight_filler();
   fillerp->set_type("gaussian");
@@ -164,13 +157,12 @@ int main (int argc, char ** argv) {
   tmplp = net_param.add_layer();
   tmplp->set_name("pool2");
   tmplp->set_type("Pooling");
-  tmplp->add_bottom("norm1");
+  tmplp->add_bottom("norm2");
   tmplp->add_top("pool2");
   tmppoolingp = tmplp->add_pooling_param();
   tmppoolingp->set_pool(PoolingParameter_PoolMethod_MAX);
   tmppoolingp->set_kernel_size(3);
   tmppoolingp->set_stride(2);
-  DLOG(INFO) << "CONV2 Setup OK";
 
 
   //3rd conv-lrn-relu-pool layer
@@ -276,10 +268,9 @@ int main (int argc, char ** argv) {
   tmppoolingp->set_pool(PoolingParameter_PoolMethod_MAX);
   tmppoolingp->set_kernel_size(3);
   tmppoolingp->set_stride(2);
-  DLOG(INFO) << "CONV5 Setup OK";
 
   //layer 6
-InnerProductParameter* tmpipp;
+  InnerProductParameter* tmpipp;
   tmplp = net_param.add_layer();
   tmplp->set_name("fc6");
   tmplp->set_type("InnerProduct");
@@ -384,6 +375,7 @@ InnerProductParameter* tmpipp;
   tmplp->add_bottom("label");
   tmplp->add_top("accuracy");
   tmplp->add_include(test_include);
+  tmplp->add_accuracy_param();
 
   //layer loss
   tmplp = net_param.add_layer();
@@ -392,6 +384,7 @@ InnerProductParameter* tmpipp;
   tmplp->add_bottom("fc8");
   tmplp->add_bottom("label");
   tmplp->add_top("loss");
+  tmplp->add_loss_param();
 
   solver_param.set_net_param(net_param);
   DLOG(INFO) << "Init solver...";

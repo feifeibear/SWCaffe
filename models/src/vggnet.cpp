@@ -108,7 +108,7 @@ int main (int argc, char ** argv) {
 
   DataParameter data_param_data;
   data_param_data.set_source("../data/imagenet_bin/train_data.bin", "../data/imagenet_bin/train_label.bin", "../data/imagenet/train_mean.bin");
-  data_param_data.set_batch_size(5);
+  data_param_data.set_batch_size(100);
   LayerParameter data_train;
   data_train.set_name("data_train");
   data_train.set_type("IMAGENETData");
