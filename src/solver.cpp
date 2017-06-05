@@ -219,14 +219,6 @@ void Solver<Dtype>::Step(int iters) {
     comm_begin_time = MPI_Wtime();
     vector<Blob<Dtype>* >& my_net_params = this->net_->learnable_params_nc();
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
-      /*
-      MPI_Bcast(
-           my_net_params[param_id]->mutable_cpu_data(),
-           my_net_params[param_id]->count(),
-           MPI_DOUBLE,
-           0,
-           MPI_COMM_WORLD);
-           */
       caffe_mpi_bcast<Dtype>(
            my_net_params[param_id]->mutable_cpu_data(),
            my_net_params[param_id]->count(),
@@ -251,7 +243,7 @@ void Solver<Dtype>::Step(int iters) {
     Dtype reduce_loss = 0;
     caffe_mpi_reduce<Dtype>( &loss, &reduce_loss, 1, MPI_SUM, 0, MPI_COMM_WORLD );
     if(Caffe::solver_rank() == 0)
-      loss = reduce_loss;
+      loss = reduce_loss/Caffe::solver_count();
 
     //DLOG(INFO) << "FJR begin reduce params";
     for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
