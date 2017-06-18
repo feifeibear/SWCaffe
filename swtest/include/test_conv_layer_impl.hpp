@@ -39,6 +39,61 @@ inline int offset(const int n, const int c, const int h,
 }
 
 template<typename Type>
+void test_conv_forward_pad_impl(Type* input,
+    Type* weight,
+    Type* output,
+    Type* bias,
+        int Ci,
+        int Ri,
+        int K,
+        int Ni,
+        int No,
+        int B,
+        int pad)
+{
+  int cB,cNo,cNi,cRo,cCo,cKr,cKc;
+  int Ci_orig = Ci, Ri_orig = Ri;
+  Ci = Ci + 2 * pad;
+  Ri = Ri + 2 * pad;
+  int Co = Ci-K+1;
+  int Ro = Ri-K+1;
+
+  DLOG(INFO) << "Ci " << Ci << "Ri " << Ri << "K " << K 
+    << "Ni " << Ni << "No " << No << "B " << B;
+
+  //bias is (No)
+  for(cRo = 0; cRo < Ro; cRo++)
+    for(cCo=0; cCo<Co; cCo++)
+      for(cNo=0; cNo<No; cNo++)
+        for(cB = 0; cB<B; cB++)
+          *(output + outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co)) = 
+            *(bias + cNo);
+
+  for(cRo=0; cRo<Ro; cRo++)
+    for(cCo=0; cCo<Co; cCo++){
+      for(cNo=0; cNo<No; cNo++){
+          for(cKr = 0 ;cKr<K; cKr++)
+            for(cKc = 0; cKc<K; cKc++){
+              for(cNi = 0; cNi<Ni; cNi++){
+                for(cB = 0; cB<B; cB++){
+                  int cRi = cRo+cKr-pad;
+                  int cCi = cCo+cKc-pad;
+                  if(cRi >= 0 && cRi < Ri_orig && cCi >= 0 cCi < Ci_orig)
+                    *(output + outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co)) += 
+                      *(input + inGetIdx(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)) * 
+                      *(weight + weightGetIdx(cNo, cNi, cKr, cKc, No, Ni, K));
+                }
+            }
+          }
+      }//cNo
+    }//cCo
+
+  printf("conv output forward is OK\n");
+}
+
+
+
+template<typename Type>
 void test_conv_forward_impl(Type* input,
     Type* weight,
     Type* output,

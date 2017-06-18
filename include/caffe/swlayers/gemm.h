@@ -15,7 +15,7 @@ typedef struct ConvData_st{
   Type* weight; //8
   Type* output; //16
   //   24,  28,  32,  36, 40,  44,  48, 52, 56 
-  int _Ni, _Ri, _Ci, _No, _K, _Ro, _Co, _B, _Costride, _bCo;
+  int _Ni, _Ri, _Ci, _No, _K, _Ro, _Co, _B, _Costride, _bCo, _pad;
 }ConvData;
 
 

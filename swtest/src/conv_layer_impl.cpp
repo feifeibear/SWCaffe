@@ -56,8 +56,6 @@ void conv_forward_impl(Type* input,
   int Co = Ci-K+1;
   int Ro = Ri-K+1;
 
-  DLOG(INFO) << "Ci " << Ci << "Ri " << Ri << "K " << K 
-    << "Ni " << Ni << "No " << No << "B " << B;
 
   //bias is (No)
   for(cRo = 0; cRo < Ro; cRo++)
@@ -101,8 +99,6 @@ void conv_backward_impl(Type* in,
         int B)
 {
     int cNi, cNo, cB, cCo, cRo, cCi, cRi, cKr, cKc;
-    DLOG(INFO) << "back: Ci " << Ci << " Ri " << Ri << " K " << K 
-    << " Ni " << Ni << " No " << No << " B " << B;
     int Co = Ci-K+1;
     int Ro = Ri-K+1;
     int Pad = K-1;

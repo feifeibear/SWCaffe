@@ -42,6 +42,10 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < bottom.size(); ++i) {
     const int* stride_data = this->stride_.cpu_data();
     const int* pad_data = this->pad_.cpu_data();
+    int mypad = 0;
+    if(this->num_spatial_axes_)
+      mypad = pad_data[0];
+
     const int* dilation_data = this->dilation_.cpu_data();
     if(bottom[0]->num() >= 128 
         && bottom[0]->channels() >= 64 
@@ -52,7 +56,8 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       Dtype* top_data           = top[i]->mutable_cpu_data();
 
       if(sizeof(Dtype) == sizeof(double))
-        sw_conv_forward_impl_d(
+        //sw_conv_forward_impl_d(
+        sw_conv_forward_pad_impl_d(
           (double*)bottom_data,
           (double*)weight,
           (double*)top_data,
@@ -68,7 +73,9 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           //int No,
           top[0]->channels(),
           //int B
-          bottom[0]->num()
+          bottom[0]->num(),
+          //int pad
+          mypad
         );
     }
     else {
@@ -144,10 +151,14 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
       DLOG(INFO) << "begin my code";
 
+      int mypad = 0;
+      const int* pad_data = this->pad_.cpu_data();
+      if(this->num_spatial_axes_)
+        mypad = pad_data[0];
 
       if (this->param_propagate_down_[0] || propagate_down[i]) {
         if(sizeof(Dtype)== sizeof(double))
-        conv_backward_impl_d(
+        conv_backward_pad_impl_d(
           //const Type* in,
           (double*)mybottom_data,
           //const Type* out_grad,
@@ -171,7 +182,9 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
           //int No,
           top[0]->channels(),
           //int B
-          bottom[0]->num()
+          bottom[0]->num(),
+          //int pad
+          mypad
           );
         }
     }//for
@@ -184,26 +197,31 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();
     Dtype* bias_diff       = this->blobs_[1]->mutable_cpu_diff();
 
+      int mypad = 0;
+      const int* pad_data = this->pad_.cpu_data();
+      if(this->num_spatial_axes_)
+        mypad = pad_data[0];
+
     for (int i = 0; i < top.size(); ++i) {
       const Dtype* bottom_data  = bottom[i]->cpu_data();
       Dtype* bottom_diff        = bottom[i]->mutable_cpu_diff();
       const Dtype* top_diff     = top[i]->mutable_cpu_diff();
 
-      if (this->bias_term_ && this->param_propagate_down_[1]) {
-        //Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
-        for (int n = 0; n < this->num_; ++n) {
-          this->backward_cpu_bias(bias_diff, top_diff + n * this->top_dim_);
+        if (this->bias_term_ && this->param_propagate_down_[1]) {
+          //Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
+          for (int n = 0; n < this->num_; ++n) {
+            this->backward_cpu_bias(bias_diff, top_diff + n * this->top_dim_);
+          }
         }
-      }
 
 
-    if(bottom[0]->num() >= 128 
-        && bottom[0]->channels() >= 64 
-        && top[0]->channels() >= 64){
+    if(    bottom[0]->num() >= 64 && bottom[0]->num() % 32 == 0 
+        && bottom[0]->channels() >= 128 && bottom[0]->channels()%128 == 0
+        && top[0]->channels() >= 64 && top[0]->channels() % 32 == 0 ){
 
       if (this->param_propagate_down_[0] || propagate_down[i]) {
         if(sizeof(Dtype)== sizeof(double))
-        sw_conv_backward_impl_d(
+        sw_conv_backward_pad_impl_d(
             //const Type* in,
             (double*)bottom_data,
             //const Type* out_grad,
@@ -227,7 +245,8 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
             //int No,
             top[0]->channels(),
             //int B
-            bottom[0]->num()
+            bottom[0]->num(),
+            mypad
             );
         }
     }
