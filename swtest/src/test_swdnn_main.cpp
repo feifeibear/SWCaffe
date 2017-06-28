@@ -295,11 +295,9 @@ int test_backward_pad() {
   for( int i = 0; i < in_size; ++i )
     if(fabs(in_diff[i] - in_diff_ref[i]) > 1e-4)
       printf("in_diff %lf vs ref %lf\n", in_diff[i], in_diff_ref[i]);
-/*
   for( int i = 0; i < weight_size; ++i )
     if(fabs(weight_diff[i] - weight_diff_ref[i]) > 1e-4)
       printf("weight_diff %lf vs ref %lf\n", weight_diff[i], weight_diff_ref[i]);
-      */
   printf("backward test OK!");
 
   free(in);
@@ -314,7 +312,7 @@ int test_backward_pad() {
 
 int main() {
   //test_backward_pad();
-  test_backward_pad(); 
+  test_backward_pad();
 //  test_forward();
   return 0;
 }
