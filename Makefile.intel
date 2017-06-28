@@ -2,7 +2,8 @@ CXX  =mpiicxx
 FLAGS=-O2
 FLAGS+=-DCPU_ONLY
 FLAGS+=-DUSE_INTEL
-#FLAGS+=-DMYMPI
+FLAGS+=-DMYMPI
+FLAGS+=-DOUTPUT_TIME
 
 BOOST_DIR=/home/export/online1/swyf/swdnn/softs/install
 PROTOBUF_DIR=../thirdparty/protobuf_install
@@ -16,7 +17,6 @@ INC_FLAGS += -I$(BOOST_DIR)
 
 LDFLAGS += -L../thirdparty/glog_install/lib/ -lglog
 LDFLAGS += -L../thirdparty/openblas_install/lib -lopenblas
-#LDFLAGS += -L../thirdparty/protobuf_install/lib -lprotobuf
 
 src=$(wildcard ./src/*.cpp ./src/layers/*.cpp ./src/solvers/*.cpp ./src/util/*.cpp)
 OBJ=$(patsubst ./src/%, ./build/%, $(patsubst %.cpp, %.o, $(src)))
@@ -40,12 +40,14 @@ mk:
 	mkdir -p $(BUILD_DIR) $(BUILD_DIR)/util $(BUILD_DIR)/layers $(BUILD_DIR)/swlayers \
 		$(BUILD_DIR)/solvers $(BUILD_DIR)/glog ./models/obj $(BIN_DIR)
 
+ar: $(OBJ)
+	ar rcs ./lib/intel/swcaffe.a $(OBJ)
 runalex:
 	sh ./scripts/intel_runalex.sh 1
 runvgg:
-	sh ./scripts/intel_runvgg.sh 1
+	sh ./scripts/intel_runvgg.sh 12
 runlenet:
-	sh ./scripts/intel_runlenet.sh 1
+	sh ./scripts/intel_runlenet.sh 12
 runsolver:
 	sh ./scripts/intel_runsolver.sh 1
 runlstm:

@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <sys/time.h>
 
 //#include "hdf5.h"
 
@@ -528,7 +529,19 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     for (int c = 0; c < before_forward_.size(); ++c) {
       before_forward_[c]->run(i);
     }
+#ifdef DEBUG_VERBOSE_2
+    struct timeval ts, te;
+    gettimeofday(&ts, NULL);
+#endif
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+#ifdef DEBUG_VERBOSE_2
+    gettimeofday(&te, NULL);
+    double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+    //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+    LOG(INFO) << "Rank " << Caffe::solver_rank() << " : layer"
+      << i << "  " << layer_names_[i]
+      << " Forward cost time: " << time << "s";
+#endif
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }
     for (int c = 0; c < after_forward_.size(); ++c) {
@@ -585,10 +598,28 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
     for (int c = 0; c < before_backward_.size(); ++c) {
       before_backward_[c]->run(i);
     }
+#ifdef DEBUG_VERBOSE_2
+    struct timeval ts, te;
+    gettimeofday(&ts, NULL);
+#endif
     if (layer_need_backward_[i]) {
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
       if (debug_info_) { BackwardDebugInfo(i); }
+#ifdef DEBUG_VERBOSE_2
+      gettimeofday(&te, NULL);
+      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+      //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+      LOG(INFO) << "Rank " << Caffe::solver_rank() << " : layer"
+        << i << "  " << layer_names_[i]
+        << " Backward cost time: " << time << "s";
+    }
+    else {
+      //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+      LOG(INFO) << "Rank " << Caffe::solver_rank() << " : layer"
+        << i << "  " << layer_names_[i] << " needn't Backward";
+#endif
+
     }
     for (int c = 0; c < after_backward_.size(); ++c) {
       after_backward_[c]->run(i);

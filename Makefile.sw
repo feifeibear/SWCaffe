@@ -2,9 +2,11 @@ CXX 	=  	mpiCC -host
 LINK 	= 	mpiCC
 SWCXX = 	sw5cc.new -slave
 FLAGS = 	-O2 -OPT:IEEE_arith=2
-#FLAGS +=  -OPT:Olimit=6020
 FLAGS += 	-DCPU_ONLY
+FLAGS += 	-DDEBUG_VERBOSE_2
 #FLAGS +=  -DMYMPI
+#FLAGS +=  -DUSE_POOLING
+#FLAGS +=  -DMPE_TRANS
 
 SWBUILD_DIR=./swbuild
 THIRD_PARTY_DIR=../thirdparty
@@ -36,7 +38,7 @@ mk:
 runalex:
 	sh ./scripts/sw_runalex.sh 1
 runvgg:
-	sh ./scripts/sw_runvgg.sh 1
+	sh ./scripts/sw_runvgg.sh 1 
 runlenet:
 	sh ./scripts/sw_runlenet.sh 1
 runsolver:
@@ -62,6 +64,10 @@ $(BIN_DIR)/test_lenet_sw: ./models/swobj/test_lenet.o $(SWOBJ) $(SWLIBOBJ)
 ./models/swobj/test_lenet.o: ./models/src/test_lenet.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
+$(SWBUILD_DIR)/swlayers/sw_pool_layer_impl.o: ./src/swlayers/sw_pool_layer_impl.c
+	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+$(SWBUILD_DIR)/swlayers/sw_slave_pool.o: ./src/swlayers/sw_slave_pool.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 
 $(SWBUILD_DIR)/util/swmatrix_trans.o: ./src/util/swmatrix_trans.c
 	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
@@ -72,6 +78,10 @@ $(SWBUILD_DIR)/swlayers/sw_conv_layer_impl.o: ./src/swlayers/sw_conv_layer_impl.
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_valid.o: ./src/swlayers/sw_slave_conv_valid.c
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_full.o: ./src/swlayers/sw_slave_conv_full.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+$(SWBUILD_DIR)/swlayers/sw_slave_conv_pad.o: ./src/swlayers/sw_slave_conv_pad.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+$(SWBUILD_DIR)/swlayers/sw_slave_conv_full_pad.o: ./src/swlayers/sw_slave_conv_full_pad.c
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/gemm_asm.o: ./src/swlayers/gemm.S
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
