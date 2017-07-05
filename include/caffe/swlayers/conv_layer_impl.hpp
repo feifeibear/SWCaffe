@@ -173,8 +173,8 @@ void conv_backward_impl(
 		        for(cKc = 0; cKc<K; cKc++)
               for(cRo=0; cRo<Ro; cRo++)
                 for(cCo=0; cCo<Co; cCo++)
-                {
-                  *(weight_diff+ weightGetIdx(cNo, cNi, cKr, cKc, No, Ni, K)) += 
+                 {
+                  *(weight_diff+weightGetIdx(cNo, cNi, cKr, cKc, No, Ni, K)) += 
                     *(in + inGetIdx(cB, cNi, cRo+cKr, cCo+cKc, B, Ni, Ri, Ci)) * 
                     *(out_grad + outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co));
                 }
@@ -197,45 +197,37 @@ void conv_backward_pad_impl(
         int pad)
 {
     int cNi, cNo, cB, cCo, cRo, cCi, cRi, cKr, cKc;
-    //DLOG(INFO) << "back: Ci " << Ci << " Ri " << Ri << " K " << K 
-    //<< " Ni " << Ni << " No " << No << " B " << B;
+    DLOG(INFO) << "back: Ci " << Ci << " Ri " << Ri << " K " << K 
+    << " Ni " << Ni << " No " << No << " B " << B;
     //int Co = Ci-K+1;
     //int Ro = Ri-K+1;
     //pad
     int Co = Ci+2*pad-K+1;
     int Ro = Ri+2*pad-K+1;
     int gr, gc, lr, lc;
-
+    //printf("Ci=%d Ri=%d Co=%d Ro=%d\n",Ci,Ri,Co,Ro);
 // in_grad = conv(out_grad, rot180(weight), 'full')
 // can be implemented with sw_slave_conv_pad_full
     memset(in_grad, 0, sizeof(Type)*Ni*B*Ci*Ri);
     for( cB = 0; cB < B; cB++ ) {
-      for( cNo = 0; cNo < No; cNo++ )
+       for( cNo = 0; cNo < No; cNo++ )
         for( cNi = 0; cNi < Ni; cNi++ )
-          for( cCi = 0; cCi < Ci+2*pad; cCi++)
-            for( cRi = 0; cRi < Ri+2*pad; cRi++){
-              Type sum = 0.0;
               for(cKr=0; cKr < K; ++cKr)
                 for(cKc=0; cKc < K; ++cKc){
-                  //gr = cKr+cRi;
-                  //gc = cKc+cCi;
-                  //lr = gr-Pad;
-                  //lc = gc-Pad;
-                  int cCi_map = cCi - pad;
-                  int cRi_map = cRi - pad;
-                  if( !(cCi_map >=0 && cCi_map < Ci && cRi_map >= 0 && cRi_map < Ri) )
+                  for(cRo=0;cRo<Ro;cRo++){                    
+                   int cRi = cRo +cKr -pad;
+                   for(cCo=0;cCo<Co;cCo++){
+                    int cCi = cCo+cKc - pad;
+                    if( !(cCi >=0 && cCi < Ci && cRi >= 0 && cRi < Ri) )
                     continue;
-                  int cRo_map = cRo + cKr - (K-1);
-                  int cCo_map = cCo + cKc - (K-1);
-                  if( !(cCo_map >= 0 && cCo_map < Co && cRo_map >= 0 && cRo_map < Ro) )
-                    continue;
-
-                  *(in_grad+inGetIdx(cB, cNi, cRi_map, cCi_map, B, Ni, Ri, Ci)) +=
-                    *(out_grad+outGetIdx(cB, cNo, cRo_map, cCo_map, B, No, Ro, Co)) *
+                  
+                    *(in_grad+inGetIdx(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)) +=
+                    *(out_grad+outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co)) *
                     *(weight+weightGetIdx( cNo, cNi,  K-1-cKr, K-1-cKc, No, Ni, K));
-                }//cKc
-            }//cRi
-    }//cB
+                }//cCo
+              }//cRo 
+            }//cKc
+      }//cB
 
 // weight_diff = conv(pad(in), out_grad, 'valid')
 // can be implemented with sw_slave_conv_pad
@@ -250,12 +242,15 @@ void conv_backward_pad_impl(
                 {
                   int cCi_map = cCo + cKc - pad;
                   int cRi_map = cRo + cKr - pad;
+                  //int cCi_map = cCo - pad;
+                  //int cRi_map = cRo - pad;
                   if( !(cCi_map >= 0 && cCi_map < Ci && cRi_map >= 0 && cRi_map < Ri) )
                     continue;
                   *(weight_diff+ weightGetIdx(cNo, cNi, cKr, cKc, No, Ni, K)) += 
                     *(in + inGetIdx(cB, cNi, cRi_map, cCi_map, B, Ni, Ri, Ci)) * 
                     *(out_grad + outGetIdx(cB, cNo, cRo, cCo, B, No, Ro, Co));
                 }
+
 }
 
 
