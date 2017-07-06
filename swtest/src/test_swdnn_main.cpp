@@ -312,7 +312,8 @@ int test_backward_pad() {
 
 int main() {
   //test_backward_pad();
-  test_backward_pad();
+  //test_backward_pad();
+  test_backward();
 //  test_forward();
   return 0;
 }

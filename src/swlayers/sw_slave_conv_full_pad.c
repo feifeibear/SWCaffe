@@ -106,30 +106,30 @@ void conv_full_pad(ConvData* param)
 
   //fjrpad
   //orig for(CoStart=0; CoStart<Co; CoStart+=CStride){
-  for(CoStart=pad; CoStart<Co+pad; CoStart+=CStride){
+  for(CoStart=0; CoStart<Co; CoStart+=CStride){
     int CoEnd = CoStart+CStride;
     int CiEnd = CoStart+CStride+K;
     //fjrpad
-    if(CoEnd > Co+2*pad)
-      CoEnd = Co+2*pad;
+    if(CoEnd > Co)
+      CoEnd = Co;
     //fjrfull
-    if(CiEnd > Ci+2*(K-1))
-      CiEnd = Ci+2*(K-1);
+    if(CiEnd > Ci+2*pad)
+      CiEnd = Ci+2*pad;
 
     //fjrpad
     //orig for(cRo=0; cRo<Ro; ++cRo){
-    for(cRo=pad; cRo < Ro+pad; ++cRo){
-
+    for(cRo=0; cRo < Ro; ++cRo){
+/*
       int cRo_map = cRo - pad;
       if( !(cRo_map >= 0 && cRo_map < Ro) )
         continue;
       int cCoStart_map = CoStart - pad;
       if( !(cCoStart_map >= 0 && cCoStart_map < Co) )
         continue;
-
+*/
       //fjrpad
-      //orig Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo*Co+CoStart);
-      Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo_map*Co+cCoStart_map);
+     Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo*Co+CoStart);
+     // Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo_map*Co+cCoStart_map);
 	    //init local_output
 	    for(i = 0; i<local_output_size/SIMDSIZE; ++i)
 		    local_output[i] = 0.0;
@@ -138,22 +138,22 @@ void conv_full_pad(ConvData* param)
 
         cRi = cRo+cKr;
         //fjrfull
-        int lr = cRi - (K-1);
+        int lr = cRi -pad;
         if(!(lr >= 0 && lr < Ri))
           continue;
 
 		    for(cCi=CoStart; cCi<CiEnd; ++cCi){
           //fjrfull
-          int lc = cCi - (K-1);
+          int lc = cCi -pad;
           if(!(lc >= 0 && lc < Ci))
             continue;
 
-			    dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
-			    dma_wait(&input_replyget, 1); input_replyget = 0;
+			    //dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
+			    //dma_wait(&input_replyget, 1); input_replyget = 0;
 
           for(cKc=0; cKc<K; ++cKc){
 
-			      dma(dma_get_weight, (long)(weight_ptr + (cKc+cKr*K)*Ni*No), (long)(local_weight));
+			      dma(dma_get_weight, (long)(weight_ptr + (K-1-cKc+(K-1-cKr)*K)*Ni*No), (long)(local_weight));
 			      dma_wait(&weight_replyget, 1); weight_replyget = 0;
 
             cCo = cCi-cKc;

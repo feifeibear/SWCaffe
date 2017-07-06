@@ -21,7 +21,7 @@ int main (int argc, char ** argv) {
   //data_train.setup_data_param(data_param_data);
   DataParameter* data_param_data = data_train.add_data_param();
   data_param_data->set_source("../data/train-images-idx3-ubyte", "../data/train-labels-idx1-ubyte", "");
-  data_param_data->set_batch_size(128);
+  data_param_data->set_batch_size(16);
   NetStateRule train_include;
   train_include.set_phase(TRAIN);
   data_train.add_include(train_include);
@@ -184,12 +184,12 @@ int main (int argc, char ** argv) {
   SolverParameter solver_param;
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(1);
-  solver_param.set_test_interval(50);
+  solver_param.set_test_interval(10);
   //solver_param.set_test_interval(1);
   solver_param.set_base_lr(0.01);
-  solver_param.set_display(100);
+  solver_param.set_display(10);
   //solver_param.set_max_iter(10000);
-  solver_param.set_max_iter(500);
+  solver_param.set_max_iter(50000);
   solver_param.set_lr_policy("inv");
   solver_param.set_gamma(0.0001);
   solver_param.set_power(0.75);

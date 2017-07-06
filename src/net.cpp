@@ -535,12 +535,12 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
 #endif
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
 #ifdef DEBUG_VERBOSE_2
-    gettimeofday(&te, NULL);
+    gettimeofday(&te, null);
     double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
-    //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
-    LOG(INFO) << "Rank " << Caffe::solver_rank() << " : layer"
+    //log_if(info, caffe::root_solver()) << "root: layer"
+    log(info) << "rank " << caffe::solver_rank() << " : layer"
       << i << "  " << layer_names_[i]
-      << " Forward cost time: " << time << "s";
+      << " forward cost time: " << time << "s";
 #endif
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }

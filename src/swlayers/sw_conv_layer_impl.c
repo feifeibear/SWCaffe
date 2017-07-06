@@ -466,8 +466,8 @@ void sw_conv_backward_pad_impl_d(
     int cKr, cKc, cNo;
     int cRo, cCo, cB;
     int cRi, cCi, cNi;
-    int Ro = Ri-K+1 , Co = Ci-K+1;
-
+    int Ro = Ri+2*pad-K+1 , Co = Ci+2*pad-K+1;
+    
     //weight_diff
     ConvData* param = (ConvData*)malloc(sizeof(ConvData));
     Type* my_in_grad = (Type*)malloc(sizeof(Type)*Ri*Ci*Ni*B);
@@ -509,15 +509,15 @@ void sw_conv_backward_pad_impl_d(
 #endif
 
     //memset(my_weight_diff, 0, sizeof(Type)*Ni*No*K*K);
-
+   
     param->input  = my_in;
     param->weight = my_out_grad;
     param->output = my_weight_diff;
 	  param->_Ni  = B;
-	  param->_Ri  = Ri;
-	  param->_Ci  = Ci;
+	  param->_Ri  = Ro;//+2*pad-K+1;
+	  param->_Ci  = Co;//+2*pad-K+1;
 	  param->_No  = No;
-	  param->_K   = (Ci+2*pad)-K+1;
+	  param->_K   = Ci+2*pad-K+1;
 	  param->_Ro  = K;
 	  param->_Co  = K;
 	  param->_B   = Ni;
@@ -530,7 +530,10 @@ void sw_conv_backward_pad_impl_d(
 	  int Costride = (64*55*1024/8-param->_Ni*param->_B*2-
             param->_Ni*param->_No)/
         (param->_No*param->_B);
-	  //printf("Costride is %d\n", Costride);
+	  //int Costride = (64*60*1024/8 - param->_Ni*param->_B*2-param->_Ni*param->_No*2)/(param->_No*param->_B);
+    //printf("Costride is %d\n", Costride);
+    //int ldm_consume = 8*(param->_Ni*param->_No*2+param->_No*param->_B*Costride+param->_Ni*param->_B*2);
+    //assert(ldm_consume < 64*1024*64);
 	  param->_Costride = Costride;
     assert(Costride > 0);
 
@@ -587,8 +590,9 @@ void sw_conv_backward_pad_impl_d(
 
     //memset(my_in_grad, 0, sizeof(Type)*Ni*B*Ci*Ri);
 // pad_inv(in_grad) = conv(out_grad, rot180(weight), 'full')
-	  athread_spawn(conv_full_pad, param);
-	  athread_join();
+	//  athread_spawn(conv_full_pad, param);
+	  athread_spawn(conv_full_pad,param);
+    athread_join();
 #ifdef MPE_TRANS
     for(cRi = 0; cRi < Ri; ++cRi)
         for(cCi = 0; cCi < Ci; ++cCi)
