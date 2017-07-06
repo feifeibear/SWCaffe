@@ -134,8 +134,8 @@ void conv_pad(ConvData* param)
                 continue;
 //for back
 			//dma(dma_get_input, (long)(input_start + (cCi+cRi*Ci)*Ni*B), (long)(local_input));
-			      dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
-			      dma_wait(&input_replyget, 1); input_replyget = 0;
+			     // dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
+			      //dma_wait(&input_replyget, 1); input_replyget = 0;
 
             for(cKc=0; cKc<K; ++cKc){
 
