@@ -263,7 +263,6 @@ int test_backward_pad() {
     weight[i] = rand()/(double)RAND_MAX;
   for( int i = 0; i < out_size; ++i )
     out_diff[i] = rand()/(double)RAND_MAX;
-
   sw_conv_backward_pad_impl_d(
         in,
         out_diff,
@@ -312,7 +311,7 @@ int test_backward_pad() {
 
 int main() {
   //test_backward_pad();
-  //test_backward_pad();
+  test_backward_pad();
   test_backward();
 //  test_forward();
   return 0;
