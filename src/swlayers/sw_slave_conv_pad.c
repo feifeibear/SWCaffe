@@ -45,10 +45,12 @@ void conv_pad(ConvData* param)
   int CStride=param->_Costride;
 
 //B, Ni, Ci, Ri
-  SIMDType* local_input  = (SIMDType*) ldm_malloc(sizeof(Type)*Ni*B/8/8*2);
+//fjr1buf
+  SIMDType* local_input  = (SIMDType*) ldm_malloc(sizeof(Type)*Ni*B/8/8);
   int local_input_size = Ni*B/8/8/SIMDSIZE;
 //No, Ni, K, K
-  Type* local_weight = (Type*) ldm_malloc(sizeof(Type)*Ni*No/8/8*2);
+//fjr1buf
+  Type* local_weight = (Type*) ldm_malloc(sizeof(Type)*Ni*No/8/8);
   int local_weight_size = Ni*No/64;
 //B, No, Co, Ro
   SIMDType* local_output = (SIMDType*) ldm_malloc(sizeof(Type)*No*B/8/8*CStride);
@@ -117,7 +119,7 @@ void conv_pad(ConvData* param)
       Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo*Co+CoStart);
 	    //init local_output
 	    for(i = 0; i<local_output_size/SIMDSIZE; ++i)
-		  local_output[i] = 0.0;
+		    local_output[i] = 0.0;
 
       for(cKr=0; cKr<K; ++cKr){
 
@@ -175,8 +177,10 @@ void conv_pad(ConvData* param)
 
   }//CoStart
 
-  ldm_free(local_input, sizeof(SIMDType)*local_input_size*2);
-  ldm_free(local_weight, sizeof(Type)*local_weight_size*2);
+  //fjr1buf
+  ldm_free(local_input, sizeof(SIMDType)*local_input_size);
+  //fjr1buf
+  ldm_free(local_weight, sizeof(Type)*local_weight_size);
   ldm_free(local_output, sizeof(Type)*local_output_size);
 
 }//main func

@@ -132,10 +132,11 @@ void sw_conv_forward_pad_impl_d(
     assert(param->_Ni >= 64 && param->_Ni%32 == 0);
     assert(param->_No >= 64 && param->_No%32 == 0);
 
-	  int Costride = (64*60*1024/8 - Ni*B*2-Ni*No*2)/(No*B);
+    //fjr1buff 7.13
+	  int Costride = (64*60*1024/8 - Ni*B-Ni*No)/(No*B);
 	  param->_Costride = Costride;
     assert(Costride > 0);
-	  int ldm_consume = 8*(Ni*No*2 + No*B*(Costride) + Ni*B*2);
+	  int ldm_consume = 8*(Ni*No + No*B*Costride + Ni*B);
 	  //printf("ldm comsumption is %d\n", ldm_consume/64);
 	  assert(ldm_consume < 64*1024*64);
     //memset(param->output, (Type)0, sizeof(Type)*Ni*B*Ci*Ri);
@@ -527,7 +528,8 @@ void sw_conv_backward_pad_impl_d(
     assert(param->_Ni >= 64 && param->_Ni%32 == 0);
     assert(param->_No >= 64 && param->_No%32 == 0);
 
-	  int Costride = (64*55*1024/8-param->_Ni*param->_B*2-
+    //fjr1buff 7.13
+	  int Costride = (64*55*1024/8-param->_Ni*param->_B-
             param->_Ni*param->_No)/
         (param->_No*param->_B);
 	  //int Costride = (64*60*1024/8 - param->_Ni*param->_B*2-param->_Ni*param->_No*2)/(param->_No*param->_B);
@@ -582,7 +584,8 @@ void sw_conv_backward_pad_impl_d(
 	  param->_B  = B;
 	  param->_pad  = pad;
 
-    Costride = (64*55*1024/8-param->_Ni*param->_B*2-param->_Ni*param->_No*2)/
+    //fjr1buff
+    Costride = (64*55*1024/8-param->_Ni*param->_B-param->_Ni*param->_No)/
             (param->_No*param->_B);
 	  param->_Costride = Costride;
 	  //printf("Costride is %d\n", Costride);

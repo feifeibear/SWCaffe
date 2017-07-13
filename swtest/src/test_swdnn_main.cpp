@@ -10,8 +10,8 @@ extern "C" {
 
 void test_forward_pad() {
   int Ni, No, B, Co, Ro, Ci, Ri, K, pad;
-  Ni = 128;
-  No = 256;
+  Ni = 512;
+  No = 512;
   B  = 128;
   K  = 1;
   pad = 3;
@@ -310,9 +310,9 @@ int test_backward_pad() {
 
 
 int main() {
-  //test_backward_pad();
   test_backward_pad();
-  test_backward();
-//  test_forward();
+  //test_forward_pad();
+  //test_backward();
+  //test_forward();
   return 0;
 }

@@ -3,7 +3,6 @@
 #include "caffe/util/serialize.hpp"
 using namespace caffe;
 
-
 #define net_param_add_layer_vgg_conv(num_output, name, bottom, top) \
   { \
     ConvolutionParameter conv_param; \
@@ -104,11 +103,16 @@ LayerParameter vgg_dropout(std::string name, std::string bottom, std::string top
 int main (int argc, char ** argv) {
 #ifdef MYMPI
   MPI_Init(&argc, &argv);
+#ifdef DEBUG_VERBOSE_1
+//google::InitGoogleLogging((const char *)argv[0]);
+//google::SetLogDestination(google::GLOG_INFO,"./log/");
 #endif
+#endif
+  Caffe::set_random_seed(1);
 
   DataParameter data_param_data;
   data_param_data.set_source("../data/imagenet_bin/train_data.bin", "../data/imagenet_bin/train_label.bin", "../data/imagenet/train_mean.bin");
-  data_param_data.set_batch_size(5);
+  data_param_data.set_batch_size(128);
   LayerParameter data_train;
   data_train.set_name("data_train");
   data_train.set_type("IMAGENETData");
@@ -119,9 +123,13 @@ int main (int argc, char ** argv) {
   train_include.set_phase(TRAIN);
   data_train.add_include(train_include);
 
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : " << "Train_Data param set done!";
+#endif
+
   DataParameter data_param_label;
   data_param_label.set_source("../data/imagenet_bin/test_data.bin", "../data/imagenet_bin/test_label.bin", "../data/imagenet/test_mean.bin");
-  data_param_label.set_batch_size(10);
+  data_param_label.set_batch_size(1);
   LayerParameter data_test;
   data_test.set_name("data_test");
   data_test.set_type("IMAGENETData");
@@ -131,6 +139,10 @@ int main (int argc, char ** argv) {
   NetStateRule test_include;
   test_include.set_phase(TEST);
   data_test.add_include(test_include);
+
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : " << "Test_Data param set done!";
+#endif
 
   LossParameter loss_param;
   LayerParameter loss;
@@ -151,6 +163,9 @@ int main (int argc, char ** argv) {
   accuracy.setup_accuracy_param(accuracy_param);
   accuracy.add_include(test_include);
 
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : " << "Loss and Accuracy param set done!";
+#endif
 
   NetParameter net_param;
   net_param.set_name("vgg16");
@@ -158,38 +173,38 @@ int main (int argc, char ** argv) {
   net_param.add_layer(data_train);
   net_param.add_layer(data_test);
 
-  net_param_add_layer_vgg_conv(64, "conv1_1", "data", "conv1_1");
+  net_param.add_layer(vgg_conv(64, "conv1_1", "data", "conv1_1"));
   net_param.add_layer(vgg_relu("relu1_1", "conv1_1", "conv1_1"));
-  net_param_add_layer_vgg_conv(64, "conv1_2", "conv1_1", "conv1_2");
+  net_param.add_layer(vgg_conv(64, "conv1_2", "conv1_1", "conv1_2"));
   net_param.add_layer(vgg_relu("relu1_2", "conv1_2", "conv1_2"));
   net_param.add_layer(vgg_pool("pool1", "conv1_2", "pool1"));
-  net_param_add_layer_vgg_conv(128, "conv2_1", "pool1", "conv2_1");
+  net_param.add_layer(vgg_conv(128, "conv2_1", "pool1", "conv2_1"));
   net_param.add_layer(vgg_relu("relu2_1", "conv2_1", "conv2_1"));
-  net_param_add_layer_vgg_conv(128, "conv2_2", "conv2_1", "conv2_2");
+  net_param.add_layer(vgg_conv(128, "conv2_2", "conv2_1", "conv2_2"));
   net_param.add_layer(vgg_relu("relu2_2", "conv2_2", "conv2_2"));
   net_param.add_layer(vgg_pool("pool2", "conv2_2", "pool2"));
 
-  net_param_add_layer_vgg_conv(256, "conv3_1", "pool2", "conv3_1");
+  net_param.add_layer(vgg_conv(256, "conv3_1", "pool2", "conv3_1"));
   net_param.add_layer(vgg_relu("relu3_1", "conv3_1", "conv3_1"));
-  net_param_add_layer_vgg_conv(256, "conv3_2", "conv3_1", "conv3_2");
+  net_param.add_layer(vgg_conv(256, "conv3_2", "conv3_1", "conv3_2"));
   net_param.add_layer(vgg_relu("relu3_2", "conv3_2", "conv3_2"));
-  net_param_add_layer_vgg_conv(256, "conv3_3", "conv3_2", "conv3_3");
+  net_param.add_layer(vgg_conv(256, "conv3_3", "conv3_2", "conv3_3"));
   net_param.add_layer(vgg_relu("relu3_3", "conv3_3", "conv3_3"));
   net_param.add_layer(vgg_pool("pool3", "conv3_3", "pool3"));
 
-  net_param_add_layer_vgg_conv(512, "conv4_1", "pool3", "conv4_1");
+  net_param.add_layer(vgg_conv(512, "conv4_1", "pool3", "conv4_1"));
   net_param.add_layer(vgg_relu("relu4_1", "conv4_1", "conv4_1"));
-  net_param_add_layer_vgg_conv(512, "conv4_2", "conv4_1", "conv4_2");
+  net_param.add_layer(vgg_conv(512, "conv4_2", "conv4_1", "conv4_2"));
   net_param.add_layer(vgg_relu("relu4_2", "conv4_2", "conv4_2"));
-  net_param_add_layer_vgg_conv(512, "conv4_3", "conv4_2", "conv4_3");
+  net_param.add_layer(vgg_conv(512, "conv4_3", "conv4_2", "conv4_3"));
   net_param.add_layer(vgg_relu("relu4_3", "conv4_3", "conv4_3"));
   net_param.add_layer(vgg_pool("pool4", "conv4_3", "pool4"));
 
-  net_param_add_layer_vgg_conv(512, "conv5_1", "pool4", "conv5_1");
+  net_param.add_layer(vgg_conv(512, "conv5_1", "pool4", "conv5_1"));
   net_param.add_layer(vgg_relu("relu5_1", "conv5_1", "conv5_1"));
-  net_param_add_layer_vgg_conv(512, "conv5_2", "conv5_1", "conv5_2");
+  net_param.add_layer(vgg_conv(512, "conv5_2", "conv5_1", "conv5_2"));
   net_param.add_layer(vgg_relu("relu5_2", "conv5_2", "conv5_2"));
-  net_param_add_layer_vgg_conv(512, "conv5_3", "conv5_2", "conv5_3");
+  net_param.add_layer(vgg_conv(512, "conv5_3", "conv5_2", "conv5_3"));
   net_param.add_layer(vgg_relu("relu5_3", "conv5_3", "conv5_3"));
   net_param.add_layer(vgg_pool("pool5", "conv5_3", "pool5"));
 
@@ -205,6 +220,10 @@ int main (int argc, char ** argv) {
   net_param.add_layer(loss);
   net_param.add_layer(accuracy);
 
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : " << "Net param set done!";
+#endif
+
   SolverParameter solver_param;
   solver_param.set_net_param(net_param);
   solver_param.add_test_iter(1);
@@ -217,19 +236,38 @@ int main (int argc, char ** argv) {
   solver_param.set_weight_decay(0.0005);
   solver_param.set_type("SGD");
 
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : Solver param set done!";
+#endif
+
   Serial_Net net;
   if(Caffe::root_solver()) {
     std::ifstream ifs("../data/serialized_caffemodel");
     net.serialize_in(ifs);
     ifs.close();
+    for (int i=0; i<net.layers.size(); i++)
+      LOG(INFO) << "Root: layer " << net.layers[i].name;
   }
 
-  for (int i=0; i<net.layers.size(); i++)
-    LOG(INFO) << "layer " << net.layers[i].name;
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : Read in model done!";
+#ifdef MYMPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+#endif
 
-  shared_ptr<Solver<float> >
-      solver(SolverRegistry<float>::CreateSolver(solver_param));
+  //shared_ptr<Solver<float> >
+  //    solver(SolverRegistry<float>::CreateSolver(solver_param));
+
+  shared_ptr<Solver<double> >
+      solver(SolverRegistry<double>::CreateSolver(solver_param));
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : init solver done!";
+#endif
   solver->net()->CopyTrainedLayersFrom(net);
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : Readin Net done!";
+#endif
   solver->Solve(NULL);
 #ifdef MYMPI
   MPI_Finalize();

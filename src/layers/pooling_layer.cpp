@@ -5,7 +5,7 @@
 #include "caffe/layers/pooling_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 
-#ifdef USE_POOL
+#ifdef USE_SWPOOL
 extern "C" {
 #include "caffe/swlayers/sw_pool_layer_impl.h"
 }
@@ -156,7 +156,7 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     caffe_set(top_count, Dtype(-FLT_MAX), top_data);  // ---!!
 		
     // The main loop
-#ifdef USE_POOL
+#ifdef USE_SWPOOL
     if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
 				sizeof(Dtype) == sizeof(double))
 	{
@@ -248,7 +248,7 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     // The main loop
     //printf("AVG=num=%d channels_=%d pooled_height_=%d pooled_width_=%d stride_h_=%d stride_w_=%d pad_h_=%d pad_w_=%d kernel_h_=%d kernel_w_=%d height_=%d width_=%d top_offset=%d bottom_offset=%d\n",\
     //    bottom[0]->num(),channels_,pooled_height_,pooled_width_,stride_h_,stride_w_,pad_h_,pad_w_,kernel_h_,kernel_w_,height_,width_,top[0]->offset(0,1), bottom[0]->offset(0,1));
-#ifdef USE_POOL
+#ifdef USE_SWPOOL
     if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
 				sizeof(Dtype) == sizeof(double))
 	{
@@ -354,7 +354,7 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     } else {
       mask = max_idx_.cpu_data();
     }
-#ifdef USE_POOL
+#ifdef USE_SWPOOL
     if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
 				sizeof(Dtype) == sizeof(double))
 	{
@@ -409,7 +409,7 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     break;
   case PoolingParameter_PoolMethod_AVE:
     // The main loop 
-#ifdef USE_POOL
+#ifdef USE_SWPOOL
     if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
 				sizeof(Dtype) == sizeof(double))
 	{

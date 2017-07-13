@@ -4,9 +4,9 @@ SWCXX = 	sw5cc.new -slave
 FLAGS = 	-O2 -OPT:IEEE_arith=2
 FLAGS += 	-DCPU_ONLY
 FLAGS += 	-DDEBUG_VERBOSE_2
+#FLAGS +=  -DUSE_SWPOOL
 #FLAGS +=  -DMYMPI
-#FLAGS +=  -DUSE_POOLING
-#FLAGS +=  -DMPE_TRANS
+LDFLAGS = -lm_slave -allshare
 
 SWBUILD_DIR=./swbuild
 THIRD_PARTY_DIR=../thirdparty
