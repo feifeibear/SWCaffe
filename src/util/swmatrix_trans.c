@@ -211,7 +211,7 @@ void swapNBHW(SlaveParam *pParam)
 	nMaxThreadsNum = pParam->nNBHWThreadsNum;
 	nLeftMaxThreadsNum = pParam->nNBHWLeftThreadsNum;
 	nSize = splitNB*splitHW*sizeof(Type);
-	
+	//if(myid<1)printf("splitHW=%d splitNB=%d nSize=%d\n",splitHW,splitNB,nSize);
 	if(myid >= nMaxThreadsNum) return;	
     //pTmp = (Type*)ldm_malloc(2*sizeof(double));
 	pLocalIn = (Type*)ldm_malloc(nSize);

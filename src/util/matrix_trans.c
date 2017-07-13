@@ -49,7 +49,7 @@ inline int get_split_size(int nSize,int nMaxSize)
 	{
       nSplitSize = nSize - nSize%4;
 	}
-	else if(nVal>nMaxSize) nSplitSize = nMaxSize;
+	else if(nVal>=nMaxSize) nSplitSize = nMaxSize;
 	else{
 		int nModHW = nSize - nSize%4,nTmp=0;
 
@@ -117,7 +117,7 @@ void swapBN_HW(Type*in,Type*out,int B,int N,int H, int W)
 	param.splitHW = get_split_size(nHW,HWSIZE);		
 	param.splitNB = get_split_size(nNB,BSIZE);		
 	int nTmp = NUM_THREADS*param.splitNB;	
-	
+	//printf("N=%d B=%d H=%d W=%d splitNB=%d splitHW=%d\n",N,B,H,W,param.splitNB,param.splitHW);
 	param.nCount = nNB/nTmp;
 	nTmp = (nNB/param.splitNB)%NUM_THREADS;
 	param.nNBHWThreadsNum = param.nCount >0 ? NUM_THREADS:nTmp;
