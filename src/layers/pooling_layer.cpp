@@ -358,7 +358,7 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
 				sizeof(Dtype) == sizeof(double))
 	{
-		pooling_backward_max(bottom[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,(const int*)mask,(const double*)top_mask,
+		pooling_backward_max(top[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,(const int*)mask,(const double*)top_mask,
 				bottom[0]->offset(0, 1),top[0]->offset(0, 1),top.size() - 1,pooled_height_, pooled_width_, stride_h_,
 				stride_w_, pad_h_, pad_w_, kernel_h_, kernel_w_, height_, width_);	    
 	}

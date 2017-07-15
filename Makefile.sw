@@ -4,7 +4,6 @@ SWCXX = 	sw5cc.new -slave
 FLAGS = 	-O2 -OPT:IEEE_arith=2
 FLAGS += 	-DCPU_ONLY
 FLAGS += 	-DDEBUG_VERBOSE_2
-#FLAGS +=  -DUSE_SWPOOL
 #FLAGS +=  -DMYMPI
 LDFLAGS = -lm_slave -allshare
 
@@ -21,9 +20,10 @@ SWOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cpp, %.o, $(src)))
 swdnnsrc=$(wildcard ./src/swlayers/*.c ./src/util/*.c)
 SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc)))
 SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
-# uncomment if use swDNN 
+# uncomment if use swDNN
 FLAGS += -DUSE_SWDNN
 SWOBJ+=$(SWDNNOBJ)
+FLAGS +=  -DUSE_SWPOOL
 
 BIN_DIR=./bin
 lenet: $(BIN_DIR)/test_lenet_sw
