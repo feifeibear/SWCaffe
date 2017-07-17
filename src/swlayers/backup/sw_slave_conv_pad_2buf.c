@@ -1,3 +1,15 @@
+/***************
+ * GEMM PLAN 
+ * Jerry Fang 
+ * 2017 June 15 
+ *
+ * input  is of dim(B, Ni)
+ * weight is of dim(Ni, No)
+ * ouput  is of dim(B, No)
+ *
+ * No overlap input DMA and weight DMA
+ * ************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,24 +19,10 @@
 #include "dma.h"
 #include "caffe/swlayers/gemm.h"
 
-/***************
- * GEMM PLAN 
- * Jerry Fang 
- * 2017 Jan.2nd
- *
- * input  is of dim(B, Ni)
- * weight is of dim(Ni, No)
- * ouput  is of dim(B, No)
- *
- * No overlap input DMA and weight DMA
- * for backward in_grad = conv(out_grad, weight, 'full');
- * out = conv(in, weight, 'full')
- * ************/
-#define Type double
 #define SIMDSIZE 4
 #define SIMDType doublev4
 
-void conv_full(ConvData* param)
+void conv_pad(ConvData* param)
 {
   int cB, cNi, cRi, cCi, cKr, cKc, ccCore, crCore, cNo;
   int ii, jj, cRo, cCo;
@@ -34,7 +32,7 @@ void conv_full(ConvData* param)
   int input_calc_index=1, input_load_index=0;
   int weight_calc_index=1, weight_load_index=0;
   int i, j;
-  int Ni, Ri, Ci, No, K, Ro, Co, B;
+  int Ni, Ri, Ci, No, K, Ro, Co, B, pad;
   Ni = param->_Ni;
   Ri = param->_Ri;
   Ci = param->_Ci;
@@ -43,6 +41,7 @@ void conv_full(ConvData* param)
   Ro = param->_Ro;
   Co = param->_Co;
   B  = param->_B;
+  pad = param->_pad;
   int CStride=param->_Costride;
 
 //B, Ni, Ci, Ri
@@ -72,7 +71,7 @@ void conv_full(ConvData* param)
   dma_set_mode(&dma_put_output, PE_MODE);
   dma_set_reply(&dma_put_output, &replyput);
 
-  //DMA for local_input(B/8, Ni/8)
+  //DMA for local_iutput(B/8, Ni/8)
   dma_set_size(&dma_get_input, B*Ni/8/8/SIMDSIZE*sizeof(SIMDType));
   dma_set_bsize(&dma_get_input, B/SIMDSIZE/8*sizeof(SIMDType));
   dma_set_stepsize(&dma_get_input, B/SIMDSIZE/8*7*sizeof(SIMDType));
@@ -109,70 +108,66 @@ void conv_full(ConvData* param)
     int CiEnd = CoStart+CStride+K;
     if(CoEnd > Co)
       CoEnd = Co;
-    //fjrbp
-    if(CiEnd > Ci+2*(K-1))
-      CiEnd = Ci+2*(K-1);
-	
+    //fjrpad
+    if(CiEnd > Ci + 2*pad)
+      CiEnd = Ci + 2*pad;
     //input init
     for(cRo=0; cRo<Ro; ++cRo){
 
       Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo*Co+CoStart);
-     
-	  //init local_output
-	  for(i = 0; i<local_output_size/SIMDSIZE; ++i)
-		local_output[i] = 0.0;
-
+	    //init local_output
+	    for(i = 0; i<local_output_size/SIMDSIZE; ++i)
+		  local_output[i] = 0.0;
 
       for(cKr=0; cKr<K; ++cKr){
 
         cRi = cRo+cKr;
-        int lr = cRi - (K-1);
+        //fjrpad
+        int lr = cRi - pad;
         if(!(lr >= 0 && lr < Ri))
             continue;
 
-		for(cCi=CoStart; cCi<CiEnd; ++cCi){
-            int lc = cCi - (K-1);
+		    for(cCi=CoStart; cCi<CiEnd; ++cCi){
+            //fjrpad
+            int lc = cCi - pad;
             if(!(lc >= 0 && lc < Ci))
                 continue;
-
 //for back
 			//dma(dma_get_input, (long)(input_start + (cCi+cRi*Ci)*Ni*B), (long)(local_input));
-			dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
-			dma_wait(&input_replyget, 1); input_replyget = 0;
+			     // dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
+			      //dma_wait(&input_replyget, 1); input_replyget = 0;
 
-          for(cKc=0; cKc<K; ++cKc){
+            for(cKc=0; cKc<K; ++cKc){
 
-			dma(dma_get_weight, (long)(weight_ptr + (cKc+cKr*K)*Ni*No), (long)(local_weight));
-			dma_wait(&weight_replyget, 1); weight_replyget = 0;
+			        dma(dma_get_weight, (long)(weight_ptr + (cKc+cKr*K)*Ni*No), (long)(local_weight));
+			        dma_wait(&weight_replyget, 1); weight_replyget = 0;
 
-            cCo = cCi-cKc;
-            if(cCo >= CoStart && cCo < CoEnd){
-    			dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
-    			dma_wait(&input_replyget, 1); input_replyget = 0;
-    
+              cCo = cCi - cKc;
+              if(cCo >= CoStart && cCo < CoEnd){
+    			      dma(dma_get_input, (long)(input_start + (lc+lr*Ci)*Ni*B), (long)(local_input));
+    			      dma_wait(&input_replyget, 1); input_replyget = 0;
 
-				gemm((Type*)(local_input),
-				(Type*)(local_weight),
-				(Type*)(local_output + (cCo-CoStart)*No*B/64/SIMDSIZE),
-				B/8/4, 
-				B/8/4, 
-				No/8, 
-				Ni/8, 
-				rid, 
-				cid);
-			}//if
-          }//cKc
-        }//cCi
+    			  	  gemm((Type*)(local_input),
+    			  	    (Type*)(local_weight),
+    			  	    (Type*)(local_output + (cCo-CoStart)*No*B/64/SIMDSIZE),
+    			  	    B/8/4, 
+    			  	    B/8/4, 
+    			  	    No/8, 
+    			  	    Ni/8, 
+    			  	    rid, 
+    			  	    cid);
+			        }//if
+            }//cKc
+          }//cCi
 
       }//cKc
 
       //input back outer
-      
       jj=0;
       for(ii=CoStart; ii<CoEnd; ++ii){
           dma(dma_put_output, (long)(output_ptr), (long)(local_output+jj*B*No/64/SIMDSIZE));
           dma_wait(&replyput, 1); replyput = 0;
-		  output_ptr += B*No;
+		      output_ptr += B*No;
           jj++;
       }
 
@@ -185,5 +180,4 @@ void conv_full(ConvData* param)
   ldm_free(local_output, sizeof(Type)*local_output_size);
 
 }//main func
-#undef SIMDType
-#undef Type
+

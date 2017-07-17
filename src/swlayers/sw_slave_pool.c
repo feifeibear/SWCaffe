@@ -61,8 +61,8 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 	dma_set_op(&pool_dmaput2, DMA_PUT);
 	dma_set_mode(&pool_dmaput2, PE_MODE);
 	dma_set_reply(&pool_dmaput2, &putreply);	
-	
-	int nTopSize = pooled_height_ * pooled_width_*sizeof(Type),i=0,j=0;
+	int nMaxIndex  = pooled_height_ * pooled_width_,i=0,j=0;
+  int nTopSize = nMaxIndex*sizeof(Type);
 	int nBottomSize = height_ * width_*sizeof(Type),nMaskSize=0;
 	if(use_top_mask>0)
 	  nMaskSize = nTopSize;
@@ -160,7 +160,7 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 							if(pTopMask[index]>hend)
 								hend = pTopMask[index];
 						}		
-					}
+          }
 					else	
 					{
 						for(pw=0;pw<pooled_width_;pw++)
@@ -171,7 +171,9 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 							if(pMask[index]>hend)
 								hend = pMask[index];
 						}
-					}					
+          }
+          if(hstart<0 || hend<0 || hstart>=nMaxIndex-1 || hend >=nMaxIndex-1)continue;
+					
 					hend = hend %width_ >0 ? (hend /width_)+1 :hend /width_ ;
 					hstart = hstart /width_;
 					nKernelSize = (hend - hstart)*width_*sizeof(Type);
@@ -236,7 +238,9 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 							if(pMask[index]>hend)
 								hend = pMask[index];
 						}
-					}					
+					}
+          if(hstart<0 || hend<0 || hstart>=nMaxIndex-1 || hend>=nMaxIndex-1) continue;
+
 					hend = hend %width_ >0 ? (hend /width_)+1 :hend /width_ ;
 					hstart = hstart /width_;					
 					nKernelSize = (hend - hstart)*width_*sizeof(Type);
@@ -309,7 +313,8 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 							if(pMask[index]>hend)
 								hend = pMask[index];
 						}
-					}					
+					}		
+          if(hstart<0 || hend<0 || hstart>=nMaxIndex-1 || hend>=nMaxIndex-1) continue;
 					hend = hend %width_ >0 ? (hend /width_)+1 :hend /width_ ;
 					hstart = hstart /width_;
 					nKernelSize = (hend - hstart)*width_*sizeof(Type);
@@ -375,6 +380,7 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 								hend = pMask[index];
 						}
 					}					
+          if(hstart<0 ||hend<0 || hstart>=nMaxIndex-1 || hend>=nMaxIndex-1)continue;
 					hend = hend %width_ >0 ? (hend /width_)+1 :hend /width_ ;
 					hstart = hstart /width_;					
 					nKernelSize = (hend - hstart)*width_*sizeof(Type);
@@ -442,6 +448,7 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 			  for (pw = 0; pw < pooled_width_; ++pw) {
 	  			index = pool_index + pw;
 		  		bottom_index =	use_top_mask >0? pTopMask[index] : pMask[index];
+          if(bottom_index<0 || bottom_index>=nMaxIndex-1)continue;
 			  	pBottomData[bottom_index] += pTopData[index];
 			  }
 			}
@@ -475,6 +482,7 @@ void poolingBackwardMax(SlavePoolingParam *pParam)
 			  for (pw = 0; pw < pooled_width_; ++pw) {
 				  index = pool_index + pw;
 				  bottom_index =	use_top_mask >0? pTopMask[index] : pMask[index];
+          if(bottom_index<0 || bottom_index>=nMaxIndex-1)continue;
 				  pBottomData[bottom_index] += pTopData[index];
 			  }
 			}

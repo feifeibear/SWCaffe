@@ -47,9 +47,9 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       mypad = pad_data[0];
 
     const int* dilation_data = this->dilation_.cpu_data();
-    if(bottom[0]->num() >= 128 
-        && bottom[0]->channels() >= 64 
-        && top[0]->channels() >= 64 
+    if(bottom[0]->num() >= 128
+        && bottom[0]->channels() >= 64
+        && top[0]->channels() >= 64
         ){
 
       const Dtype* bottom_data  = bottom[i]->cpu_data();

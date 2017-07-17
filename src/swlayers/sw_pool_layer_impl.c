@@ -9,7 +9,7 @@ extern SLAVE_FUN(poolingForwardAvg)();
 extern SLAVE_FUN(poolingBackwardMax)();
 extern SLAVE_FUN(poolingBackwardAvg)();
 
-inline int pooling_judge_condition(int N,int C,int pooled_height_,int pooled_width_)
+int pooling_judge_condition(int N,int C,int pooled_height_,int pooled_width_)
 {
 	const int nMinBuffSize = 16;
 	if((N*C) < nMinBuffSize || (pooled_height_*pooled_width_) < nMinBuffSize) return -1;

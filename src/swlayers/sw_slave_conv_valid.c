@@ -23,6 +23,7 @@
  * change weight to 1 pixel read leading to batch-size-version
  *
  * ************/
+#define Type double
 #define SIMDSIZE 4
 #define SIMDType doublev4
 
@@ -209,4 +210,5 @@ void conv_valid(ConvData* param)
   ldm_free(local_output, sizeof(Type)*local_output_size);
 
 }//main func
-
+#undef Type
+#undef SIMDType

@@ -13,18 +13,18 @@ typedef struct _tagSlavePoolingParam
 	Type *pTopData,*pBottomData,*pTopMask;
 }SlavePoolingParam;
 
-extern inline int pooling_judge_condition(int N,int C,int pooled_height_,int pooled_width_);
+ int pooling_judge_condition(int N,int C,int pooled_height_,int pooled_width_);
 
-extern void pooling_forward_max(int N,int C,double *pTopData,const double *pBottomData,int*pMask,double *pTopMask,int nBottomOffset,
+ void pooling_forward_max(int N,int C,double *pTopData,const double *pBottomData,int*pMask,double *pTopMask,int nBottomOffset,
 				int nTopOffset,int use_top_mask,int pooled_height_,int pooled_width_,int stride_h_,
 				int stride_w_,int pad_h_,int pad_w_,int kernel_h_,int kernel_w_,int height_,int width_);
-extern void pooling_forward_avg(int N,int C,double *pTopData,const double*pBottomData,int nBottomOffset,
+ void pooling_forward_avg(int N,int C,double *pTopData,const double*pBottomData,int nBottomOffset,
 				int nTopOffset,int pooled_height_,int pooled_width_,int stride_h_,
 				int stride_w_,int pad_h_,int pad_w_,int kernel_h_,int kernel_w_,int height_,int width_);				
-extern void pooling_backward_max(int N,int C,const double *pTopData,double *pBottomData,const int*pMask,const double *pTopMask,int nBottomOffset,
+ void pooling_backward_max(int N,int C,const double *pTopData,double *pBottomData,const int*pMask,const double *pTopMask,int nBottomOffset,
 				int nTopOffset,int use_top_mask,int pooled_height_,int pooled_width_,int stride_h_,
 				int stride_w_,int pad_h_,int pad_w_,int kernel_h_,int kernel_w_,int height_,int width_);
-extern void pooling_backward_avg(int N,int C,const double *pTopData,double*pBottomData,int nBottomOffset,
+ void pooling_backward_avg(int N,int C,const double *pTopData,double*pBottomData,int nBottomOffset,
 				int nTopOffset,int pooled_height_,int pooled_width_,int stride_h_,
 				int stride_w_,int pad_h_,int pad_w_,int kernel_h_,int kernel_w_,int height_,int width_);				
 

@@ -20,6 +20,7 @@
  * for backward in_grad = conv(out_grad, weight, 'full');
  * pad_inv(out) = conv(in, weight, 'full')
  * ************/
+#define Type double
 #define SIMDSIZE 4
 #define SIMDType doublev4
 
@@ -93,14 +94,14 @@ void conv_full_pad(ConvData* param)
   dma_set_stepsize(&dma_put_output, B/SIMDSIZE/8*7*sizeof(SIMDType));
 
 //1st weight_load
-  Type* weight_start = param->weight+(cid*No/8*Ni+rid*Ni/8);
+  Type* weight_start = (Type*)param->weight+(cid*No/8*Ni+rid*Ni/8);
   Type* weight_ptr = weight_start;
 
   dma(dma_get_weight, (long)(weight_ptr), (long)(local_weight));
   dma_wait(&weight_replyget, 1); weight_replyget = 0;
 
   //DMA for 1st input
-  Type* input_start = param->input+rid*B/8+cid*Ni/8*B;
+  Type* input_start = (Type*)param->input+rid*B/8+cid*Ni/8*B;
   dma(dma_get_input, (long)(input_start), (long)(local_input));
   dma_wait(&input_replyget, 1); input_replyget = 0;
 
@@ -128,7 +129,7 @@ void conv_full_pad(ConvData* param)
         continue;
 */
       //fjrpad
-     Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo*Co+CoStart);
+     Type* output_ptr = (Type*)param->output + rid*B/8 + cid*No/8*B + B*No*(cRo*Co+CoStart);
      // Type* output_ptr = param->output + rid*B/8 + cid*No/8*B + B*No*(cRo_map*Co+cCoStart_map);
 	    //init local_output
 	    for(i = 0; i<local_output_size/SIMDSIZE; ++i)
@@ -196,4 +197,5 @@ void conv_full_pad(ConvData* param)
   ldm_free(local_output, sizeof(Type)*local_output_size);
 
 }//main func
-
+#undef Type
+#undef SIMDType
