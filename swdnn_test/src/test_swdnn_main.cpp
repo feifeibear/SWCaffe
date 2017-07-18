@@ -24,10 +24,10 @@ void test_forward_pad_float() {
   int weight_size = Ni*No*K*K;
   int out_size    = No*B*Co*Ro;
 
-  float* in = (float*)malloc(sizeof(double)*in_size);
-  float* weight = (float*)malloc(sizeof(double)*weight_size);
-  float* out = (float*)malloc(sizeof(double)*out_size);
-  float* out_ref = (float*)malloc(sizeof(double)*out_size);
+  float* in = (float*)malloc(sizeof(float)*in_size);
+  float* weight = (float*)malloc(sizeof(float)*weight_size);
+  float* out = (float*)malloc(sizeof(float)*out_size);
+  float* out_ref = (float*)malloc(sizeof(float)*out_size);
 
   for( int i = 0; i < in_size; ++i )
     in[i] = rand()/(float)RAND_MAX;
