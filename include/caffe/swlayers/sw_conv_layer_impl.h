@@ -19,6 +19,19 @@ void sw_conv_forward_impl_d(
         int No,
         int B);
 
+void sw_conv_forward_pad_impl_f(
+        const float* in,
+        const float* weight,
+        float* out,
+        int Ci,
+        int Ri,
+        int K,
+        int Ni,
+        int No,
+        int B,
+        int pad);
+
+
 void sw_conv_forward_pad_impl_d(
         const double * in,
         const double * weight,
@@ -60,6 +73,22 @@ void sw_conv_backward_pad_impl_d(
         int No,
         int B,
         int pad);
+
+void sw_conv_backward_pad_impl_f(
+        const float* in,
+        const float* out_grad,
+        const float* weight,
+        float* in_grad,
+        float* weight_diff,
+        //Type* bias_grad,
+        int Ci,
+        int Ri,
+        int K,
+        int Ni,
+        int No,
+        int B,
+        int pad);
+
 
 
 #endif

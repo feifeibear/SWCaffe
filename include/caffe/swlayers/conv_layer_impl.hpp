@@ -36,7 +36,6 @@ inline int offset(const int n, const int c, const int h,
     const int height,
     const int width) {
   return ((n * channels + c) * height + h) * width + w;
-//  return ((c * batchs + n) * height + h) * width + w;
 }
 
 template<typename Type>
