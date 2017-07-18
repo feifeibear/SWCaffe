@@ -3,14 +3,9 @@
 #include "caffe/layers/conv_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 
-//#define USE_SWDNN
-//#define TEST
-//#ifdef USE_SWDNN
-
 extern "C" {
 #include "caffe/swlayers/sw_conv_layer_impl.h"
 }
-//#endif
 
 static int times = 0;
 namespace caffe {
@@ -36,7 +31,6 @@ template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
 #ifdef USE_SWDNN
-  assert(typeid(Dtype) == typeid(double));
   const Dtype* weight       = this->blobs_[0]->cpu_data();
   const Dtype* bias_data    = this->blobs_[1]->cpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
@@ -55,8 +49,7 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const Dtype* bottom_data  = bottom[i]->cpu_data();
       Dtype* top_data           = top[i]->mutable_cpu_data();
 
-      if(sizeof(Dtype) == sizeof(double))
-        //sw_conv_forward_impl_d(
+      if(typeid(Dtype) == typeid(double)) {
         sw_conv_forward_pad_impl_d(
           (double*)bottom_data,
           (double*)weight,
@@ -77,6 +70,30 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           //int pad
           mypad
         );
+      } else if ( typeid(Dtype) == typeid(float) ) {
+        DLOG(INFO) << "before swDNN-float CONV FORWARD";
+        sw_conv_forward_pad_impl_f(
+          (float*)bottom_data,
+          (float*)weight,
+          (float*)top_data,
+          //bias_data,
+          //int Ci,
+          bottom[0]->width(),
+          //int Ri,
+          bottom[0]->height(),
+          //int K,
+          this->kernel_shape().cpu_data()[0],
+          //int Ni,
+          bottom[0]->channels(),
+          //int No,
+          top[0]->channels(),
+          //int B
+          bottom[0]->num(),
+          //int pad
+          mypad
+        );
+        DLOG(INFO) << "end swDNN-float CONV FORWARD";
+      }
     }
     else {
       const Dtype* bottom_data = bottom[i]->cpu_data();
@@ -192,7 +209,6 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 #endif
 
 #ifdef USE_SWDNN
-    assert(typeid(Dtype) == typeid(double));
     const Dtype* weight    = this->blobs_[0]->cpu_data();
     Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();
     Dtype* bias_diff       = this->blobs_[1]->mutable_cpu_diff();
@@ -219,11 +235,10 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         && bottom[0]->channels() >= 128 && bottom[0]->channels()%128 == 0
         && top[0]->channels() >= 64 && top[0]->channels() % 32 == 0 ){
 
-      LOG(INFO) << "before swDNN for back conv"; 
-
+      LOG(INFO) << "before swDNN for back conv";
       if (this->param_propagate_down_[0] || propagate_down[i]) {
-        if(sizeof(Dtype)== sizeof(double))
-        sw_conv_backward_pad_impl_d(
+        if(typeid(Dtype)== typeid(double)) {
+          sw_conv_backward_pad_impl_d(
             //const Type* in,
             (double*)bottom_data,
             //const Type* out_grad,
@@ -250,8 +265,37 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
             bottom[0]->num(),
             mypad
             );
+        } else if (typeid(Dtype) == typeid(float)) {
+          sw_conv_backward_pad_impl_f(
+            //const Type* in,
+            (float*)bottom_data,
+            //const Type* out_grad,
+            (float*)top_diff,
+            //Type* weight,
+            (float*)weight,
+            //Type* in_grad,
+            (float*)bottom_diff,
+            //Type* weight_diff,
+            (float*)weight_diff,
+            //Type* bias_grad,
+            //bias_diff,
+            //int Ci,
+            bottom[0]->width(),
+            //int Ri,
+            bottom[0]->height(),
+            //int K,
+            this->kernel_shape().cpu_data()[0],
+            //int Ni,
+            bottom[0]->channels(),
+            //int No,
+            top[0]->channels(),
+            //int B
+            bottom[0]->num(),
+            mypad
+            );
         }
-        LOG(INFO) << "end swDNN for back conv"; 
+      }
+      LOG(INFO) << "end swDNN for back conv"; 
     }
     else {
       LOG(INFO) << "before SWBLAS for back conv"; 
