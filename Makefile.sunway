@@ -20,6 +20,7 @@ SWOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cpp, %.o, $(src)))
 swdnnsrc=$(wildcard ./src/swlayers/*.c ./src/util/*.c)
 SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc)))
 SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
+SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm_float.o
 # uncomment if use swDNN
 FLAGS += -DUSE_SWDNN
 SWOBJ+=$(SWDNNOBJ)
@@ -79,11 +80,17 @@ $(SWBUILD_DIR)/swlayers/sw_slave_conv_valid.o: ./src/swlayers/sw_slave_conv_vali
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_full.o: ./src/swlayers/sw_slave_conv_full.c
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+$(SWBUILD_DIR)/swlayers/sw_slave_conv_pad_float.o: ./src/swlayers/sw_slave_conv_pad_float.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_pad.o: ./src/swlayers/sw_slave_conv_pad.c
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+$(SWBUILD_DIR)/swlayers/sw_slave_conv_full_pad_float.o: ./src/swlayers/sw_slave_conv_full_pad_float.c
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/sw_slave_conv_full_pad.o: ./src/swlayers/sw_slave_conv_full_pad.c
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 $(SWBUILD_DIR)/swlayers/gemm_asm.o: ./src/swlayers/gemm.S
+	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
+$(SWBUILD_DIR)/swlayers/gemm_asm_float.o: ./src/swlayers/gemm_float.S
 	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
 
 $(SWBUILD_DIR)/%.o: ./src/%.cpp

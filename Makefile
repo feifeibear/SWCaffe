@@ -1,2 +1,2 @@
 #-include Makefile.intel
--include Makefile.sw
+-include Makefile.sunway

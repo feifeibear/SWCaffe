@@ -2,8 +2,8 @@ CXX  =mpiicxx
 FLAGS=-O2
 FLAGS+=-DCPU_ONLY
 FLAGS+=-DUSE_INTEL
-FLAGS+=-DMYMPI
-FLAGS+=-DOUTPUT_TIME
+FLAGS += 	-DDEBUG_VERBOSE_2
+#FLAGS+=-DMYMPI
 
 BOOST_DIR=/home/export/online1/swyf/swdnn/softs/install
 PROTOBUF_DIR=../thirdparty/protobuf_install

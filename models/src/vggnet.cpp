@@ -259,8 +259,8 @@ int main (int argc, char ** argv) {
   //shared_ptr<Solver<float> >
   //    solver(SolverRegistry<float>::CreateSolver(solver_param));
 
-  shared_ptr<Solver<double> >
-      solver(SolverRegistry<double>::CreateSolver(solver_param));
+  shared_ptr<Solver<float> >
+      solver(SolverRegistry<float>::CreateSolver(solver_param));
 #ifdef DEBUG_VERBOSE_1
   LOG(INFO) << "Rank " << Caffe::solver_rank() << " : init solver done!";
 #endif
