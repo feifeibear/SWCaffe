@@ -23,7 +23,7 @@ SWDNNOBJ+=$(SWBUILD_DIR)/swlayers/gemm_asm.o
 # uncomment if use swDNN
 FLAGS += -DUSE_SWDNN
 SWOBJ+=$(SWDNNOBJ)
-#FLAGS +=  -DUSE_SWPOOL
+FLAGS +=  -DUSE_SWPOOL
 
 BIN_DIR=./bin
 lenet: $(BIN_DIR)/test_lenet_sw
