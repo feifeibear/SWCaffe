@@ -226,8 +226,16 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
                   } else {
                     mask[pool_index] = index;
                   }
+                  //printf("find a max, index : %d, mask[%d] : %d\n", index, pool_index, mask[pool_index]);
                 }
               }
+            }
+            if(mask[pool_index] < 0) {
+              printf("Pool Forward Error : n: %d, c: %d, ph: %d, pw: %d, top_data[%d]: %d\n",
+                n, c, ph, pw, pool_index, top_data[pool_index]);
+              printf("mask[%d] : %d, width_ : %d, height_ : %d, pooled_height_ : %d, pooled_width_ : %d\n", 
+                  pool_index, mask[pool_index], width_, height_, pooled_height_, pooled_width_);
+              exit(0);
             }
           }
         }
@@ -355,7 +363,7 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       mask = max_idx_.cpu_data();
     }
 #ifdef USE_SWPOOL
-    if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
+    if(pooling_judge_condition(top[0]->num(),channels_,pooled_height_, pooled_width_) >0 &&
 				sizeof(Dtype) == sizeof(double))
 	{
 		pooling_backward_max(top[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,(const int*)mask,(const double*)top_mask,
@@ -392,6 +400,11 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
             const int index = ph * pooled_width_ + pw;
             const int bottom_index =
                 use_top_mask ? top_mask[index] : mask[index];
+            if(bottom_index < 0){
+              printf("Pool Error bottom_index %d, n: %d, c: %d, ph: %d, pw: %d, index: %d\n",
+                bottom_index, n, c, ph, pw, index);
+              exit(0);
+            }
             bottom_diff[bottom_index] += top_diff[index];
           }
         }
