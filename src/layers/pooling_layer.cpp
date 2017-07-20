@@ -244,7 +244,6 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 #endif
     break;
   case PoolingParameter_PoolMethod_AVE:
-    
     // The main loop
     //printf("AVG=num=%d channels_=%d pooled_height_=%d pooled_width_=%d stride_h_=%d stride_w_=%d pad_h_=%d pad_w_=%d kernel_h_=%d kernel_w_=%d height_=%d width_=%d top_offset=%d bottom_offset=%d\n",\
     //    bottom[0]->num(),channels_,pooled_height_,pooled_width_,stride_h_,stride_w_,pad_h_,pad_w_,kernel_h_,kernel_w_,height_,width_,top[0]->offset(0,1), bottom[0]->offset(0,1));
@@ -393,6 +392,8 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
             const int bottom_index =
                 use_top_mask ? top_mask[index] : mask[index];
             bottom_diff[bottom_index] += top_diff[index];
+            if(bottom_index<0 || bottom_index>(height_*width_-1))printf("use_top_mask: %d, bottom_index=%d\n",
+                use_top_mask, bottom_index);
           }
         }
         bottom_diff += bottom[0]->offset(0, 1);

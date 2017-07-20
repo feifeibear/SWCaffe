@@ -172,9 +172,18 @@ int main (int argc, char ** argv) {
 
   net_param.add_layer(data_train);
   net_param.add_layer(data_test);
-
   net_param.add_layer(vgg_conv(64, "conv1_1", "data", "conv1_1"));
   net_param.add_layer(vgg_relu("relu1_1", "conv1_1", "conv1_1"));
+
+  TransParameter trans_param(128, 3, 224, 224, true);
+  LayerParameter trans;
+  trans.set_name("trans_1");
+  trans.set_type("Trans");
+  trans.add_bottom("conv1_1");
+  trans.add_top("conv1_1");
+  trans.setup_trans_param(trans_param);
+  net_param.add_layer(trans);
+
   net_param.add_layer(vgg_conv(64, "conv1_2", "conv1_1", "conv1_2"));
   net_param.add_layer(vgg_relu("relu1_2", "conv1_2", "conv1_2"));
   net_param.add_layer(vgg_pool("pool1", "conv1_2", "pool1"));
@@ -207,6 +216,15 @@ int main (int argc, char ** argv) {
   net_param.add_layer(vgg_conv(512, "conv5_3", "conv5_2", "conv5_3"));
   net_param.add_layer(vgg_relu("relu5_3", "conv5_3", "conv5_3"));
   net_param.add_layer(vgg_pool("pool5", "conv5_3", "pool5"));
+
+  TransParameter trans_param2(128, 512, 7, 7, false);
+  LayerParameter trans2;
+  trans2.set_name("trans_2");
+  trans2.set_type("Trans");
+  trans2.add_bottom("pool5");
+  trans2.add_top("pool5");
+  trans2.setup_trans_param(trans_param2);
+  net_param.add_layer(trans2);
 
   net_param.add_layer(vgg_ip(4096, "fc6", "pool5", "fc6"));
   net_param.add_layer(vgg_relu("relu6", "fc6", "fc6"));
@@ -264,7 +282,7 @@ int main (int argc, char ** argv) {
 #ifdef DEBUG_VERBOSE_1
   LOG(INFO) << "Rank " << Caffe::solver_rank() << " : init solver done!";
 #endif
-  solver->net()->CopyTrainedLayersFrom(net);
+  //solver->net()->CopyTrainedLayersFrom(net);
 #ifdef DEBUG_VERBOSE_1
   LOG(INFO) << "Rank " << Caffe::solver_rank() << " : Readin Net done!";
 #endif

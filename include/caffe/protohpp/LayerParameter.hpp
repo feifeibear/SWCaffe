@@ -9,6 +9,7 @@
 #include <caffe/protohpp/PoolingParameter.hpp>
 #include <caffe/protohpp/DataParameter.hpp>
 #include <caffe/protohpp/ReLUParameter.hpp>
+#include <caffe/protohpp/TransParameter.hpp>
 #include <caffe/protohpp/SoftmaxParameter.hpp>
 #include <caffe/protohpp/LossParameter.hpp>
 #include <caffe/protohpp/AccuracyParameter.hpp>
@@ -159,6 +160,7 @@ class LayerParameter {
       has_pooling_param_ = false;
       has_data_param_ = false;
       has_relu_param_ = false;
+      has_trans_param_ = false;
       has_softmax_param_ = false;
       has_loss_param_=  false;
       has_accuracy_param_ = false;
@@ -181,6 +183,7 @@ class LayerParameter {
       convolution_param_ = NULL;
       pooling_param_ = NULL;
       relu_param_ = NULL;
+      trans_param_ = NULL;
       softmax_param_ = NULL;
       loss_param_ = NULL;
       accuracy_param_ = NULL;
@@ -205,6 +208,7 @@ class LayerParameter {
       convolution_param_ = NULL;
       pooling_param_ = NULL;
       relu_param_ = NULL;
+      trans_param_ = NULL;
       softmax_param_ = NULL;
       loss_param_ = NULL;
       accuracy_param_ = NULL;
@@ -258,6 +262,7 @@ class LayerParameter {
       has_data_param_ = other.has_data_param();
       has_softmax_param_ = other.has_softmax_param();
       has_relu_param_ = other.has_relu_param();
+      has_trans_param_ = other.has_trans_param();
       has_loss_param_ = other.has_loss_param();
       has_accuracy_param_ = other.has_accuracy_param();
       has_recurrent_param_ = other.has_recurrent_param();
@@ -293,6 +298,9 @@ class LayerParameter {
       
       if (has_relu_param_)
         this->mutable_relu_param()->CopyFrom(other.relu_param());
+
+      if (has_trans_param_)
+        this->mutable_trans_param()->CopyFrom(other.trans_param());
 
       if (has_loss_param_)
         this->mutable_loss_param()->CopyFrom(other.loss_param());
@@ -353,6 +361,7 @@ class LayerParameter {
       has_data_param_ = false;
       has_softmax_param_ = false;
       has_relu_param_ = false;
+      has_trans_param_ = false;
       has_loss_param_ = false;
       has_accuracy_param_ = false;
       has_recurrent_param_ = false;
@@ -374,6 +383,7 @@ class LayerParameter {
       if (pooling_param_ != NULL) delete pooling_param_;
       if (softmax_param_ != NULL) delete softmax_param_;
       if (relu_param_ != NULL) delete relu_param_;
+      if (trans_param_ != NULL) delete trans_param_;
       if (loss_param_ != NULL) delete loss_param_;
       if (accuracy_param_ != NULL) delete accuracy_param_;
       if (recurrent_param_ != NULL) delete recurrent_param_;
@@ -577,6 +587,30 @@ class LayerParameter {
       return *relu_param_;
     }
     inline bool has_relu_param() const { return has_relu_param_; }
+
+    //trans
+    inline void setup_trans_param(const TransParameter& other) {
+      has_trans_param_ = true;
+      if (trans_param_ == NULL) trans_param_ = new TransParameter;
+      trans_param_->CopyFrom(other);
+    }
+    inline TransParameter* add_trans_param() {
+      has_trans_param_ = true;
+      if (trans_param_ == NULL) trans_param_ = new TransParameter;
+      return trans_param_;
+    }
+    TransParameter* mutable_trans_param() {
+      has_trans_param_ = true;
+      if (trans_param_ == NULL) trans_param_ = new TransParameter;
+      return trans_param_;
+    }
+    inline const TransParameter& trans_param() const {
+      CHECK_NOTNULL(trans_param_);
+      return *trans_param_;
+    }
+    inline bool has_trans_param() const { return has_trans_param_; }
+
+
 
     //Softmax
     void setup_softmax_param(const SoftmaxParameter& other) {
@@ -887,6 +921,8 @@ class LayerParameter {
     bool has_data_param_;
     ReLUParameter* relu_param_;
     bool has_relu_param_;
+    TransParameter* trans_param_;
+    bool has_trans_param_;
     SoftmaxParameter* softmax_param_;
     bool has_softmax_param_;
     LossParameter* loss_param_;

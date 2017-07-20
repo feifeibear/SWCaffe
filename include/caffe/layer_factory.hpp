@@ -138,6 +138,19 @@ class LayerRegisterer {
   }                                                                            \
   REGISTER_LAYER_CREATOR(type, Creator_##type##Layer)
 
+
+#define REGISTER_LAYER_CREATOR_DP(type, creator)                                  \
+  static LayerRegisterer<double> g_creator_d_##type(#type, creator<double>)
+
+#define REGISTER_LAYER_CLASS_DP(type)                                             \
+  template <typename Dtype>                                                    \
+  shared_ptr<Layer<Dtype> > Creator_##type##Layer(const LayerParameter& param) \
+  {                                                                            \
+    return shared_ptr<Layer<Dtype> >(new type##Layer<Dtype>(param));           \
+  }                                                                            \
+  REGISTER_LAYER_CREATOR_DP(type, Creator_##type##Layer)
+
+
 }  // namespace caffe
 
 #endif  // CAFFE_LAYER_FACTORY_H_

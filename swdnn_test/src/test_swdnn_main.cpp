@@ -115,7 +115,7 @@ void test_forward() {
 
 
   for( int st = 0; st < 1; ++st ){
-    sw_conv_forward_impl_d(
+    sw_conv_forward_pad_impl_d(
         in,
         weight,
         out,
@@ -124,7 +124,8 @@ void test_forward() {
         K,
         Ni,
         No,
-        B);
+        B,
+        0);
 
     conv_forward_impl<double>(
         in,
@@ -186,7 +187,7 @@ int test_backward() {
   for( int i = 0; i < out_size; ++i )
     out_diff[i] = rand()/(double)RAND_MAX;
 
-  sw_conv_backward_impl_d(
+  sw_conv_backward_pad_impl_d(
         in,
         out_diff,
         weight,
@@ -197,7 +198,8 @@ int test_backward() {
         K,
         Ni,
         No,
-        B);
+        B,
+        0);
 
   conv_backward_impl<double>(
         in,

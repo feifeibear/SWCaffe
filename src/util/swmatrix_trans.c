@@ -5,6 +5,7 @@
 #include <math.h>
 #include "caffe/util/matrix_trans.h"
 
+typedef doublev4 SIMDType;
 __thread_local_fix dma_desc dmaget2,dmaput2;
 
 #define SWAPABCD2(in0,in1,in2,in3){\

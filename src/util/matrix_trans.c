@@ -7,7 +7,7 @@
 extern SLAVE_FUN(swapBN)();
 extern SLAVE_FUN(swapNBHW)();
 extern SLAVE_FUN(swapNBHW_ROLL)();
-void printf_buf(char *msg, Type * buf,unsigned int buf_len)
+void printf_buf(char *msg, double * buf,unsigned int buf_len)
 {
     int i;
     printf("%s\n",msg);
@@ -71,7 +71,7 @@ inline int get_split_size(int nSize,int nMaxSize)
 	return nSplitSize;
 }
 
-void swapBN(Type*in,Type*out,int B,int N,int H, int W)
+void swapBN(double*in,double*out,int B,int N,int H, int W)
 {
 	int nNB = N*B;		
 	SlaveParam param;
@@ -91,7 +91,7 @@ void swapBN(Type*in,Type*out,int B,int N,int H, int W)
 	athread_join();
 }
 
-void swapBN_HW(Type*in,Type*out,int B,int N,int H, int W)
+void swapBN_HW(double*in,double*out,int B,int N,int H, int W)
 {
 	int cRi, cCi, cNi, cB;
 	int nHW = H*W;
@@ -142,7 +142,7 @@ void swapBN_HW(Type*in,Type*out,int B,int N,int H, int W)
     }	
     athread_join();			
 }
-void weight_caffe_to_swdnn_back(Type*in,Type*out,int B,int N,int H,int W)
+void weight_caffe_to_swdnn_back(double*in,double*out,int B,int N,int H,int W)
 {
 	int cRi, cCi, cNi, cB;
 	//process the problem of the (H,W) very small
@@ -158,7 +158,7 @@ void weight_caffe_to_swdnn_back(Type*in,Type*out,int B,int N,int H,int W)
         return;
 	}
 	
-	Type* sout   = (Type*)malloc(sizeof(Type)*B*N*H*W);
+	double* sout   = (double*)malloc(sizeof(double)*B*N*H*W);
 	if(sout == NULL)
 	{
 		printf("weight_caffe_to_swdnn_back malloc failure!\n");
@@ -205,7 +205,7 @@ void weight_caffe_to_swdnn_back(Type*in,Type*out,int B,int N,int H,int W)
 	
 	free(sout);
 }
-void image_caffe_to_swdnn(Type*in,Type*out,int B,int N,int H,int W)
+void image_caffe_to_swdnn(double*in,double*out,int B,int N,int H,int W)
 {
 	int cRi, cCi, cNi, cB;
 	//process the problem of the (H,W) very small
@@ -219,7 +219,7 @@ void image_caffe_to_swdnn(Type*in,Type*out,int B,int N,int H,int W)
 					   out[image_swdnn_offset(cB, cNi, cRi, cCi, B, N, H, W)] = in[image_caffe_offset(cB, cNi, cRi, cCi, B, N, H, W)];
 	   return;
 	}
-	Type* sout   = (Type*)malloc(sizeof(Type)*B*N*H*W);
+	double* sout   = (double*)malloc(sizeof(double)*B*N*H*W);
 	if(sout == NULL)
 	{
 		printf("image_caffe_to_swdnn malloc failure!\n");
@@ -230,7 +230,7 @@ void image_caffe_to_swdnn(Type*in,Type*out,int B,int N,int H,int W)
 	
 	free(sout);
 }
-void image_swdnn_to_caffe(Type*in,Type*out,int B,int N,int H,int W)
+void image_swdnn_to_caffe(double*in,double*out,int B,int N,int H,int W)
 {
 	int cRi, cCi, cNi, cB;
 	//process the problem of the (H,W) very small
@@ -244,7 +244,7 @@ void image_swdnn_to_caffe(Type*in,Type*out,int B,int N,int H,int W)
 					   out[image_caffe_offset(cB, cNi, cRi, cCi, B, N, H, W)] = in[image_swdnn_offset(cB, cNi, cRi, cCi, B, N, H, W)];
 	   return;
 	}
-	Type* sout   = (Type*)malloc(sizeof(Type)*B*N*H*W);
+	double* sout   = (double*)malloc(sizeof(double)*B*N*H*W);
 	if(sout == NULL)
 	{
 		printf("image_swdnn_to_caffe malloc failure!\n");
@@ -256,3 +256,14 @@ void image_swdnn_to_caffe(Type*in,Type*out,int B,int N,int H,int W)
 	free(sout);
 }
 
+void weight_swdnn_to_caffe(double* in, double* out, int B, int N, int H, int W){
+  swapBN_HW(in,out,H,W,B,N);
+}
+
+void weight_caffe_to_swdnn(double* in, double* out, int B, int N, int H, int W){
+  swapBN_HW(in,out,B,N,H,W);
+}
+
+void image_caffe_to_swdnn_back(double* in, double* out,int B, int N, int H, int W){
+  swapBN_HW(in,out,B,N,H,W);
+}

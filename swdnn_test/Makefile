@@ -14,11 +14,11 @@ THIRD_PARTY_DIR=../../thirdparty
 SWINC_FLAGS=-I../include -I./include -I$(THIRD_PARTY_DIR)/CBLAS/include -I${BOOST_DIR}
 
 
-CAFFE_OBJ = 	../swtest/obj/test_caffe_main.o\
-							../swtest/obj/test_convolution_layer.o\
+CAFFE_OBJ = 	../swdnn_test/obj/test_caffe_main.o\
+							../swdnn_test/obj/test_convolution_layer.o\
 							../lib/swcaffe.a
 
-SWDNN_OBJ= 		../swtest/obj/test_swdnn_main.o\
+SWDNN_OBJ= 		../swdnn_test/obj/test_swdnn_main.o\
 							../swbuild/swlayers/sw_conv_layer_impl.o\
 							../swbuild/swlayers/sw_slave_conv_valid.o\
 							../swbuild/swlayers/sw_slave_conv_full.o\
@@ -30,7 +30,7 @@ SWDNN_OBJ= 		../swtest/obj/test_swdnn_main.o\
 							../swbuild/glog/logging.o
 
 
-#../swtest/obj/conv_layer_impl.o\
+#../swdnn_test/obj/conv_layer_impl.o\
 
 
 all: ./bin/swdnn_main
@@ -42,15 +42,15 @@ run: ./bin/swdnn_main
 	mpiCC $^ -o $@
 
 #intel
-../swtest/obj/test_caffe_main.o: ../swtest/src/test_caffe_main.cpp 
+../swdnn_test/obj/test_caffe_main.o: ../swdnn_test/src/test_caffe_main.cpp 
 	mpiicc $(FLAGS) $(INC_FLAGS) -c $^ -o $@ 
-../swtest/obj/test_convolution_layer.o: ../swtest/src/test_convolution_layer.cpp
+../swdnn_test/obj/test_convolution_layer.o: ../swdnn_test/src/test_convolution_layer.cpp
 	mpiicc $(FLAGS) $(INC_FLAGS) -c $^ -o $@
 
 #SW26010
-../swtest/obj/test_swdnn_main.o: ../swtest/src/test_swdnn_main.cpp 
+../swdnn_test/obj/test_swdnn_main.o: ../swdnn_test/src/test_swdnn_main.cpp 
 	mpiCC -host $(FLAGS) $(SWINC_FLAGS) -c $^ -o $@ 
-#../swtest/obj/conv_layer_impl.o: ../swtest/src/conv_layer_impl.cpp
+#../swdnn_test/obj/conv_layer_impl.o: ../swdnn_test/src/conv_layer_impl.cpp
 #	mpiCC -host $(FLAGS) $(SWINC_FLAGS) -c $^ -o $@
 
 clean:
