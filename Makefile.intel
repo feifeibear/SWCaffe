@@ -45,7 +45,7 @@ ar: $(OBJ)
 runalex:
 	sh ./scripts/intel_runalex.sh 1
 runvgg:
-	sh ./scripts/intel_runvgg.sh 12
+	sh ./scripts/intel_runvgg.sh 1
 runlenet:
 	sh ./scripts/intel_runlenet.sh 12
 runsolver:
