@@ -1,0 +1,848 @@
+#include <stdio.h> 
+#include <float.h>
+#include <slave.h>
+#include <math.h>
+#include <dma.h>
+#include <simd.h>
+#include <string.h>
+#include <limits.h>
+#include <assert.h>
+
+#define min(a,b) ((a)>(b)?(b):(a))
+#define max(a,b) ((a)>(b)?(a):(b))
+
+__thread_local dma_desc dma_get_pool, dma_put_pool;
+
+typedef struct _tagSlavePoolingParam
+{
+	int num,channels,pooled_height,pooled_width,stride_h,stride_w,pad_h,pad_w,kernel_h,kernel_w,height,width;
+	int  *mask;
+	void *top_data,*bottom_data,*top_mask;
+}SlavePoolingParam;
+
+
+void maxPoolForward_f(SlavePoolingParam *lParam) {
+    
+#define Type float
+    const int max_buff_size = 1024*58;
+	Type* bottom_data = lParam->bottom_data; 
+	int num = lParam->num; 
+	int channels = lParam->channels;
+    int height = lParam->height;
+	int width = lParam->width; 
+	int pooled_height = lParam->pooled_height;
+    int pooled_width = lParam->pooled_width; 
+	int kernel_h = lParam->kernel_h;
+	int kernel_w = lParam->kernel_w;
+    int stride_h = lParam->stride_h; 
+	int stride_w = lParam->stride_w;
+	int pad_h = lParam->pad_h; 
+	int pad_w = lParam->pad_w;
+    Type* top_data = lParam->top_data; 
+	int* mask = lParam->mask; 
+	Type* top_mask = lParam->top_mask;
+	Type *bottom_data_local,*top_data_local,*top_mask_local;	
+	int  *mask_local;
+	
+    int id = athread_get_id(-1);
+	int count = num*channels*pooled_height;
+    int local_count = count/64 + (id<(count%64));
+    int start = id*count/64 + (id<(count%64)?id:(count%64));
+    int end = start + local_count;
+	
+	int blockNum = 0,mask_size = 0,top_data_size = 0,bottom_data_size = 0;
+	if (mask)
+	    blockNum =  max_buff_size/(pooled_width*sizeof(Type) + width*sizeof(Type) + pooled_width*sizeof(int));
+	else
+		blockNum =  max_buff_size/(pooled_width*sizeof(Type)*2 + width*sizeof(Type));
+	
+	blockNum = blockNum > pooled_height ? pooled_height : blockNum;
+	int restNum = pooled_height % blockNum;
+    
+	top_data_size =  blockNum * pooled_width*sizeof(Type);
+	bottom_data_size =  blockNum * width*sizeof(Type);		
+		
+	if (mask)
+	{
+	    mask_size =  blockNum * pooled_width*sizeof(int);
+		mask_local = (int*)(long)ldm_malloc(mask_size);
+	}
+	else
+	{
+		mask_size =  top_data_size;
+		top_mask_local  = (Type*)(long)ldm_malloc(mask_size);	
+	}
+	
+	bottom_data_local  = (Type*)(long)ldm_malloc(bottom_data_size);
+	top_data_local = (Type*)(long)ldm_malloc(top_data_size);		
+	
+	int i = 0, index= 0, h = 0,w = 0;
+    // DMA settings
+	volatile int replyget=0, replyput=0;
+	dma_set_op(&dma_get_pool, DMA_GET);
+	dma_set_mode(&dma_get_pool, PE_MODE);
+	dma_set_reply(&dma_get_pool, &replyget);
+
+	dma_set_op(&dma_put_pool, DMA_PUT);
+	dma_set_mode(&dma_put_pool, PE_MODE);
+	dma_set_reply(&dma_put_pool, &replyput);    
+	
+	
+    for(i = start;i < end ;i += top_data_size)
+    {
+		int blockCount = i + top_data_size;		
+					
+		for(index = i; index <  blockCount;index++)
+		{
+			const int pw = index % pooled_width;
+			const int ph = (index / pooled_width) % pooled_height;
+			const int c = (index / pooled_width / pooled_height) % channels;
+			const int n = index / pooled_width / pooled_height / channels;
+			int hstart = ph * stride_h - pad_h;
+			int wstart = pw * stride_w - pad_w;
+			const int hend = min(hstart + kernel_h, height);
+			const int wend = min(wstart + kernel_w, width);
+			hstart = max(hstart, 0);
+			wstart = max(wstart, 0);
+			Type maxval = -FLT_MAX;
+			int maxidx = -1;
+			int rows = hend - hstart;
+			assert(rows <= blockNum);
+			dma_set_size(&dma_get_pool,rows * width * sizeof(Type));
+	        dma(dma_get_pool,(long)(bottom_data + (n * channels + c) * height * width + hstart * width),(long)(bottom_data_local));
+		    dma_wait(&replyget,1);replyget=0;
+		
+			for (h = 0; h < rows; ++h) {
+			  for (w = wstart; w < wend; ++w) {
+				if (bottom_data_local[h * width + w] > maxval) {
+				  maxidx = h * width + w;
+				  maxval = bottom_data_local[maxidx];
+				  maxidx += hstart * width;
+				}
+			  }
+			}
+			int index_local = index - i;
+			//if(id<1)printf("index_local=%d maxval=%f maxidx=%d\n",index_local,maxval,maxidx);
+			top_data_local[index_local] = maxval;
+			if (mask) {
+			  mask_local[index_local] = maxidx;
+			} else {
+			  top_mask_local[index_local] = maxidx;
+			}
+		}
+		if (mask) 
+		{
+			dma_set_size(&dma_put_pool,mask_size);
+	        dma(dma_put_pool,(long)(mask + i),(long)(mask_local));
+		    dma_wait(&replyput,1);replyput=0;
+		}
+		else
+		{
+			dma_set_size(&dma_put_pool,top_data_size);
+			dma(dma_put_pool,(long)(top_mask + i),(long)(top_mask_local));
+			dma_wait(&replyput,1);replyput=0;
+		}
+		dma_set_size(&dma_put_pool,top_data_size);
+	    dma(dma_put_pool,(long)(top_data + i),(long)(top_data_local));
+		dma_wait(&replyput,1);replyput=0;
+    }
+	if(restNum >0)
+	{
+		int rest_mask_size =  restNum * pooled_width*sizeof(int);
+		int rest_data_size =  restNum * pooled_width*sizeof(Type);
+		start = end - restNum*pooled_width;
+		for(index = start;index < end ;index++)
+		{
+			const int pw = index % pooled_width;
+			const int ph = (index / pooled_width) % pooled_height;
+			const int c = (index / pooled_width / pooled_height) % channels;
+			const int n = index / pooled_width / pooled_height / channels;
+			int hstart = ph * stride_h - pad_h;
+			int wstart = pw * stride_w - pad_w;
+			const int hend = min(hstart + kernel_h, height);
+			const int wend = min(wstart + kernel_w, width);
+			hstart = max(hstart, 0);
+			wstart = max(wstart, 0);
+			Type maxval = -FLT_MAX;
+			int maxidx = -1;
+			int rows = hend - hstart;
+			assert(rows <= blockNum);
+			dma_set_size(&dma_get_pool,rows * width * sizeof(Type));
+			dma(dma_get_pool,(long)(bottom_data + (n * channels + c) * height * width + hstart * width),(long)(bottom_data_local));
+			dma_wait(&replyget,1);replyget=0;
+			
+			for (h = 0; h < rows; ++h) {
+			  for (w = wstart; w < wend; ++w) {
+				if (bottom_data_local[h * width + w] > maxval) {
+				  maxidx = h * width + w;
+				  maxval = bottom_data_local[maxidx];
+				  maxidx += hstart * width;
+				}
+			  }
+			}
+			int index_local = index - start;
+			top_data_local[index_local] = maxval;
+			if (mask) {
+			  mask_local[index_local] = maxidx;
+			} else {
+			  top_mask_local[index_local] = maxidx;
+			}
+		}
+		if (mask) 
+		{
+			dma_set_size(&dma_put_pool,rest_mask_size);
+			dma(dma_put_pool,(long)(mask + start),(long)(mask_local));
+			dma_wait(&replyput,1);replyput=0;
+		}
+		else
+		{
+			dma_set_size(&dma_put_pool,rest_data_size);
+			dma(dma_put_pool,(long)(top_mask + start),(long)(top_mask_local));
+			dma_wait(&replyput,1);replyput=0;
+		}
+		dma_set_size(&dma_put_pool,rest_data_size);
+		dma(dma_put_pool,(long)(top_data + start),(long)(top_data_local));
+		dma_wait(&replyput,1);replyput=0;
+	}
+   	
+	if (mask)
+	{
+	   ldm_free(mask_local,mask_size);
+	}
+	else
+	{
+		ldm_free(mask_local,top_data_size);	
+	}
+	ldm_free(bottom_data_local,bottom_data_size);
+	ldm_free(top_data_local,top_data_size);
+#undef Type
+}
+
+
+void maxPoolBackward_f(SlavePoolingParam *lParam)
+{
+#define Type float
+    const int max_buff_size = 1024*58;
+	Type* bottom_data = lParam->bottom_data; 
+	int num = lParam->num; 
+	int channels = lParam->channels;
+    int height = lParam->height;
+	int width = lParam->width; 
+	int pooled_height = lParam->pooled_height;
+    int pooled_width = lParam->pooled_width; 
+	int kernel_h = lParam->kernel_h;
+	int kernel_w = lParam->kernel_w;
+    int stride_h = lParam->stride_h; 
+	int stride_w = lParam->stride_w;
+	int pad_h = lParam->pad_h; 
+	int pad_w = lParam->pad_w;
+    Type* top_data = lParam->top_data; 
+	int* mask = lParam->mask; 
+	Type* top_mask = lParam->top_mask;
+	Type *bottom_data_local,*top_data_local,*top_mask_local;	
+	int  *mask_local;
+	
+    int id = athread_get_id(-1);
+	int count = num*channels*height;
+    int local_count = count/64 + (id<(count%64));
+    int start = id*count/64 + (id<(count%64)?id:(count%64));
+    int end = start + local_count;
+	
+	int blockNum = 0,mask_size = 0,top_data_size = 0,bottom_data_size = 0;
+	if (mask)
+	    blockNum =  max_buff_size/(pooled_width*sizeof(Type) + width*sizeof(Type) + pooled_width*sizeof(int));
+	else
+		blockNum =  max_buff_size/(pooled_width*sizeof(Type)*2 + width*sizeof(Type));
+	
+	blockNum = blockNum > pooled_height ? pooled_height : blockNum;
+	int restNum = pooled_height % blockNum;
+    
+	top_data_size =  blockNum * pooled_width*sizeof(Type);
+	bottom_data_size =  blockNum * width*sizeof(Type);		
+		
+	if (mask)
+	{
+	    mask_size =  blockNum * pooled_width*sizeof(int);
+		mask_local = (int*)(long)ldm_malloc(mask_size);
+	}
+	else
+	{
+		mask_size =  top_data_size;
+		top_mask_local  = (Type*)(long)ldm_malloc(mask_size);	
+	}
+	
+	bottom_data_local  = (Type*)(long)ldm_malloc(bottom_data_size);
+	top_data_local = (Type*)(long)ldm_malloc(top_data_size);	
+	
+	int i = 0, index= 0, ph = 0,pw = 0;
+    // DMA settings
+	volatile int replyget=0, replyput=0;
+	dma_set_op(&dma_get_pool, DMA_GET);
+	dma_set_mode(&dma_get_pool, PE_MODE);
+	dma_set_reply(&dma_get_pool, &replyget);
+
+	dma_set_op(&dma_put_pool, DMA_PUT);
+	dma_set_mode(&dma_put_pool, PE_MODE);
+	dma_set_reply(&dma_put_pool, &replyput);   	
+	
+    for(i = start;i < end ;i += bottom_data_size)
+    {
+		int blockCount = i + bottom_data_size;		
+					
+		for(index = i; index <  blockCount;index++)
+		{
+	  	    // find out the local index
+			// find out the local offset
+			const int w = index % width;
+			const int h = (index / width) % height;
+			const int c = (index / width / height) % channels;
+			const int n = index / width / height / channels;
+			const int phstart =
+				 (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
+			const int phend = min((h + pad_h) / stride_h + 1, pooled_height);
+			const int pwstart =
+				 (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
+			const int pwend = min((w + pad_w) / stride_w + 1, pooled_width);
+			Type gradient = 0;
+			const int offset = (n * channels + c) * pooled_height * pooled_width;
+			//const Type* const top_diff_slice = top_diff + offset;
+			
+			int rows = phend - phstart;
+			assert(rows <= blockNum);
+			dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			dma(dma_get_pool,(long)(top_data + offset + phstart * pooled_width),(long)(top_data_local));
+			dma_wait(&replyget,1);replyget=0;
+			
+			if (mask) {
+			  //const int* const mask_slice = mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(int));
+			  dma(dma_get_pool,(long)(mask + offset + phstart * pooled_width),(long)(mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data_local[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			} else {
+			  //const Type* const top_mask_slice = top_mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			  dma(dma_get_pool,(long)(top_mask + offset + phstart * pooled_width),(long)(top_mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (top_mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			}
+			bottom_data_local[index - i] = gradient;
+		}
+		
+		dma_set_size(&dma_put_pool,bottom_data_size);
+		dma(dma_put_pool,(long)(bottom_data + i),(long)(bottom_data_local));
+		dma_wait(&replyput,1);replyput=0;
+	}
+	if(restNum >0)
+	{
+		int rest_bottom_data_size =  restNum * width*sizeof(Type);
+		start = end - restNum*width;
+		for(index = start;index < end ;index++)
+		{
+			// find out the local index
+			// find out the local offset
+			const int w = index % width;
+			const int h = (index / width) % height;
+			const int c = (index / width / height) % channels;
+			const int n = index / width / height / channels;
+			const int phstart =
+				 (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
+			const int phend = min((h + pad_h) / stride_h + 1, pooled_height);
+			const int pwstart =
+				 (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
+			const int pwend = min((w + pad_w) / stride_w + 1, pooled_width);
+			Type gradient = 0;
+			const int offset = (n * channels + c) * pooled_height * pooled_width;
+			//const Type* const top_diff_slice = top_diff + offset;
+			
+			int rows = phend - phstart;
+			assert(rows < blockNum);
+			dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			dma(dma_get_pool,(long)(top_data + offset + phstart * pooled_width),(long)(top_data_local));
+			dma_wait(&replyget,1);replyget=0;
+			
+			if (mask) {
+			  //const int* const mask_slice = mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(int));
+			  dma(dma_get_pool,(long)(mask + offset + phstart * pooled_width),(long)(mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data_local[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			} else {
+			  //const Type* const top_mask_slice = top_mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			  dma(dma_get_pool,(long)(top_mask + offset + phstart * pooled_width),(long)(top_mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (top_mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			}
+			bottom_data_local[index - start] = gradient;
+		}
+		dma_set_size(&dma_put_pool,rest_bottom_data_size);
+		dma(dma_put_pool,(long)(bottom_data + start),(long)(bottom_data_local));
+		dma_wait(&replyput,1);replyput=0;
+	}
+	if (mask)
+	{
+	   ldm_free(mask_local,mask_size);
+	}
+	else
+	{
+		ldm_free(mask_local,top_data_size);	
+	}
+	ldm_free(bottom_data_local,bottom_data_size);
+	ldm_free(top_data_local,top_data_size);
+#undef Type	
+}
+
+
+void maxPoolForward_d(SlavePoolingParam *lParam) {
+    
+#define Type double
+    const int max_buff_size = 1024*58;
+	Type* bottom_data = lParam->bottom_data; 
+	int num = lParam->num; 
+	int channels = lParam->channels;
+    int height = lParam->height;
+	int width = lParam->width; 
+	int pooled_height = lParam->pooled_height;
+    int pooled_width = lParam->pooled_width; 
+	int kernel_h = lParam->kernel_h;
+	int kernel_w = lParam->kernel_w;
+    int stride_h = lParam->stride_h; 
+	int stride_w = lParam->stride_w;
+	int pad_h = lParam->pad_h; 
+	int pad_w = lParam->pad_w;
+    Type* top_data = lParam->top_data; 
+	int* mask = lParam->mask; 
+	Type* top_mask = lParam->top_mask;
+	Type *bottom_data_local,*top_data_local,*top_mask_local;	
+	int  *mask_local;
+	
+    int id = athread_get_id(-1);
+	int count = num*channels*pooled_height;
+    int local_count = count/64 + (id<(count%64));
+    int start = id*count/64 + (id<(count%64)?id:(count%64));
+    int end = start + local_count;
+	
+	int blockNum = 0,mask_size = 0,top_data_size = 0,bottom_data_size = 0;
+	if (mask)
+	    blockNum =  max_buff_size/(pooled_width*sizeof(Type) + width*sizeof(Type) + pooled_width*sizeof(int));
+	else
+		blockNum =  max_buff_size/(pooled_width*sizeof(Type)*2 + width*sizeof(Type));
+	
+	blockNum = blockNum > pooled_height ? pooled_height : blockNum;
+	int restNum = pooled_height % blockNum;
+    
+	top_data_size =  blockNum * pooled_width*sizeof(Type);
+	bottom_data_size =  blockNum * width*sizeof(Type);		
+		
+	if (mask)
+	{
+	    mask_size =  blockNum * pooled_width*sizeof(int);
+		mask_local = (int*)(long)ldm_malloc(mask_size);
+	}
+	else
+	{
+		mask_size =  top_data_size;
+		top_mask_local  = (Type*)(long)ldm_malloc(mask_size);	
+	}
+	
+	bottom_data_local  = (Type*)(long)ldm_malloc(bottom_data_size);
+	top_data_local = (Type*)(long)ldm_malloc(top_data_size);		
+	
+	int i = 0, index= 0, h = 0,w = 0;
+    // DMA settings
+	volatile int replyget=0, replyput=0;
+	dma_set_op(&dma_get_pool, DMA_GET);
+	dma_set_mode(&dma_get_pool, PE_MODE);
+	dma_set_reply(&dma_get_pool, &replyget);
+
+	dma_set_op(&dma_put_pool, DMA_PUT);
+	dma_set_mode(&dma_put_pool, PE_MODE);
+	dma_set_reply(&dma_put_pool, &replyput);    
+	
+	
+    for(i = start;i < end ;i += top_data_size)
+    {
+		int blockCount = i + top_data_size;		
+					
+		for(index = i; index <  blockCount;index++)
+		{
+			const int pw = index % pooled_width;
+			const int ph = (index / pooled_width) % pooled_height;
+			const int c = (index / pooled_width / pooled_height) % channels;
+			const int n = index / pooled_width / pooled_height / channels;
+			int hstart = ph * stride_h - pad_h;
+			int wstart = pw * stride_w - pad_w;
+			const int hend = min(hstart + kernel_h, height);
+			const int wend = min(wstart + kernel_w, width);
+			hstart = max(hstart, 0);
+			wstart = max(wstart, 0);
+			Type maxval = -FLT_MAX;
+			int maxidx = -1;
+			int rows = hend - hstart;
+			assert(rows <= blockNum);
+			dma_set_size(&dma_get_pool,rows * width * sizeof(Type));
+	        dma(dma_get_pool,(long)(bottom_data + (n * channels + c) * height * width + hstart * width),(long)(bottom_data_local));
+		    dma_wait(&replyget,1);replyget=0;
+		
+			for (h = 0; h < rows; ++h) {
+			  for (w = wstart; w < wend; ++w) {
+				if (bottom_data_local[h * width + w] > maxval) {
+				  maxidx = h * width + w;
+				  maxval = bottom_data_local[maxidx];
+				  maxidx += hstart * width;
+				}
+			  }
+			}
+			int index_local = index - i;
+			top_data_local[index_local] = maxval;
+			if (mask) {
+			  mask_local[index_local] = maxidx;
+			} else {
+			  top_mask_local[index_local] = maxidx;
+			}
+		}
+		if (mask) 
+		{
+			dma_set_size(&dma_put_pool,mask_size);
+	        dma(dma_put_pool,(long)(mask + i),(long)(mask_local));
+		    dma_wait(&replyput,1);replyput=0;
+		}
+		else
+		{
+			dma_set_size(&dma_put_pool,top_data_size);
+			dma(dma_put_pool,(long)(top_mask + i),(long)(top_mask_local));
+			dma_wait(&replyput,1);replyput=0;
+		}
+		dma_set_size(&dma_put_pool,top_data_size);
+	    dma(dma_put_pool,(long)(top_data + i),(long)(top_data_local));
+		dma_wait(&replyput,1);replyput=0;
+    }
+	if(restNum >0)
+	{
+		int rest_mask_size =  restNum * pooled_width*sizeof(int);
+		int rest_data_size =  restNum * pooled_width*sizeof(Type);
+		start = end - restNum*pooled_width;
+		for(index = start;index < end ;index++)
+		{
+			const int pw = index % pooled_width;
+			const int ph = (index / pooled_width) % pooled_height;
+			const int c = (index / pooled_width / pooled_height) % channels;
+			const int n = index / pooled_width / pooled_height / channels;
+			int hstart = ph * stride_h - pad_h;
+			int wstart = pw * stride_w - pad_w;
+			const int hend = min(hstart + kernel_h, height);
+			const int wend = min(wstart + kernel_w, width);
+			hstart = max(hstart, 0);
+			wstart = max(wstart, 0);
+			Type maxval = -FLT_MAX;
+			int maxidx = -1;
+			int rows = hend - hstart;
+			assert(rows <= blockNum);
+			dma_set_size(&dma_get_pool,rows * width * sizeof(Type));
+			dma(dma_get_pool,(long)(bottom_data + (n * channels + c) * height * width + hstart * width),(long)(bottom_data_local));
+			dma_wait(&replyget,1);replyget=0;
+			
+			for (h = 0; h < rows; ++h) {
+			  for (w = wstart; w < wend; ++w) {
+				if (bottom_data_local[h * width + w] > maxval) {
+				  maxidx = h * width + w;
+				  maxval = bottom_data_local[maxidx];
+				  maxidx += hstart * width;
+				}
+			  }
+			}
+			int index_local = index - start;
+			top_data_local[index_local] = maxval;
+			if (mask) {
+			  mask_local[index_local] = maxidx;
+			} else {
+			  top_mask_local[index_local] = maxidx;
+			}
+		}
+		if (mask) 
+		{
+			dma_set_size(&dma_put_pool,rest_mask_size);
+			dma(dma_put_pool,(long)(mask + start),(long)(mask_local));
+			dma_wait(&replyput,1);replyput=0;
+		}
+		else
+		{
+			dma_set_size(&dma_put_pool,rest_data_size);
+			dma(dma_put_pool,(long)(top_mask + start),(long)(top_mask_local));
+			dma_wait(&replyput,1);replyput=0;
+		}
+		dma_set_size(&dma_put_pool,rest_data_size);
+		dma(dma_put_pool,(long)(top_data + start),(long)(top_data_local));
+		dma_wait(&replyput,1);replyput=0;
+	}
+   	
+	if (mask)
+	{
+	   ldm_free(mask_local,mask_size);
+	}
+	else
+	{
+		ldm_free(mask_local,top_data_size);	
+	}
+	ldm_free(bottom_data_local,bottom_data_size);
+	ldm_free(top_data_local,top_data_size);
+#undef Type
+}
+
+
+void maxPoolBackward_d(SlavePoolingParam *lParam)
+{
+#define Type double
+    const int max_buff_size = 1024*58;
+	Type* bottom_data = lParam->bottom_data; 
+	int num = lParam->num; 
+	int channels = lParam->channels;
+    int height = lParam->height;
+	int width = lParam->width; 
+	int pooled_height = lParam->pooled_height;
+    int pooled_width = lParam->pooled_width; 
+	int kernel_h = lParam->kernel_h;
+	int kernel_w = lParam->kernel_w;
+    int stride_h = lParam->stride_h; 
+	int stride_w = lParam->stride_w;
+	int pad_h = lParam->pad_h; 
+	int pad_w = lParam->pad_w;
+    Type* top_data = lParam->top_data; 
+	int* mask = lParam->mask; 
+	Type* top_mask = lParam->top_mask;
+	Type *bottom_data_local,*top_data_local,*top_mask_local;	
+	int  *mask_local;
+	
+    int id = athread_get_id(-1);
+	int count = num*channels*height;
+    int local_count = count/64 + (id<(count%64));
+    int start = id*count/64 + (id<(count%64)?id:(count%64));
+    int end = start + local_count;
+	
+	int blockNum = 0,mask_size = 0,top_data_size = 0,bottom_data_size = 0;
+	if (mask)
+	    blockNum =  max_buff_size/(pooled_width*sizeof(Type) + width*sizeof(Type) + pooled_width*sizeof(int));
+	else
+		blockNum =  max_buff_size/(pooled_width*sizeof(Type)*2 + width*sizeof(Type));
+	
+	blockNum = blockNum > pooled_height ? pooled_height : blockNum;
+	int restNum = pooled_height % blockNum;
+    
+	top_data_size =  blockNum * pooled_width*sizeof(Type);
+	bottom_data_size =  blockNum * width*sizeof(Type);		
+		
+	if (mask)
+	{
+	    mask_size =  blockNum * pooled_width*sizeof(int);
+		mask_local = (int*)(long)ldm_malloc(mask_size);
+	}
+	else
+	{
+		mask_size =  top_data_size;
+		top_mask_local  = (Type*)(long)ldm_malloc(mask_size);	
+	}
+	
+	bottom_data_local  = (Type*)(long)ldm_malloc(bottom_data_size);
+	top_data_local = (Type*)(long)ldm_malloc(top_data_size);	
+	
+	int i = 0, index= 0, ph = 0,pw = 0;
+    // DMA settings
+	volatile int replyget=0, replyput=0;
+	dma_set_op(&dma_get_pool, DMA_GET);
+	dma_set_mode(&dma_get_pool, PE_MODE);
+	dma_set_reply(&dma_get_pool, &replyget);
+
+	dma_set_op(&dma_put_pool, DMA_PUT);
+	dma_set_mode(&dma_put_pool, PE_MODE);
+	dma_set_reply(&dma_put_pool, &replyput);   	
+	
+    for(i = start;i < end ;i += bottom_data_size)
+    {
+		int blockCount = i + bottom_data_size;		
+					
+		for(index = i; index <  blockCount;index++)
+		{
+	  	    // find out the local index
+			// find out the local offset
+			const int w = index % width;
+			const int h = (index / width) % height;
+			const int c = (index / width / height) % channels;
+			const int n = index / width / height / channels;
+			const int phstart =
+				 (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
+			const int phend = min((h + pad_h) / stride_h + 1, pooled_height);
+			const int pwstart =
+				 (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
+			const int pwend = min((w + pad_w) / stride_w + 1, pooled_width);
+			Type gradient = 0;
+			const int offset = (n * channels + c) * pooled_height * pooled_width;
+			//const Type* const top_diff_slice = top_diff + offset;
+			
+			int rows = phend - phstart;
+			assert(rows <= blockNum);
+			dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			dma(dma_get_pool,(long)(top_data + offset + phstart * pooled_width),(long)(top_data_local));
+			dma_wait(&replyget,1);replyget=0;
+			
+			if (mask) {
+			  //const int* const mask_slice = mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(int));
+			  dma(dma_get_pool,(long)(mask + offset + phstart * pooled_width),(long)(mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data_local[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			} else {
+			  //const Type* const top_mask_slice = top_mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			  dma(dma_get_pool,(long)(top_mask + offset + phstart * pooled_width),(long)(top_mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (top_mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			}
+			bottom_data_local[index - i] = gradient;
+		}
+		
+		dma_set_size(&dma_put_pool,bottom_data_size);
+		dma(dma_put_pool,(long)(bottom_data + i),(long)(bottom_data_local));
+		dma_wait(&replyput,1);replyput=0;
+	}
+	if(restNum >0)
+	{
+		int rest_bottom_data_size =  restNum * width*sizeof(Type);
+		start = end - restNum*width;
+		for(index = start;index < end ;index++)
+		{
+			// find out the local index
+			// find out the local offset
+			const int w = index % width;
+			const int h = (index / width) % height;
+			const int c = (index / width / height) % channels;
+			const int n = index / width / height / channels;
+			const int phstart =
+				 (h + pad_h < kernel_h) ? 0 : (h + pad_h - kernel_h) / stride_h + 1;
+			const int phend = min((h + pad_h) / stride_h + 1, pooled_height);
+			const int pwstart =
+				 (w + pad_w < kernel_w) ? 0 : (w + pad_w - kernel_w) / stride_w + 1;
+			const int pwend = min((w + pad_w) / stride_w + 1, pooled_width);
+			Type gradient = 0;
+			const int offset = (n * channels + c) * pooled_height * pooled_width;
+			//const Type* const top_diff_slice = top_diff + offset;
+			
+			int rows = phend - phstart;
+			assert(rows < blockNum);
+			dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			dma(dma_get_pool,(long)(top_data + offset + phstart * pooled_width),(long)(top_data_local));
+			dma_wait(&replyget,1);replyget=0;
+			
+			if (mask) {
+			  //const int* const mask_slice = mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(int));
+			  dma(dma_get_pool,(long)(mask + offset + phstart * pooled_width),(long)(mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data_local[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			} else {
+			  //const Type* const top_mask_slice = top_mask + offset;
+			  dma_set_size(&dma_get_pool,rows * pooled_width * sizeof(Type));
+			  dma(dma_get_pool,(long)(top_mask + offset + phstart * pooled_width),(long)(top_mask_local));
+			  dma_wait(&replyget,1);replyget=0;
+			
+			  for ( ph = 0; ph < rows; ++ph) {
+				for ( pw = pwstart; pw < pwend; ++pw) {
+				  if (top_mask_local[ph * pooled_width + pw] == h * width + w) {
+					gradient += top_data[ph * pooled_width + pw];
+				  }
+				}
+			  }
+			}
+			bottom_data_local[index - start] = gradient;
+		}
+		dma_set_size(&dma_put_pool,rest_bottom_data_size);
+		dma(dma_put_pool,(long)(bottom_data + start),(long)(bottom_data_local));
+		dma_wait(&replyput,1);replyput=0;
+	}
+	if (mask)
+	{
+	   ldm_free(mask_local,mask_size);
+	}
+	else
+	{
+		ldm_free(mask_local,top_data_size);	
+	}
+	ldm_free(bottom_data_local,bottom_data_size);
+	ldm_free(top_data_local,top_data_size);
+#undef Type	
+}
+
+void avgPoolForward_f(SlavePoolingParam *lParam) 
+{    
+#define Type float
+
+#undef Type
+}
+void avgPoolForward_d(SlavePoolingParam *lParam) 
+{    
+#define Type double
+
+#undef Type
+}
+void avgPoolBackward_f(SlavePoolingParam *lParam)
+{
+#define Type float
+
+#undef Type
+}
+
+void avgPoolBackward_d(SlavePoolingParam *lParam)
+{
+#define Type double
+
+#undef Type
+}
