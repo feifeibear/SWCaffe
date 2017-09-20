@@ -42,7 +42,7 @@ int64_t cluster_seedgen(void) {
 
 void GlobalInit(int* pargc, char*** pargv) {
   // Google flags.
- // ::gflags::ParseCommandLineFlags(pargc, pargv, true);
+  ::gflags::ParseCommandLineFlags(pargc, pargv, true);
   // Google logging.
 #ifdef USE_INTEL
   ::google::InitGoogleLogging(*(pargv)[0]);

@@ -252,7 +252,7 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 #endif
 
 #ifdef USE_SWDNN
-    assert(typeid(Dtype) == typeid(double));
+    //assert(typeid(Dtype) == typeid(double));
     const Dtype* weight    = this->blobs_[0]->cpu_data();
     Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();
     Dtype* bias_diff       = this->blobs_[1]->mutable_cpu_diff();

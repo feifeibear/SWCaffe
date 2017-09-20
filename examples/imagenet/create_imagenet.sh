@@ -3,16 +3,16 @@
 # N.B. set the path to the imagenet train + val data dirs
 set -e
 
-EXAMPLE=examples/imagenet
-DATA=data/ilsvrc12
-TOOLS=build/tools
+EXAMPLE=./examples/imagenet
+DATA=./data/ilsvrc12
+TOOLS=./bin
 
-TRAIN_DATA_ROOT=/path/to/imagenet/train/
-VAL_DATA_ROOT=/path/to/imagenet/val/
+TRAIN_DATA_ROOT=/home/export/online1/swyf/swdnn/ilsvrc12/ILSVRC2012/ILSVRC2012_img_train/
+VAL_DATA_ROOT=/home/export/online1/swyf/swdnn/ilsvrc12/ILSVRC2012/ILSVRC2012_img_val/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
-RESIZE=false
+RESIZE=true
 if $RESIZE; then
   RESIZE_HEIGHT=256
   RESIZE_WIDTH=256
@@ -37,7 +37,9 @@ fi
 
 echo "Creating train lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
+#GLOG_logtostderr=1 $TOOLS/convert_imageset \
+bsub -I -q q_sw_yfb -N 1 -b -cgsp 64 -host_stack 1024 -sw3run ./sw3run-all -sw3runarg "-a 1" -cross_size 28000 \
+    $TOOLS/convert_imageset_sw \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
@@ -47,7 +49,9 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
 
 echo "Creating val lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
+#GLOG_logtostderr=1 $TOOLS/convert_imageset \
+bsub -I -q q_sw_yfb -N 1 -b -cgsp 64 -host_stack 1024 -sw3run ./sw3run-all -sw3runarg "-a 1" -cross_size 28000 \
+    $TOOLS/convert_imageset_sw \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \

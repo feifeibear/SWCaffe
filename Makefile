@@ -18,6 +18,7 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblas0324.a
 #SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libhdf5.a
 #SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libhdf5_hl.a -Wl,--no-whole-archive
 SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libopencv_core.a -Wl,--no-whole-archive
+FLAGS += -DUSE_OPENCV
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libopencv_highgui.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libopencv_imgproc.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libjpeg.a
@@ -26,6 +27,10 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libprotobuf.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libboost_system.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libboost_thread.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libboost_atomic.a
+SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libgflags.a
+#######order matters
+FLAGS += -DUSE_LMDB
+SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/liblmdb.a
 
 src=$(wildcard ./src/caffe/*.cpp ./src/caffe/layers/*.cpp ./src/caffe/solvers/*.cpp ./src/caffe/util/*.cpp ./src/glog/*.cpp)
 SWOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cpp, %.o, $(src))) $(SWBUILD_DIR)/caffe/proto/caffe.pb.o
@@ -44,11 +49,14 @@ FLAGS += -DUSE_SWSOFTMAX
 FLAGS += -DDEBUG_PRINT_TIME
 BIN_DIR=./bin
 video: $(BIN_DIR)/video_sw
+caffe: $(BIN_DIR)/caffe_sw
 lenet: $(BIN_DIR)/test_lenet_sw
 vgg: $(BIN_DIR)/vggnet_sw
 alexnet: $(BIN_DIR)/alexnet_sw
 solver: $(BIN_DIR)/test_solver_sw
 lstm: $(BIN_DIR)/test_lstm_sw
+compute_image_mean: $(BIN_DIR)/compute_image_mean_sw
+convert_imageset: $(BIN_DIR)/convert_imageset_sw
 
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/caffe $(SWBUILD_DIR)/caffe/util $(SWBUILD_DIR)/caffe/layers $(SWBUILD_DIR)/caffe/swlayers $(SWBUILD_DIR)/caffe/proto\
@@ -70,10 +78,22 @@ runsolver:
 runlstm:
 	sh ./scripts/sw_runlstm.sh 1
 
+$(BIN_DIR)/convert_imageset_sw: ./models/swobj/convert_imageset_sw.o $(SWOBJ)
+	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
+./models/swobj/convert_imageset_sw.o: ./tools/convert_imageset.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
+
+$(BIN_DIR)/caffe_sw: ./models/swobj/caffe_sw.o $(SWOBJ) 
+	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
+./models/swobj/caffe_sw.o: ./tools/caffe.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
 $(BIN_DIR)/video_sw: ./models/swobj/videoprocess.o $(SWOBJ) 
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
 ./models/swobj/videoprocess.o: ./models/src/videoprocess.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
 $(BIN_DIR)/alexnet_sw: ./models/swobj/alexnet.o $(SWOBJ) 
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
 ./models/swobj/alexnet.o: ./models/src/alexnet.cpp

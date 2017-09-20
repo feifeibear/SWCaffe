@@ -378,10 +378,10 @@ int time() {
   Timer forward_timer;
   Timer backward_timer;
   Timer timer;
-  std::vector<double> forward_time_per_layer(layers.size(), 0.0);
-  std::vector<double> backward_time_per_layer(layers.size(), 0.0);
-  double forward_time = 0.0;
-  double backward_time = 0.0;
+  std::vector<float> forward_time_per_layer(layers.size(), 0.0);
+  std::vector<float> backward_time_per_layer(layers.size(), 0.0);
+  float forward_time = 0.0;
+  float backward_time = 0.0;
   for (int j = 0; j < FLAGS_iterations; ++j) {
     Timer iter_timer;
     iter_timer.Start();
@@ -427,8 +427,9 @@ int time() {
 RegisterBrewFunction(time);
 
 int main(int argc, char** argv) {
+  printf("SWCAFFE TEST: argc %d, argv %s\n", argc, argv[argc-1]);
   // Print output to stderr (while still logging).
-  FLAGS_alsologtostderr = 1;
+  //FLAGS_alsologtostderr = 1;
   // Set version
   gflags::SetVersionString(AS_STRING(CAFFE_VERSION));
   // Usage message.
@@ -453,6 +454,7 @@ int main(int argc, char** argv) {
     }
 #endif
   } else {
+    printf("SWCAFFE TEST: argc %d\n", argc);
     gflags::ShowUsageWithFlagsRestrict(argv[0], "tools/caffe");
   }
 }

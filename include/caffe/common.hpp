@@ -2,7 +2,7 @@
 #define CAFFE_COMMON_HPP_
 
 #include <boost/shared_ptr.hpp>
-//#include <gflags/gflags.h>
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <climits>
