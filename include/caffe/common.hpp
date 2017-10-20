@@ -18,6 +18,10 @@
 
 #include "caffe/util/device_alternate.hpp"
 
+#ifdef SWMPI
+#include <mpi.h>
+#endif
+
 // Convert macro to string
 #define STRINGIFY(m) #m
 #define AS_STRING(m) STRINGIFY(m)
@@ -167,6 +171,21 @@ class Caffe {
   inline static void set_multiprocess(bool val) { Get().multiprocess_ = val; }
   inline static bool root_solver() { return Get().solver_rank_ == 0; }
 
+#ifdef SWMPI
+  inline static int mpi_count() { return Get().mpi_count_; }
+  inline static void set_mpi_count(int val) { Get().mpi_count_ = val; }
+  inline static int mpi_rank() { return Get().mpi_rank_; }
+  inline static void set_mpi_rank(int val) { Get().mpi_rank_ = val; }
+  inline static bool mpi_root_solver() { return Get().mpi_rank_ == 0; }
+  inline static void set_mpi_request(int size) { Get().mpi_request_ = new MPI_Request[size]; }
+  inline static void set_mpi_status(int size) { Get().mpi_status_ = new MPI_Status[size]; }
+  inline static void set_mpi_rs_num(int size) { Get().mpi_rs_num_ = size; }
+  inline static int mpi_rs_num() { return Get().mpi_rs_num_; }
+  inline static MPI_Request* mpi_request(int i) { return &(Get().mpi_request_[i]); }
+  inline static MPI_Status* mpi_status(int i) { return &(Get().mpi_status_[i]); }
+#endif
+
+
  protected:
 #ifndef CPU_ONLY
   cublasHandle_t cublas_handle_;
@@ -180,6 +199,14 @@ class Caffe {
   int solver_count_;
   int solver_rank_;
   bool multiprocess_;
+
+#ifdef SWMPI
+  int mpi_count_;
+  int mpi_rank_;
+  MPI_Request *mpi_request_;
+  MPI_Status *mpi_status_;
+  int mpi_rs_num_;
+#endif
 
  private:
   // The private constructor to avoid duplicate instantiation.

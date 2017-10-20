@@ -47,6 +47,10 @@ template <typename Dtype>
 int caffe_mpi_reduce( void *sendbuf, void *recvbuf, int count,
     MPI_Op op, int root, MPI_Comm comm  );
 
+template <typename Dtype>
+int caffe_mpi_ireduce( void *sendbuf, void *recvbuf, int count,
+    MPI_Op op, int root, MPI_Comm comm, MPI_Request *req  );
+
 
 template <typename Dtype>
 int caffe_mpi_bcast( void *buffer, int count, int root,

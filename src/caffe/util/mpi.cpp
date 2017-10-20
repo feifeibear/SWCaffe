@@ -122,6 +122,18 @@ int caffe_mpi_reduce<double>( void *sendbuf, void *recvbuf, int count,
 }
 
 template <>
+int caffe_mpi_ireduce<float>( void *sendbuf, void *recvbuf, int count,
+    MPI_Op op, int root, MPI_Comm comm, MPI_Request *req ){
+  return MPI_Ireduce(sendbuf, recvbuf, count, MPI_FLOAT, op, root, comm, req);
+}
+
+template <>
+int caffe_mpi_ireduce<double>( void *sendbuf, void *recvbuf, int count,
+    MPI_Op op, int root, MPI_Comm comm, MPI_Request *req  ){
+  return MPI_Ireduce(sendbuf, recvbuf, count, MPI_DOUBLE, op, root, comm, req);
+}
+
+template <>
 int caffe_mpi_bcast<float>( void *buffer, int count, int root,
     MPI_Comm comm ) {
   return MPI_Bcast(buffer, count, MPI_FLOAT, root, comm);

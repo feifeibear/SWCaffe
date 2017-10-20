@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-
+#include <sys/time.h>
 //#include "hdf5.h"
 
 #include "caffe/common.hpp"
@@ -16,6 +16,8 @@
 #include "caffe/util/insert_splits.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/upgrade_proto.hpp"
+
+#include "caffe/util/mpi.hpp"
 
 namespace caffe {
 
@@ -66,6 +68,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   param_id_vecs_.resize(param.layer_size());
   top_id_vecs_.resize(param.layer_size());
   bottom_need_backward_.resize(param.layer_size());
+
   for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
     // Inherit phase from net if unset.
     if (!param.layer(layer_id).has_phase()) {
@@ -252,6 +255,14 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   }
   ShareWeights();
   debug_info_ = param.debug_info();
+#ifdef SWMPI
+  int mpirsnum = learnable_params_.size() + 1;
+  Caffe::set_mpi_request(mpirsnum);
+  Caffe::set_mpi_status(mpirsnum);
+  Caffe::set_mpi_rs_num(mpirsnum);
+  LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: MPI_Re&Sta num: " << mpirsnum;
+  LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Network initialization done.";
+#endif
   LOG_IF(INFO, Caffe::root_solver()) << "Network initialization done.";
 }
 
@@ -521,7 +532,25 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     for (int c = 0; c < before_forward_.size(); ++c) {
       before_forward_[c]->run(i);
     }
+#ifdef DEBUG_VERBOSE_2
+    struct timeval ts, te;
+    gettimeofday(&ts, NULL);
+#endif
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+#ifdef DEBUG_VERBOSE_2
+    gettimeofday(&te, NULL);
+    double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+#ifdef SWMPI
+    LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
+      << i << "  " << layer_names_[i]
+      << " Forward cost time: " << time << "s";
+#else
+    LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+      << i << "  " << layer_names_[i]
+      << " Forward cost time: " << time << "s";
+#endif
+
+#endif
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }
     for (int c = 0; c < after_forward_.size(); ++c) {
@@ -567,19 +596,107 @@ template <typename Dtype>
 void Net<Dtype>::BackwardFromTo(int start, int end) {
   CHECK_GE(end, 0);
   CHECK_LT(start, layers_.size());
+
+#ifdef SWMPI
+  int markformpi = 0;
   for (int i = start; i >= end; --i) {
     for (int c = 0; c < before_backward_.size(); ++c) {
       before_backward_[c]->run(i);
     }
     if (layer_need_backward_[i]) {
+#ifdef DEBUG_VERBOSE_2
+      struct timeval ts, te;
+      gettimeofday(&ts, NULL);
+#endif
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
-      if (debug_info_) { BackwardDebugInfo(i); }
+      if (debug_info_) { BackwardDebugInfo(i);}
+
+#ifdef DEBUG_VERBOSE_2
+      gettimeofday(&te, NULL);
+      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+      //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
+        << i << "  " << layer_names_[i]
+        << " Backward cost time: " << time << "s";
+#endif
+
+//      std::string layer_type = layers_[i]->type();
+//      if ((layer_type == std::string("InnerProduct")) ||
+//          layer_type == std::string("Convolution"))
+//      {
+//        markformpi++;
+//        caffe_mpi_ireduce<Dtype>(
+//            layers_[i]->blobs()[0]->mutable_cpu_diff(),
+//            layers_[i]->blobs()[0]->mutable_cpu_diff(),
+//            layers_[i]->blobs()[0]->count(),
+//            MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+//#ifdef DEBUG_VERBOSE_6
+//        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+//          " name: " << layer_type <<
+//          " weightdiff addr " << layers_[i]->blobs()[0]->mutable_cpu_diff() <<
+//          " weightdiff count " << layers_[i]->blobs()[0]->count() <<
+//          " mpirequest[" << markformpi <<
+//          "] " << Caffe::mpi_request(markformpi) <<
+//          " " << *Caffe::mpi_request(markformpi);
+//#endif
+//        MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+//        markformpi++;
+//        caffe_mpi_ireduce<Dtype>(
+//            layers_[i]->blobs()[1]->mutable_cpu_diff(),
+//            layers_[i]->blobs()[1]->mutable_cpu_diff(),
+//            layers_[i]->blobs()[1]->count(),
+//            MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+//#ifdef DEBUG_VERBOSE_6
+//        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+//          " name: " << layer_type <<
+//          " biasdiff addr " << layers_[i]->blobs()[1]->mutable_cpu_diff() <<
+//          " biasdiff count " << layers_[i]->blobs()[1]->count() <<
+//          " mpirequest[" << markformpi <<
+//          "] " << Caffe::mpi_request(markformpi) <<
+//          " " << *Caffe::mpi_request(markformpi);
+//#endif
+//        MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+//      }
     }
+    else {
+#ifdef DEBUG_VERBOSE_2
+      LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+        "  " << layer_names_[i] << " needn't Backward";
+#endif
+    }
+
     for (int c = 0; c < after_backward_.size(); ++c) {
       after_backward_[c]->run(i);
     }
   }
+#else
+  for (int i = start; i >= end; --i) {
+    for (int c = 0; c < before_backward_.size(); ++c) {
+      before_backward_[c]->run(i);
+    }
+    if (layer_need_backward_[i]) {
+#ifdef DEBUG_VERBOSE_2
+      struct timeval ts, te;
+      gettimeofday(&ts, NULL);
+#endif
+      layers_[i]->Backward(
+          top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+      if (debug_info_) { BackwardDebugInfo(i);}
+
+#ifdef DEBUG_VERBOSE_2
+      gettimeofday(&te, NULL);
+      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+      LOG(INFO) << "Root: layer"
+        << i << "  " << layer_names_[i]
+        << " Backward cost time: " << time << "s";
+#endif
+      for (int c = 0; c < after_backward_.size(); ++c) {
+        after_backward_[c]->run(i);
+      }
+    }
+  }
+#endif
 }
 
 template <typename Dtype>

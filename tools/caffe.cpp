@@ -13,6 +13,7 @@ namespace bp = boost::python;
 
 #include "boost/algorithm/string.hpp"
 #include "caffe/caffe.hpp"
+#include <mpi.h>
 #include "caffe/util/signal_handler.h"
 
 using caffe::Blob;
@@ -175,6 +176,93 @@ caffe::SolverAction::Enum GetRequestedAction(
   }
   LOG(FATAL) << "Invalid signal effect \""<< flag_value << "\" was specified";
 }
+
+#ifdef SWMPI
+// Train / Finetune a model.
+int mpitrain() {
+  CHECK_GT(FLAGS_solver.size(), 0) << "Need a solver definition to train.";
+  CHECK(!FLAGS_snapshot.size() || !FLAGS_weights.size())
+      << "Give a snapshot to resume training or weights to finetune "
+      "but not both.";
+  vector<string> stages = get_stages_from_flags();
+
+  caffe::SolverParameter solver_param;
+  caffe::ReadSolverParamsFromTextFileOrDie(FLAGS_solver, &solver_param);
+
+  solver_param.mutable_train_state()->set_level(FLAGS_level);
+  for (int i = 0; i < stages.size(); i++) {
+    solver_param.mutable_train_state()->add_stage(stages[i]);
+  }
+
+  // If the gpus flag is not provided, allow the mode and device to be set
+  // in the solver prototxt.
+  if (FLAGS_gpu.size() == 0
+      && solver_param.has_solver_mode()
+      && solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU) {
+      if (solver_param.has_device_id()) {
+          FLAGS_gpu = "" +
+              boost::lexical_cast<string>(solver_param.device_id());
+      } else {  // Set default GPU if unspecified
+          FLAGS_gpu = "" + boost::lexical_cast<string>(0);
+      }
+  }
+
+  vector<int> gpus;
+  get_gpus(&gpus);
+  if (gpus.size() == 0) {
+    LOG(INFO) << "Use CPU.";
+    Caffe::set_mode(Caffe::CPU);
+  } else {
+    ostringstream s;
+    for (int i = 0; i < gpus.size(); ++i) {
+      s << (i ? ", " : "") << gpus[i];
+    }
+    LOG(INFO) << "Using GPUs " << s.str();
+#ifndef CPU_ONLY
+    cudaDeviceProp device_prop;
+    for (int i = 0; i < gpus.size(); ++i) {
+      cudaGetDeviceProperties(&device_prop, gpus[i]);
+      LOG(INFO) << "GPU " << gpus[i] << ": " << device_prop.name;
+    }
+#endif
+    solver_param.set_device_id(gpus[0]);
+    Caffe::SetDevice(gpus[0]);
+    Caffe::set_mode(Caffe::GPU);
+    Caffe::set_solver_count(gpus.size());
+  }
+
+  caffe::SignalHandler signal_handler(
+        GetRequestedAction(FLAGS_sigint_effect),
+        GetRequestedAction(FLAGS_sighup_effect));
+
+  shared_ptr<caffe::Solver<float> >
+      solver(caffe::SolverRegistry<float>::CreateSolver(solver_param));
+
+  solver->SetActionFunction(signal_handler.GetActionFunction());
+
+  if (FLAGS_snapshot.size()) {
+    LOG(INFO) << "Resuming from " << FLAGS_snapshot;
+    solver->Restore(FLAGS_snapshot.c_str());
+  } else if (FLAGS_weights.size()) {
+    CopyLayers(solver.get(), FLAGS_weights);
+  }
+
+  LOG(INFO) << "Starting Optimization";
+  if (gpus.size() > 1) {
+#ifdef USE_NCCL
+    caffe::NCCL<float> nccl(solver);
+    nccl.Run(gpus, FLAGS_snapshot.size() > 0 ? FLAGS_snapshot.c_str() : NULL);
+#else
+    LOG(FATAL) << "Multi-GPU execution not available - rebuild with USE_NCCL";
+#endif
+  } else {
+    solver->Solve();
+  }
+  LOG(INFO) << "Optimization Done.";
+  return 0;
+}
+RegisterBrewFunction(mpitrain);
+#endif
 
 // Train / Finetune a model.
 int train() {
@@ -427,7 +515,9 @@ int time() {
 RegisterBrewFunction(time);
 
 int main(int argc, char** argv) {
-  printf("SWCAFFE TEST: argc %d, argv %s\n", argc, argv[argc-1]);
+#ifdef SWMPI
+  MPI_Init(&argc, &argv);
+#endif
   // Print output to stderr (while still logging).
   //FLAGS_alsologtostderr = 1;
   // Set version
@@ -442,6 +532,16 @@ int main(int argc, char** argv) {
       "  time            benchmark model execution time");
   // Run tool or show usage.
   caffe::GlobalInit(&argc, &argv);
+
+  ////////////
+#ifdef SWMPI
+#ifdef DEBUG_VERBOSE_1
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : " << "Init done!";
+  printf("SWCAFFE TEST: argc %d, argv %s\n", argc, argv[argc-1]);
+#endif
+#endif
+  //////////
+
   if (argc == 2) {
 #ifdef WITH_PYTHON_LAYER
     try {
@@ -457,4 +557,8 @@ int main(int argc, char** argv) {
     printf("SWCAFFE TEST: argc %d\n", argc);
     gflags::ShowUsageWithFlagsRestrict(argv[0], "tools/caffe");
   }
+#ifdef SWMPI
+  MPI_Finalize();
+#endif
+  return 0;
 }

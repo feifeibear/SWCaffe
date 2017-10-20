@@ -16,7 +16,11 @@ void LMDB::Open(const string& source, Mode mode) {
   if (mode == READ) {
     flags = MDB_RDONLY | MDB_NOTLS;
   }
+#ifdef SWMPI
+  flags |= MDB_NOLOCK;
+#endif
   int rc = mdb_env_open(mdb_env_, source.c_str(), flags, 0664);
+
 #ifndef ALLOW_LMDB_NOLOCK
   MDB_CHECK(rc);
 #else

@@ -2,6 +2,11 @@
 
 #include <string>
 #include <vector>
+#include <sys/time.h>
+#ifdef SWMPI
+#include "caffe/util/mpi.hpp"
+#include "caffe/util/math_functions.hpp"
+#endif
 
 #include "caffe/solver.hpp"
 #include "caffe/util/format.hpp"
@@ -51,10 +56,23 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   }
   // Scaffolding code
   InitTrainNet();
+
+#ifdef SWMPI
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : init train net done...";
+  if (Caffe::mpi_root_solver()) {
+    InitTestNets();
+    LOG(INFO) << "MPIRoot: init test net done...";
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : Solver scaffolding done.";
+#else
   InitTestNets();
   if (Caffe::root_solver()) {
     LOG(INFO) << "Solver scaffolding done.";
   }
+#endif
+
   iter_ = 0;
   current_step_ = 0;
 }
@@ -185,9 +203,39 @@ void Solver<Dtype>::Step(int iters) {
   smoothed_loss_ = 0;
   iteration_timer_.Start();
 
+  struct timeval ts, te;
+  double calc_lapse = 0.0, comm_lapse = 0.0, tmp_comm_lapse = 0.0;
+
+
   while (iter_ < stop_iter) {
     // zero-init the params
     net_->ClearParamDiffs();
+
+#ifdef SWMPI
+#ifdef DEBUG_VERBOSE_1
+    gettimeofday(&ts, NULL);
+#endif
+
+    if (param_.test_interval() && iter_ % param_.test_interval() == 0
+        && (iter_ > 0 || param_.test_initialization())) {
+      if (Caffe::mpi_root_solver()) {
+        TestAll();
+      }
+      if (requested_early_exit_) {
+        // Break out of the while loop because stop was requested while testing.
+        break;
+      }
+    }
+#ifdef DEBUG_VERBOSE_1
+    gettimeofday(&te, NULL);
+    tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+    LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Test cost time is " << tmp_comm_lapse << "sec";
+#endif
+#else
+#ifdef DEBUG_VERBOSE_1
+    gettimeofday(&ts, NULL);
+#endif
+
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
       if (Caffe::root_solver()) {
@@ -198,6 +246,12 @@ void Solver<Dtype>::Step(int iters) {
         break;
       }
     }
+#ifdef DEBUG_VERBOSE_1
+    gettimeofday(&te, NULL);
+    tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+    LOG(INFO) << "Root: Test cost time is " << tmp_comm_lapse << "sec";
+#endif
+#endif
 
     for (int i = 0; i < callbacks_.size(); ++i) {
       callbacks_[i]->on_start();
@@ -205,10 +259,130 @@ void Solver<Dtype>::Step(int iters) {
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
     // accumulate the loss and gradient
+#ifdef SWMPI
+#ifdef DEBUG_VERBOSE_1
+    MPI_Barrier(MPI_COMM_WORLD);
+    gettimeofday(&ts, NULL);
+#endif
+    vector<Blob<Dtype>* >& my_net_params = this->net_->learnable_params_nc();
+    for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
+      /*
+      MPI_Bcast(
+           my_net_params[param_id]->mutable_cpu_data(),
+           my_net_params[param_id]->count(),
+           MPI_DOUBLE,
+           0,
+           MPI_COMM_WORLD);
+           */
+      caffe_mpi_bcast<Dtype>(
+           my_net_params[param_id]->mutable_cpu_data(),
+           my_net_params[param_id]->count(),
+           0,
+           MPI_COMM_WORLD);
+#ifdef DEBUG_VERBOSE_6
+      LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: param " << param_id <<
+        " data addr is " << my_net_params[param_id]->mutable_cpu_diff() <<
+        " data count is " << my_net_params[param_id]->count();
+#endif
+    }
+#ifdef DEBUG_VERBOSE_1
+    MPI_Barrier(MPI_COMM_WORLD);
+    gettimeofday(&te, NULL);
+    tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+    comm_lapse += tmp_comm_lapse;
+    //LOG_IF(INFO, Caffe::root_solver()) << "Root: Broadcast net param time is " << tmp_comm_lapse << "sec";
+    LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : Broadcast net param time is " << tmp_comm_lapse << "sec";
+#endif
+#endif
+
+#ifdef DEBUG_VERBOSE_1
+    gettimeofday(&ts, NULL);
+#endif
+    // accumulate the loss and gradient
     Dtype loss = 0;
+    //////////////for the mpi computation and communication overlapped
+    /////////////param_.iter_size() should be 1
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
+ }
+
+#ifdef DEBUG_VERBOSE_1
+#ifdef SWMPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    gettimeofday(&te, NULL);
+    tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+    calc_lapse += tmp_comm_lapse;
+#ifdef SWMPI
+    LOG(INFO) << "Rank " << Caffe::mpi_rank() << ": net ForwardBackward time is " << tmp_comm_lapse << "sec"
+              << " loss: " << loss;
+#else
+    LOG_IF(INFO, Caffe::root_solver()) << "Root: net ForwardBackward time is " << tmp_comm_lapse << "sec";
+#endif
+#endif
+
+#ifdef SWMPI
+    if (Caffe::mpi_rank() == 0) {
+      loss /= param_.iter_size();
+      loss /= (Caffe::mpi_count() - 1);
+      // average the loss across iterations for smoothed reporting
+      UpdateSmoothedLoss(loss, start_iter, average_loss);
+      if (display) {
+        float lapse = iteration_timer_.Seconds();
+        float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
+        LOG(INFO) << "Iteration " << iter_
+          << " (" << per_s << " iter/s, " << lapse << "s/"
+          << param_.display() << " iters), loss = " << smoothed_loss_;
+        iteration_timer_.Start();
+        iterations_last_ = iter_;
+        const vector<Blob<Dtype>*>& result = net_->output_blobs();
+        int score_index = 0;
+        for (int j = 0; j < result.size(); ++j) {
+          const Dtype* result_vec = result[j]->cpu_data();
+          const string& output_name =
+              net_->blob_names()[net_->output_blob_indices()[j]];
+          const Dtype loss_weight =
+              net_->blob_loss_weights()[net_->output_blob_indices()[j]];
+          for (int k = 0; k < result[j]->count(); ++k) {
+            ostringstream loss_msg_stream;
+            if (loss_weight) {
+              loss_msg_stream << " (* " << loss_weight
+                              << " = " << loss_weight * result_vec[k] << " loss)";
+            }
+            LOG(INFO) << "    Train net output #"
+              << score_index++ << ": " << output_name << " = "
+              << result_vec[k] << loss_msg_stream.str();
+          }
+        }
+      }
+
+      for (int i = 0; i < callbacks_.size(); ++i) {
+        callbacks_[i]->on_gradients_ready();
+      }
+      ApplyUpdate();
     }
+    // Increment the internal iter_ counter -- its value should always indicate
+    // the number of times the weights have been updated.
+    ++iter_;
+
+    SolverAction::Enum request = GetRequestedAction();
+
+    if (Caffe::mpi_rank() == 0) {
+      // Save a snapshot if needed.
+      if ((param_.snapshot()
+           && iter_ % param_.snapshot() == 0) ||
+         (request == SolverAction::SNAPSHOT)) {
+      Snapshot();
+      }
+    }
+
+    if (SolverAction::STOP == request) {
+      requested_early_exit_ = true;
+      // Break out of training loop.
+      break;
+    }
+
+#else
     loss /= param_.iter_size();
     // average the loss across iterations for smoothed reporting
     UpdateSmoothedLoss(loss, start_iter, average_loss);
@@ -263,6 +437,8 @@ void Solver<Dtype>::Step(int iters) {
       // Break out of training loop.
       break;
     }
+#endif
+
   }
 }
 

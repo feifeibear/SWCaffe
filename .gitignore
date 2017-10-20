@@ -6,3 +6,4 @@ data/
 tags
 examples/imagenet/ilsvrc12*
 *.caffemodel
+log/

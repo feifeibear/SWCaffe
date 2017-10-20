@@ -3,11 +3,19 @@ LINK 	= 	mpiCC
 SWCXX = 	sw5cc.new -slave -CG:pjump_all
 FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0 
 FLAGS += 	-DCPU_ONLY
+#FLAGS += 	-DSWMPI
+LDFLAGS = -lm_slave 
+#LDFLAGS = -allshare
+
+#alogrithm logic and forbackward time
+FLAGS += 	-DDEBUG_VERBOSE_1
+#time of each layer
 FLAGS += 	-DDEBUG_VERBOSE_2
 #print timer in sw_conv_layer_impl
 FLAGS += 	-DDEBUG_VERBOSE_3
-#FLAGS +=  -DMYMPI
-LDFLAGS = -lm_slave -allshare
+#address and length of mpibuff
+FLAGS += 	-DDEBUG_VERBOSE_6
+
 
 SWBUILD_DIR=./swbuild
 THIRD_PARTY_DIR=../thirdparty

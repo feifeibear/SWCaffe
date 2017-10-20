@@ -54,8 +54,15 @@ void GlobalInit(int* pargc, char*** pargv) {
 #ifdef CPU_ONLY  // CPU-only Caffe.
 
 Caffe::Caffe()
-    : random_generator_(), mode_(Caffe::CPU),
-      solver_count_(1), solver_rank_(0), multiprocess_(false) { }
+    : random_generator_(), mode_(Caffe::CPU) {
+#ifdef SWMPI
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_count_);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank_);
+#endif
+    solver_count_ = 1;
+    solver_rank_ = 0;
+    multiprocess_ = false;
+}
 
 Caffe::~Caffe() { }
 
