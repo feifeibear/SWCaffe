@@ -5,7 +5,7 @@ FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0
 FLAGS += 	-DCPU_ONLY
 #FLAGS += 	-DSWMPI
 LDFLAGS = -lm_slave 
-#LDFLAGS = -allshare
+LDFLAGS += -allshare
 
 #alogrithm logic and forbackward time
 FLAGS += 	-DDEBUG_VERBOSE_1

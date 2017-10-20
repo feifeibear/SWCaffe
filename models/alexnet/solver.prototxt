@@ -1,7 +1,7 @@
 net: "models/alexnet/train_val.prototxt"
 
 test_iter: 195   	#  49999/256
-test_interval: 1000      
+test_interval: 1000
 test_initialization: false
 
 display:  100
