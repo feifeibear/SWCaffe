@@ -6,18 +6,18 @@ name: "AlexNet_bn"
 
 layer {
   name: "data"
-  type: "Data"
+  type: "IMAGENETData"
   top: "data"
   top: "label"
   transform_param {
-    mean_file: "../../imagenet_lmdb/imagenet_mean.binaryproto"
+    mean_file: "../../../imagenet_lmdb/imagenet_mean.binaryproto"
     mirror: true
     crop_size: 227
     scale: 0.00390625
   }
   data_param {
-    source: "../../imagenet_lmdb/train_lmdb"
-    batch_size: 16 
+    source: "../../../imagenet_lmdb/train_lmdb"
+    batch_size: 256 
     backend: LMDB
     #cache:   true
     #shuffle: true 
@@ -26,17 +26,17 @@ layer {
 }
 layer {
   name: "data"
-  type: "Data"
+  type: "IMAGENETData"
   top: "data"
   top: "label"
   transform_param {
-    mean_file: "../../imagenet_lmdb/imagenet_mean.binaryproto"
+    mean_file: "../../../imagenet_lmdb/imagenet_mean.binaryproto"
     mirror: false
     crop_size: 227
     scale: 0.00390625
   }
   data_param {
-    source: "../../imagenet_lmdb/val_lmdb"
+    source: "../../../imagenet_lmdb/val_lmdb"
     batch_size: 16          
     backend: LMDB
   }

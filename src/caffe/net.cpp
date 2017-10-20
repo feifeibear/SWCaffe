@@ -532,6 +532,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     for (int c = 0; c < before_forward_.size(); ++c) {
       before_forward_[c]->run(i);
     }
+
 #ifdef DEBUG_VERBOSE_2
     struct timeval ts, te;
     gettimeofday(&ts, NULL);

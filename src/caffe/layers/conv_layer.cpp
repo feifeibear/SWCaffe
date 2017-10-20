@@ -38,7 +38,6 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 #ifdef USE_SWDNN
   //assert(typeid(Dtype) == typeid(double));
   const Dtype* weight       = this->blobs_[0]->cpu_data();
-  const Dtype* bias_data    = this->blobs_[1]->cpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
     const int* stride_data = this->stride_.cpu_data();
     const int* pad_data = this->pad_.cpu_data();
@@ -50,61 +49,60 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     if(bottom[0]->num() >= 128 
         && bottom[0]->channels() >= 64 
         && top[0]->channels() >= 64 
-        ){
-
+      ){
       const Dtype* bottom_data  = bottom[i]->cpu_data();
       Dtype* top_data           = top[i]->mutable_cpu_data();
 
       if(sizeof(Dtype) == sizeof(double))
-	  {
-		//sw_conv_forward_impl_d(
+      {
+        //sw_conv_forward_impl_d(
         sw_conv_forward_pad_impl_d(
-          (double*)bottom_data,
-          (double*)weight,
-          (double*)top_data,
-          //bias_data,
-          //int Ci,
-          bottom[0]->width(),
-          //int Ri,
-          bottom[0]->height(),
-          //int K,
-          this->kernel_shape_.cpu_data()[0],
-          //int Ni,
-          bottom[0]->channels(),
-          //int No,
-          top[0]->channels(),
-          //int B
-          bottom[0]->num(),
-          //int pad
-          mypad
-        );
-	   }
-	   else 
-	   {
-        
+            (double*)bottom_data,
+            (double*)weight,
+            (double*)top_data,
+            //bias_data,
+            //int Ci,
+            bottom[0]->width(),
+            //int Ri,
+            bottom[0]->height(),
+            //int K,
+            this->kernel_shape_.cpu_data()[0],
+            //int Ni,
+            bottom[0]->channels(),
+            //int No,
+            top[0]->channels(),
+            //int B
+            bottom[0]->num(),
+            //int pad
+            mypad
+            );
+      }
+      else 
+      {
+
         sw_conv_forward_pad_impl_f(
-          (float*)bottom_data,
-          (float*)weight,
-          (float*)top_data,
-          //bias_data,
-          //int Ci,
-          bottom[0]->width(),
-          //int Ri,
-          bottom[0]->height(),
-          //int K,
-          this->kernel_shape_.cpu_data()[0],
-          //int Ni,
-          bottom[0]->channels(),
-          //int No,
-          top[0]->channels(),
-          //int B
-          bottom[0]->num(),
-          //int pad
-          mypad
-        );
-	   }
+            (float*)bottom_data,
+            (float*)weight,
+            (float*)top_data,
+            //bias_data,
+            //int Ci,
+            bottom[0]->width(),
+            //int Ri,
+            bottom[0]->height(),
+            //int K,
+            this->kernel_shape_.cpu_data()[0],
+            //int Ni,
+            bottom[0]->channels(),
+            //int No,
+            top[0]->channels(),
+            //int B
+            bottom[0]->num(),
+            //int pad
+            mypad
+            );
+      }
     }
-	
+
     else {
       const Dtype* bottom_data = bottom[i]->cpu_data();
       Dtype* top_data = top[i]->mutable_cpu_data();
@@ -115,7 +113,6 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       }
     }
 
-
     if (this->bias_term_) {
       Dtype* top_data = top[i]->mutable_cpu_data();
       const Dtype* bias = this->blobs_[1]->cpu_data();
@@ -123,7 +120,7 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         this->forward_cpu_bias(top_data
             + n * this->top_dim_, bias);
     }
-   }//for
+  }//for
 #else
    const Dtype* weight = this->blobs_[0]->cpu_data();
    for (int i = 0; i < bottom.size(); ++i) {
@@ -255,7 +252,6 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     //assert(typeid(Dtype) == typeid(double));
     const Dtype* weight    = this->blobs_[0]->cpu_data();
     Dtype* weight_diff     = this->blobs_[0]->mutable_cpu_diff();
-    Dtype* bias_diff       = this->blobs_[1]->mutable_cpu_diff();
 
       int mypad = 0;
       const int* pad_data = this->pad_.cpu_data();
@@ -268,7 +264,7 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       const Dtype* top_diff     = top[i]->mutable_cpu_diff();
 
         if (this->bias_term_ && this->param_propagate_down_[1]) {
-          //Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
+          Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
           for (int n = 0; n < this->num_; ++n) {
             this->backward_cpu_bias(bias_diff, top_diff + n * this->top_dim_);
           }
