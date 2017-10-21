@@ -15,6 +15,8 @@ FLAGS += 	-DDEBUG_VERBOSE_1
 #FLAGS += 	-DDEBUG_VERBOSE_3
 #address and length of mpibuff
 #FLAGS += 	-DDEBUG_VERBOSE_6
+#in sgd solvers data value print
+#FLAGS +=  -DDEBUG_VERBOSE_7
 
 
 SWBUILD_DIR=./swbuild
@@ -47,7 +49,7 @@ SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc))
 SWDNNOBJ+=$(SWBUILD_DIR)/caffe/swlayers/gemm_asm.o
 SWDNNOBJ+=$(SWBUILD_DIR)/caffe/swlayers/gemm_asm_float.o
 SWOBJ+=$(SWDNNOBJ)
-FLAGS += -DUSE_SWDNN
+#FLAGS += -DUSE_SWDNN
 FLAGS += -DSW_TRANS
 FLAGS += -DUSE_SWPOOL
 FLAGS += -DUSE_SWRELU
