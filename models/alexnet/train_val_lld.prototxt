@@ -6,7 +6,7 @@ name: "AlexNet_bn"
 
 layer {
   name: "data"
-  type: "IMAGENETData"
+  type: "Data"
   top: "data"
   top: "label"
   transform_param {
@@ -17,7 +17,7 @@ layer {
   }
   data_param {
     source: "../../../imagenet_lmdb/train_lmdb"
-    batch_size: 256 
+    batch_size: 256
     backend: LMDB
     #cache:   true
     #shuffle: true 
@@ -26,7 +26,7 @@ layer {
 }
 layer {
   name: "data"
-  type: "IMAGENETData"
+  type: "Data"
   top: "data"
   top: "label"
   transform_param {
@@ -37,7 +37,7 @@ layer {
   }
   data_param {
     source: "../../../imagenet_lmdb/val_lmdb"
-    batch_size: 16          
+    batch_size:256          
     backend: LMDB
   }
   include { phase: TEST }
@@ -62,31 +62,23 @@ layer {
   name: "conv1/bn"
   type: "BatchNorm"
   bottom: "conv1"
-  top: "conv1"
+  top: "conv1/bn"
   batch_norm_param {
     moving_average_fraction: 0.9
     eps: 0.0001
-  }
-}
-layer {
-  name: "conv1/scale"
-  bottom: "conv1"
-  top: "conv1"
-  type: "Scale"
-  scale_param {
-    bias_term: true
+    #scale_bias: true
   }
 }
 layer {
   name: "relu1"
   type: "ReLU"
-  bottom: "conv1"
-  top: "conv1"
+  bottom: "conv1/bn"
+  top: "conv1/bn"
 }
 layer {
   name: "pool1"
   type: "Pooling"
-  bottom: "conv1"
+  bottom: "conv1/bn"
   top: "pool1"
   pooling_param {
     pool: MAX
@@ -115,31 +107,23 @@ layer {
   name: "conv2/bn"
   type: "BatchNorm"
   bottom: "conv2"
-  top: "conv2"
+  top: "conv2/bn"
   batch_norm_param {
     moving_average_fraction: 0.9
     eps: 0.0001
-  }
-}
-layer {
-  name: "conv2/scale"
-  bottom: "conv2"
-  top: "conv2"
-  type: "Scale"
-  scale_param {
-    bias_term: true
+    #scale_bias: true
   }
 }
 layer {
   name: "relu2"
   type: "ReLU"
-  bottom: "conv2"
-  top: "conv2"
+  bottom: "conv2/bn"
+  top: "conv2/bn"
 }
 layer {
   name: "pool2"
   type: "Pooling"
-  bottom: "conv2"
+  bottom: "conv2/bn"
   top: "pool2"
   pooling_param {
     pool: MAX
@@ -167,31 +151,23 @@ layer {
   name: "conv3/bn"
   type: "BatchNorm"
   bottom: "conv3"
-  top: "conv3"
+  top: "conv3/bn"
   batch_norm_param {
     moving_average_fraction: 0.9
     eps: 0.0001
-  }
-}
-layer {
-  name: "conv3/scale"
-  bottom: "conv3"
-  top: "conv3"
-  type: "Scale"
-  scale_param {
-    bias_term: true
+    #scale_bias: true
   }
 }
 layer {
   name: "relu3"
   type: "ReLU"
-  bottom: "conv3"
-  top: "conv3"
+  bottom: "conv3/bn"
+  top: "conv3/bn"
 }
 layer {
   name: "conv4"
   type: "Convolution"
-  bottom: "conv3"
+  bottom: "conv3/bn"
   top: "conv4"
   convolution_param {
     num_output: 384
@@ -209,31 +185,24 @@ layer {
   name: "conv4/bn"
   type: "BatchNorm"
   bottom: "conv4"
-  top: "conv4"
+  top: "conv4/bn"
   batch_norm_param {
     moving_average_fraction: 0.9
     eps: 0.0001
+    #scale_bias: true
   }
 }
-layer {
-  name: "conv4/scale"
-  bottom: "conv4"
-  top: "conv4"
-  type: "Scale"
-  scale_param {
-    bias_term: true
-  }
-}
+
 layer {
   name: "relu4"
   type: "ReLU"
-  bottom: "conv4"
-  top: "conv4"
+  bottom: "conv4/bn"
+  top: "conv4/bn"
 }
 layer {
   name: "conv5"
   type: "Convolution"
-  bottom: "conv4"
+  bottom: "conv4/bn"
   top: "conv5"
   convolution_param {
     num_output: 256
@@ -244,38 +213,34 @@ layer {
       type: "gaussian"
       std: 0.01
     }
-    bias_term: false
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
   }
 }
 layer {
   name: "conv5/bn"
   type: "BatchNorm"
   bottom: "conv5"
-  top: "conv5"
+  top: "conv5/bn"
   batch_norm_param {
     moving_average_fraction: 0.9
     eps: 0.0001
+    #scale_bias: true
   }
 }
-layer {
-  name: "conv5/scale"
-  bottom: "conv5"
-  top: "conv5"
-  type: "Scale"
-  scale_param {
-    bias_term: true
-  }
-}
+
 layer {
   name: "relu5"
   type: "ReLU"
-  bottom: "conv5"
-  top: "conv5"
+  bottom: "conv5/bn"
+  top: "conv5/bn"
 }
 layer {
   name: "pool5"
   type: "Pooling"
-  bottom: "conv5"
+  bottom: "conv5/bn"
   top: "pool5"
   pooling_param {
     pool: MAX

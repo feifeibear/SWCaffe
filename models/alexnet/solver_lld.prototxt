@@ -1,0 +1,33 @@
+net: "models/alexnet/train_val_lld.prototxt"
+
+test_iter: 195   	#  49999/256
+test_interval: 1000      
+test_initialization: false
+
+display:  1
+
+max_iter: 500000  	# 100 epochs 
+
+lr_policy: "step"
+gamma:0.1
+stepsize:100000
+base_lr:  0.01
+momentum: 0.9
+weight_decay: 0.0005
+
+snapshot: 1000
+snapshot_prefix: "models/alexnet/alexnet_bn"
+snapshot_after_train: true
+
+solver_mode: CPU
+#regularization_type: "L2_unitary"
+
+# Train dataset size = 1,272,113
+# Test dataset size  =    49,999
+
+# batch 64  --> epoch = 20,000
+# batch 96  --> epoch = 15,000
+# batch 128 --> epoch = 10,000 
+# batch 256 --> epoch =  5,000  
+# batch 512 --> epoch =  2,500   #
+# batch 1024--> epoch =  1,250

@@ -74,12 +74,13 @@ void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 bool IMAGENETDataLayer<Dtype>::Skip() {
 #ifdef SWMPI
-  //hard code when server_num===0
-  int worker_cnt = Caffe::mpi_count()-1;
-  int worker_rank = Caffe::mpi_rank()-1;
-  bool keep = (offset_ % worker_cnt) == worker_rank ||
+  int size = Caffe::mpi_count()-1;
+  int rank = Caffe::mpi_rank()-1;
+  bool keep = (offset_ % size) == rank ||
               // In test mode, only rank 0 runs, so avoid skipping
-              this->layer_param_.phase() == TEST;
+              this->layer_param_.phase() == TEST ||
+              // For the train iteration after optimization in server
+              rank == -1;
   return !keep;
 
 #else

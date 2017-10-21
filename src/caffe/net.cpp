@@ -753,7 +753,7 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
     }
     else {
 #ifdef DEBUG_VERBOSE_2
-      LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+      LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1 : layer " << i <<
         "  " << layer_names_[i] << " needn't Backward";
 #endif
     }

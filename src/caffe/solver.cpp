@@ -330,7 +330,7 @@ void Solver<Dtype>::Step(int iters) {
     /////////////param_.iter_size() should be 1
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
- }
+    }
 
 #ifdef DEBUG_VERBOSE_1
 #ifdef SWMPI
