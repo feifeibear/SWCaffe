@@ -73,12 +73,23 @@ void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 }
 template <typename Dtype>
 bool IMAGENETDataLayer<Dtype>::Skip() {
+#ifdef SWMPI
+  //hard code when server_num===0
+  int worker_cnt = Caffe::mpi_count()-1;
+  int worker_rank = Caffe::mpi_rank()-1;
+  bool keep = (offset_ % worker_cnt) == worker_rank ||
+              // In test mode, only rank 0 runs, so avoid skipping
+              this->layer_param_.phase() == TEST;
+  return !keep;
+
+#else
   int size = Caffe::solver_count();
   int rank = Caffe::solver_rank();
   bool keep = (offset_ % size) == rank ||
               // In test mode, only rank 0 runs, so avoid skipping
               this->layer_param_.phase() == TEST;
   return !keep;
+#endif
 }
 
 template<typename Dtype>
@@ -138,9 +149,15 @@ void IMAGENETDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   }
   timer.Stop();
   batch_timer.Stop();
+#ifdef SWMPI
+  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Read time: " << read_time / 1000 << " ms.";
+  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Transform time: " << trans_time / 1000 << " ms.";
+#else
   DLOG(INFO) << "Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
   DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
   DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
+#endif
 }
 
 INSTANTIATE_CLASS(IMAGENETDataLayer);
