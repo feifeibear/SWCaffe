@@ -150,7 +150,10 @@ void sw_conv_forward_pad_impl_f_ori(
 	  int ldm_consume = 8*(Ni*No + No*B*Costride + Ni*B);
 	  assert(ldm_consume < 64*1024*64);
 
+    //float impl
 	  athread_spawn(conv_pad_float, param);
+    //float2double
+	  //athread_spawn(conv_pad_float__, param);
 	  //athread_spawn(conv_pad, param);
 	  athread_join();
 
@@ -262,8 +265,10 @@ void sw_conv_forward_pad_impl_f(
     struct timeval ts, te;
     gettimeofday(&ts, NULL);
 #endif
-	  //athread_spawn(conv_pad_float, param);
+    //float impl
 	  athread_spawn(conv_pad_float, param);
+    //float2double impl
+	  //athread_spawn(conv_pad_float__, param);
 	  //athread_spawn(conv_pad, param);
 	  athread_join();
 #ifdef DEBUG_VERBOSE_3
@@ -764,7 +769,7 @@ void sw_conv_backward_pad_impl_f(
     struct timeval ts, te;
     gettimeofday(&ts, NULL);
 #endif
-	  athread_spawn(conv_pad_float, param);
+	  athread_spawn(conv_pad_float__, param);
 	  athread_join();
 #ifdef DEBUG_VERBOSE_3
     gettimeofday(&te, NULL);
@@ -1369,7 +1374,11 @@ void sw_conv_backward_pad_weight_diff_impl_f(
     assert(Costride > 0);
 
     // weight_diff = conv(pad(in), out_grad, 'valid')
-	  athread_spawn(conv_pad_float__, param);
+    //float impl
+    athread_spawn(conv_pad_float, param);
+
+	  //float2double impl
+    //athread_spawn(conv_pad_float__, param);
 	  athread_join();
 
 #ifdef MPE_TRANS
