@@ -5,7 +5,7 @@ base_lr: 0.001
 lr_policy: "step"
 gamma: 0.1
 display: 1
-max_iter:128
+max_iter:1
 momentum:0.9
 weight_decay:0.0005
 snapshot:32

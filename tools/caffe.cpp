@@ -344,7 +344,12 @@ int train() {
   } else {
     solver->Solve();
   }
+#ifdef SWMPI
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : " << "Optimization Done.";
+#else
   LOG(INFO) << "Optimization Done.";
+#endif
   return 0;
 }
 RegisterBrewFunction(train);
@@ -536,7 +541,7 @@ int main(int argc, char** argv) {
   ////////////
 #ifdef SWMPI
 #ifdef DEBUG_VERBOSE_1
-  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : " << "Init done!";
+  LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : " << "Init done!";
   printf("SWCAFFE TEST: argc %d, argv %s\n", argc, argv[argc-1]);
 #endif
 #endif
@@ -558,6 +563,8 @@ int main(int argc, char** argv) {
     gflags::ShowUsageWithFlagsRestrict(argv[0], "tools/caffe");
   }
 #ifdef SWMPI
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : " << "Caffe done!";
   MPI_Finalize();
 #endif
   return 0;

@@ -621,43 +621,43 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
         << " Backward cost time: " << time << "s";
 #endif
 
-//      std::string layer_type = layers_[i]->type();
-//      if ((layer_type == std::string("InnerProduct")) ||
-//          layer_type == std::string("Convolution"))
-//      {
-//        markformpi++;
-//        caffe_mpi_ireduce<Dtype>(
-//            layers_[i]->blobs()[0]->mutable_cpu_diff(),
-//            layers_[i]->blobs()[0]->mutable_cpu_diff(),
-//            layers_[i]->blobs()[0]->count(),
-//            MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-//#ifdef DEBUG_VERBOSE_6
-//        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
-//          " name: " << layer_type <<
-//          " weightdiff addr " << layers_[i]->blobs()[0]->mutable_cpu_diff() <<
-//          " weightdiff count " << layers_[i]->blobs()[0]->count() <<
-//          " mpirequest[" << markformpi <<
-//          "] " << Caffe::mpi_request(markformpi) <<
-//          " " << *Caffe::mpi_request(markformpi);
-//#endif
-//        MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
-//        markformpi++;
-//        caffe_mpi_ireduce<Dtype>(
-//            layers_[i]->blobs()[1]->mutable_cpu_diff(),
-//            layers_[i]->blobs()[1]->mutable_cpu_diff(),
-//            layers_[i]->blobs()[1]->count(),
-//            MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-//#ifdef DEBUG_VERBOSE_6
-//        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
-//          " name: " << layer_type <<
-//          " biasdiff addr " << layers_[i]->blobs()[1]->mutable_cpu_diff() <<
-//          " biasdiff count " << layers_[i]->blobs()[1]->count() <<
-//          " mpirequest[" << markformpi <<
-//          "] " << Caffe::mpi_request(markformpi) <<
-//          " " << *Caffe::mpi_request(markformpi);
-//#endif
-//        MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
-//      }
+      std::string layer_type = layers_[i]->type();
+      if ((layer_type == std::string("InnerProduct")) ||
+          layer_type == std::string("Convolution"))
+      {
+        markformpi++;
+        caffe_mpi_ireduce<Dtype>(
+            layers_[i]->blobs()[0]->mutable_cpu_diff(),
+            layers_[i]->blobs()[0]->mutable_cpu_diff(),
+            layers_[i]->blobs()[0]->count(),
+            MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+#ifdef DEBUG_VERBOSE_6
+        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+          " name: " << layer_type <<
+          " weightdiff addr " << layers_[i]->blobs()[0]->mutable_cpu_diff() <<
+          " weightdiff count " << layers_[i]->blobs()[0]->count() <<
+          " mpirequest[" << markformpi <<
+          "] " << Caffe::mpi_request(markformpi) <<
+          " " << *Caffe::mpi_request(markformpi);
+#endif
+        //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+        markformpi++;
+        caffe_mpi_ireduce<Dtype>(
+            layers_[i]->blobs()[1]->mutable_cpu_diff(),
+            layers_[i]->blobs()[1]->mutable_cpu_diff(),
+            layers_[i]->blobs()[1]->count(),
+            MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+#ifdef DEBUG_VERBOSE_6
+        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+          " name: " << layer_type <<
+          " biasdiff addr " << layers_[i]->blobs()[1]->mutable_cpu_diff() <<
+          " biasdiff count " << layers_[i]->blobs()[1]->count() <<
+          " mpirequest[" << markformpi <<
+          "] " << Caffe::mpi_request(markformpi) <<
+          " " << *Caffe::mpi_request(markformpi);
+#endif
+        //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+      }
     }
     else {
 #ifdef DEBUG_VERBOSE_2

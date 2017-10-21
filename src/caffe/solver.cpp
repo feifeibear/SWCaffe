@@ -330,7 +330,7 @@ void Solver<Dtype>::Step(int iters) {
       if (display) {
         float lapse = iteration_timer_.Seconds();
         float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
-        LOG(INFO) << "Iteration " << iter_
+        LOG(INFO) << "MPIRoot: Iteration " << iter_
           << " (" << per_s << " iter/s, " << lapse << "s/"
           << param_.display() << " iters), loss = " << smoothed_loss_;
         iteration_timer_.Start();
@@ -365,6 +365,8 @@ void Solver<Dtype>::Step(int iters) {
     // the number of times the weights have been updated.
     ++iter_;
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
     SolverAction::Enum request = GetRequestedAction();
 
     if (Caffe::mpi_rank() == 0) {
@@ -372,7 +374,7 @@ void Solver<Dtype>::Step(int iters) {
       if ((param_.snapshot()
            && iter_ % param_.snapshot() == 0) ||
          (request == SolverAction::SNAPSHOT)) {
-      Snapshot();
+        Snapshot();
       }
     }
 
@@ -462,6 +464,18 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   Step(param_.max_iter() - iter_);
   // If we haven't already, save a snapshot after optimization, unless
   // overridden by setting snapshot_after_train := false
+#ifdef SWMPI
+  if (Caffe::mpi_root_solver()) {
+    if (param_.snapshot_after_train()
+        && (!param_.snapshot() || iter_ % param_.snapshot() != 0)) {
+      Snapshot();
+    }
+    if (requested_early_exit_) {
+      LOG(INFO) << "MPIRoot: Optimization stopped early.";
+      return;
+    }
+  }
+#else
   if (param_.snapshot_after_train()
       && (!param_.snapshot() || iter_ % param_.snapshot() != 0)) {
     Snapshot();
@@ -470,12 +484,30 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     LOG(INFO) << "Optimization stopped early.";
     return;
   }
+#endif
   // After the optimization is done, run an additional train and test pass to
   // display the train and test loss/outputs if appropriate (based on the
   // display and test_interval settings, respectively).  Unlike in the rest of
   // training, for the train net we only run a forward pass as we've already
   // updated the parameters "max_iter" times -- this final pass is only done to
   // display the loss, which is computed in the forward pass.
+#ifdef SWMPI
+  if (Caffe::mpi_root_solver()) {
+    if (param_.display() && iter_ % param_.display() == 0) {
+      int average_loss = this->param_.average_loss();
+      Dtype loss;
+      net_->Forward(&loss);
+
+      UpdateSmoothedLoss(loss, start_iter, average_loss);
+
+      LOG(INFO) << "MPIRoot: Iteration " << iter_ << ", loss = " << smoothed_loss_;
+    }
+    if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
+      TestAll();
+    }
+    LOG(INFO) << "MPIRoot: Optimization Done.";
+  }
+#else
   if (param_.display() && iter_ % param_.display() == 0) {
     int average_loss = this->param_.average_loss();
     Dtype loss;
@@ -489,6 +521,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     TestAll();
   }
   LOG(INFO) << "Optimization Done.";
+#endif
 }
 
 template <typename Dtype>
@@ -577,7 +610,11 @@ void Solver<Dtype>::Test(const int test_net_id) {
 
 template <typename Dtype>
 void Solver<Dtype>::Snapshot() {
+#ifdef SWMPI
+  CHECK(Caffe::mpi_root_solver());
+#else
   CHECK(Caffe::root_solver());
+#endif
   string model_filename;
   switch (param_.snapshot_format()) {
   case caffe::SolverParameter_SnapshotFormat_BINARYPROTO:
