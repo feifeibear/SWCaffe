@@ -17,7 +17,7 @@ layer {
   }
   data_param {
     source: "../../../imagenet_lmdb/train_lmdb"
-    batch_size: 16 
+    batch_size: 32 
     backend: LMDB
     #cache:   true
     #shuffle: true 
@@ -59,6 +59,25 @@ layer {
   }
 }
 layer {
+  name: "conv1/bn"
+  type: "BatchNorm"
+  bottom: "conv1"
+  top: "conv1"
+  batch_norm_param {
+    moving_average_fraction: 0.9
+    eps: 0.0001
+  }
+}
+layer {
+  name: "conv1/scale"
+  bottom: "conv1"
+  top: "conv1"
+  type: "Scale"
+  scale_param {
+    bias_term: true
+  }
+}
+layer {
   name: "relu1"
   type: "ReLU"
   bottom: "conv1"
@@ -90,6 +109,25 @@ layer {
       std: 0.01
     }
    bias_term: false
+  }
+}
+layer {
+  name: "conv2/bn"
+  type: "BatchNorm"
+  bottom: "conv2"
+  top: "conv2"
+  batch_norm_param {
+    moving_average_fraction: 0.9
+    eps: 0.0001
+  }
+}
+layer {
+  name: "conv2/scale"
+  bottom: "conv2"
+  top: "conv2"
+  type: "Scale"
+  scale_param {
+    bias_term: true
   }
 }
 layer {
@@ -126,6 +164,25 @@ layer {
   }
 }
 layer {
+  name: "conv3/bn"
+  type: "BatchNorm"
+  bottom: "conv3"
+  top: "conv3"
+  batch_norm_param {
+    moving_average_fraction: 0.9
+    eps: 0.0001
+  }
+}
+layer {
+  name: "conv3/scale"
+  bottom: "conv3"
+  top: "conv3"
+  type: "Scale"
+  scale_param {
+    bias_term: true
+  }
+}
+layer {
   name: "relu3"
   type: "ReLU"
   bottom: "conv3"
@@ -149,6 +206,25 @@ layer {
   }
 }
 layer {
+  name: "conv4/bn"
+  type: "BatchNorm"
+  bottom: "conv4"
+  top: "conv4"
+  batch_norm_param {
+    moving_average_fraction: 0.9
+    eps: 0.0001
+  }
+}
+layer {
+  name: "conv4/scale"
+  bottom: "conv4"
+  top: "conv4"
+  type: "Scale"
+  scale_param {
+    bias_term: true
+  }
+}
+layer {
   name: "relu4"
   type: "ReLU"
   bottom: "conv4"
@@ -168,10 +244,26 @@ layer {
       type: "gaussian"
       std: 0.01
     }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
+    bias_term: false
+  }
+}
+layer {
+  name: "conv5/bn"
+  type: "BatchNorm"
+  bottom: "conv5"
+  top: "conv5"
+  batch_norm_param {
+    moving_average_fraction: 0.9
+    eps: 0.0001
+  }
+}
+layer {
+  name: "conv5/scale"
+  bottom: "conv5"
+  top: "conv5"
+  type: "Scale"
+  scale_param {
+    bias_term: true
   }
 }
 layer {

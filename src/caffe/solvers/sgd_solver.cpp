@@ -100,6 +100,45 @@ void SGDSolver<Dtype>::ClipGradients() {
 
 template <typename Dtype>
 void SGDSolver<Dtype>::ApplyUpdate() {
+#ifdef SWMPI
+  Dtype rate = GetLearningRate();
+  if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
+    LOG(INFO) << "MPIRoot: Iteration " << this->iter_
+        << ", lr = " << rate;
+  }
+  ClipGradients();
+  for (int param_id = 0; param_id < this->net_->learnable_params().size();
+       ++param_id) {
+#ifdef DEBUG_VERBOSE_7
+    if((this->net_->learnable_params()[param_id])->count() > 4){
+      LOG(INFO) << "MPIRoot: In ApplyUpdate param "<< param_id
+        << " param size "<<(this->net_->learnable_params()[param_id])->count()
+        << " param examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[0]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[1]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[2]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[3]<<" "
+        << " paramdiff examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[0]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[1]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[2]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[3]<<" ";
+
+    }else{
+      LOG(INFO) << "MPIRoot: In ApplyUpdate param "<< param_id
+        << " param size "<<(this->net_->learnable_params()[param_id])->count()
+        << " param examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[0]<<" "
+        << " paramdiff examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[0]<<" ";
+    }
+#endif
+    Normalize(param_id);
+    Regularize(param_id);
+    ComputeUpdateValue(param_id, rate);
+  }
+  this->net_->Update();
+#else
   Dtype rate = GetLearningRate();
   if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
     LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << this->iter_
@@ -113,6 +152,7 @@ void SGDSolver<Dtype>::ApplyUpdate() {
     ComputeUpdateValue(param_id, rate);
   }
   this->net_->Update();
+#endif
 }
 
 template <typename Dtype>

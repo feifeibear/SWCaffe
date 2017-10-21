@@ -212,45 +212,45 @@ void Solver<Dtype>::Step(int iters) {
     net_->ClearParamDiffs();
 
 #ifdef SWMPI
-#ifdef DEBUG_VERBOSE_1
-    gettimeofday(&ts, NULL);
-#endif
 
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
       if (Caffe::mpi_root_solver()) {
+#ifdef DEBUG_VERBOSE_1
+        gettimeofday(&ts, NULL);
+#endif
         TestAll();
+#ifdef DEBUG_VERBOSE_1
+        gettimeofday(&te, NULL);
+        tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+        LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Test cost time is " << tmp_comm_lapse << "sec";
+#endif
       }
       if (requested_early_exit_) {
         // Break out of the while loop because stop was requested while testing.
         break;
       }
     }
-#ifdef DEBUG_VERBOSE_1
-    gettimeofday(&te, NULL);
-    tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
-    LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Test cost time is " << tmp_comm_lapse << "sec";
-#endif
 #else
-#ifdef DEBUG_VERBOSE_1
-    gettimeofday(&ts, NULL);
-#endif
 
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
       if (Caffe::root_solver()) {
+#ifdef DEBUG_VERBOSE_1
+    gettimeofday(&ts, NULL);
+#endif
         TestAll();
-      }
-      if (requested_early_exit_) {
-        // Break out of the while loop because stop was requested while testing.
-        break;
-      }
-    }
 #ifdef DEBUG_VERBOSE_1
     gettimeofday(&te, NULL);
     tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
     LOG(INFO) << "Root: Test cost time is " << tmp_comm_lapse << "sec";
 #endif
+      }
+      if (requested_early_exit_) {
+        // Break out of the while loop because stop was requested while testing.
+        break;
+      }
+    }
 #endif
 
     for (int i = 0; i < callbacks_.size(); ++i) {
@@ -330,7 +330,7 @@ void Solver<Dtype>::Step(int iters) {
       if (display) {
         float lapse = iteration_timer_.Seconds();
         float per_s = (iter_ - iterations_last_) / (lapse ? lapse : 1);
-        LOG(INFO) << "Iteration " << iter_
+        LOG(INFO) << "MPIRoot: Iteration " << iter_
           << " (" << per_s << " iter/s, " << lapse << "s/"
           << param_.display() << " iters), loss = " << smoothed_loss_;
         iteration_timer_.Start();
