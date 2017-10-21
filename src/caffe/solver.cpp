@@ -265,25 +265,51 @@ void Solver<Dtype>::Step(int iters) {
     gettimeofday(&ts, NULL);
 #endif
     vector<Blob<Dtype>* >& my_net_params = this->net_->learnable_params_nc();
-    for(int param_id = 0; param_id < my_net_params.size(); param_id++) {
-      /*
-      MPI_Bcast(
-           my_net_params[param_id]->mutable_cpu_data(),
-           my_net_params[param_id]->count(),
-           MPI_DOUBLE,
-           0,
-           MPI_COMM_WORLD);
-           */
-      caffe_mpi_bcast<Dtype>(
-           my_net_params[param_id]->mutable_cpu_data(),
-           my_net_params[param_id]->count(),
-           0,
-           MPI_COMM_WORLD);
+    for(int i=0; i<this->net_->layers().size(); i++){
+      std::string layer_type = this->net_->layers()[i]->type();
 #ifdef DEBUG_VERBOSE_6
-      LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: param " << param_id <<
-        " data addr is " << my_net_params[param_id]->mutable_cpu_diff() <<
-        " data count is " << my_net_params[param_id]->count();
+      LOG(INFO) << "MPIRoot: before bcast " <<
+        " layer "<< i <<
+        " layer type "<<layer_type<<
+        " blobs num "<<this->net_->layers()[i]->blobs().size();
 #endif
+        if ((layer_type == std::string("InnerProduct")) ||
+            layer_type == std::string("Convolution") ||
+            layer_type == std::string("Scale"))
+        {
+          for(int nblobs = 0; nblobs < this->net_->layers()[i]->blobs().size(); nblobs++){
+            caffe_mpi_bcast<Dtype>(
+                this->net_->layers()[i]->blobs()[nblobs]->mutable_cpu_data(),
+                this->net_->layers()[i]->blobs()[nblobs]->count(),
+                0,
+                MPI_COMM_WORLD);
+#ifdef DEBUG_VERBOSE_6
+            LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: layer " << i <<
+              " data "<< nblobs <<
+              " addr is " << 
+              this->net_->layers()[i]->blobs()[nblobs]->mutable_cpu_data() <<
+              " count is " << 
+              this->net_->layers()[i]->blobs()[nblobs]->count();
+#endif
+          }
+        }else if(layer_type == std::string("BatchNorm") && iter_ == 0){
+          for(int nblobs = 0; nblobs <  this->net_->layers()[i]->blobs().size(); nblobs++){
+            caffe_mpi_bcast<Dtype>(
+                this->net_->layers()[i]->blobs()[nblobs]->mutable_cpu_data(),
+                this->net_->layers()[i]->blobs()[nblobs]->count(),
+                0,
+                MPI_COMM_WORLD);
+#ifdef DEBUG_VERBOSE_6
+            LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: layer " << i <<
+              " BN layer init "<<
+              " data "<< nblobs <<
+              " addr is " <<
+              this->net_->layers()[i]->blobs()[nblobs]->mutable_cpu_data() <<
+              " count is " <<
+              this->net_->layers()[i]->blobs()[nblobs]->count();
+#endif
+          }
+        }
     }
 #ifdef DEBUG_VERBOSE_1
     MPI_Barrier(MPI_COMM_WORLD);

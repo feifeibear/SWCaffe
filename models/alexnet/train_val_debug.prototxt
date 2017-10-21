@@ -17,7 +17,7 @@ layer {
   }
   data_param {
     source: "../../../imagenet_lmdb/train_lmdb"
-    batch_size: 32 
+    batch_size: 128 
     backend: LMDB
     #cache:   true
     #shuffle: true 
