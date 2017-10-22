@@ -10,7 +10,7 @@ LDFLAGS += -allshare
 #alogrithm logic and forbackward time
 FLAGS += 	-DDEBUG_VERBOSE_1
 #time of each layer
-#FLAGS += 	-DDEBUG_VERBOSE_2
+FLAGS += 	-DDEBUG_VERBOSE_2
 #print timer in sw_conv_layer_impl
 #FLAGS += 	-DDEBUG_VERBOSE_3
 #address and length of mpibuff
@@ -58,77 +58,42 @@ FLAGS += -DUSE_SWPRELU
 FLAGS += -DUSE_SWSOFTMAX
 FLAGS += -DDEBUG_PRINT_TIME
 BIN_DIR=./bin
-video: $(BIN_DIR)/video_sw
 caffe: $(BIN_DIR)/caffe_sw
-lenet: $(BIN_DIR)/test_lenet_sw
-vgg: $(BIN_DIR)/vggnet_sw
-alexnet: $(BIN_DIR)/alexnet_sw
-solver: $(BIN_DIR)/test_solver_sw
-lstm: $(BIN_DIR)/test_lstm_sw
-compute_image_mean: $(BIN_DIR)/compute_image_mean_sw
 convert_imageset: $(BIN_DIR)/convert_imageset_sw
 
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/caffe $(SWBUILD_DIR)/caffe/util $(SWBUILD_DIR)/caffe/layers $(SWBUILD_DIR)/caffe/swlayers $(SWBUILD_DIR)/caffe/proto\
-		$(SWBUILD_DIR)/caffe/solvers $(SWBUILD_DIR)/glog ./models/swobj $(BIN_DIR)
+		$(SWBUILD_DIR)/caffe/solvers $(SWBUILD_DIR)/glog $(SWBUILD_DIR)/swobj $(BIN_DIR)
 	mkdir -p lib/sw
 ar: $(SWOBJ) $(SWLIBOBJ)
 	swar rcs ./lib/sw/swcaffe.a $^  
 
-runvideo:
-	sh ./scripts/sw_runvideo.sh 1
-runalex:
-	sh ./scripts/sw_runalex.sh 1
-runvgg:
-	sh ./scripts/sw_runvgg.sh 1
-runlenet:
-	sh ./scripts/sw_runlenet.sh 1
-runsolver:
-	sh ./scripts/sw_runsolver.sh 1
-runlstm:
-	sh ./scripts/sw_runlstm.sh 1
+#runvideo:
+	#sh ./scripts/sw_runvideo.sh 1
+#runalex:
+	#sh ./scripts/sw_runalex.sh 1
+#runvgg:
+	#sh ./scripts/sw_runvgg.sh 1
+#runlenet:
+	#sh ./scripts/sw_runlenet.sh 1
+#runsolver:
+	#sh ./scripts/sw_runsolver.sh 1
+#runlstm:
+	#sh ./scripts/sw_runlstm.sh 1
 
-$(BIN_DIR)/convert_imageset_sw: ./models/swobj/convert_imageset_sw.o $(SWOBJ)
+#caffe toolsls
+$(BIN_DIR)/convert_imageset_sw: $(SWBUILD_DIR)/swobj/convert_imageset_sw.o $(SWOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
-./models/swobj/convert_imageset_sw.o: ./tools/convert_imageset.cpp
+$(SWBUILD_DIR)/swobj/convert_imageset_sw.o: ./tools/convert_imageset.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
 
-$(BIN_DIR)/caffe_sw: ./models/swobj/caffe_sw.o $(SWOBJ) 
+$(BIN_DIR)/caffe_sw: $(SWBUILD_DIR)/swobj/caffe_sw.o $(SWOBJ) 
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
-./models/swobj/caffe_sw.o: ./tools/caffe.cpp
+$(SWBUILD_DIR)/swobj/caffe_sw.o: ./tools/caffe.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-$(BIN_DIR)/video_sw: ./models/swobj/videoprocess.o $(SWOBJ) 
-	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
-./models/swobj/videoprocess.o: ./models/src/videoprocess.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(BIN_DIR)/alexnet_sw: ./models/swobj/alexnet.o $(SWOBJ) 
-	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
-./models/swobj/alexnet.o: ./models/src/alexnet.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(BIN_DIR)/vggnet_sw: ./models/swobj/vggnet.o $(SWOBJ) 
-	$(LINK) $^   -o $@ $(LDFLAGS) $(SWLIBOBJ)
-./models/swobj/vggnet.o: ./models/src/vggnet.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(BIN_DIR)/test_solver_sw: ./models/swobj/test_solver.o $(SWOBJ) $(SWLIBOBJ)
-	$(LINK) $^ $(LDFLAGS)  -o $@
-./models/swobj/test_solver.o: ./models/src/test_solver.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(BIN_DIR)/test_lenet_sw: ./models/swobj/test_lenet.o $(SWOBJ) $(SWLIBOBJ)
-	$(LINK) $^ $(LDFLAGS)  -o $@
-./models/swobj/test_lenet.o: ./models/src/test_lenet.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(BIN_DIR)/test_lstm_sw: ./models/swobj/test_lstm.o $(SWOBJ) $(SWLIBOBJ)
-	$(LINK) $^ $(LDFLAGS)  -o $@
-./models/swobj/test_lstm.o: ./models/src/test_lstm.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
+#sw tools
 $(SWBUILD_DIR)/caffe/swlayers/sw_pool_layer_impl.o: ./src/caffe/swlayers/sw_pool_layer_impl.c
 	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/caffe/swlayers/sw_slave_pool.o: ./src/caffe/swlayers/sw_slave_pool.c
@@ -215,4 +180,4 @@ $(SWBUILD_DIR)/caffe/proto/%.o: ./src/caffe/proto/%.cc
 
 
 clean:
-	rm -f $(SWOBJ) vggnet test_solver ./models/swobj/* core*
+	rm -f $(SWOBJ) $(SWBUILD_DIR)/swobj/* core* $(BIN_DIR)/*
