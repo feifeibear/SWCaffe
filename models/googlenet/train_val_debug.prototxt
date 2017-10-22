@@ -1,3 +1,6 @@
+#------------------------------------------------
+#GoogleNet
+#------------------------------------------------
 name: "GoogleNet"
 layer {
   name: "data"
@@ -15,7 +18,7 @@ layer {
     mean_value: 123
   }
   data_param {
-    source: "../../../imagenet_lmdb/train_lmdb"
+    source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/train_lmdb"
     batch_size: 128
     backend: LMDB
   }
@@ -36,7 +39,7 @@ layer {
     mean_value: 123
   }
   data_param {
-    source: "../../../imagenet_lmdb/val_lmdb"
+    source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/val_lmdb"
     batch_size: 50
     backend: LMDB
   }

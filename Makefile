@@ -68,20 +68,7 @@ mk:
 ar: $(SWOBJ) $(SWLIBOBJ)
 	swar rcs ./lib/sw/swcaffe.a $^  
 
-#runvideo:
-	#sh ./scripts/sw_runvideo.sh 1
-#runalex:
-	#sh ./scripts/sw_runalex.sh 1
-#runvgg:
-	#sh ./scripts/sw_runvgg.sh 1
-#runlenet:
-	#sh ./scripts/sw_runlenet.sh 1
-#runsolver:
-	#sh ./scripts/sw_runsolver.sh 1
-#runlstm:
-	#sh ./scripts/sw_runlstm.sh 1
-
-#caffe toolsls
+#caffe tools
 $(BIN_DIR)/convert_imageset_sw: $(SWBUILD_DIR)/swobj/convert_imageset_sw.o $(SWOBJ)
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
 $(SWBUILD_DIR)/swobj/convert_imageset_sw.o: ./tools/convert_imageset.cpp

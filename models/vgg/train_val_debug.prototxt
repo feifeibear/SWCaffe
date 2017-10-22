@@ -10,10 +10,10 @@ layer {
   transform_param {
     mirror: true
     crop_size: 224
-    mean_file: "../../../imagenet_lmdb/imagenet_mean.binaryproto"
+    mean_file: "/home/export/online1/swyf/swdnn/imagenet_lmdb/imagenet_mean.binaryproto"
   }
   data_param {
-    source: "../../../imagenet_lmdb/train_lmdb"
+    source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/train_lmdb"
     batch_size: 128 
     backend: LMDB
   }
@@ -29,10 +29,10 @@ layer {
   transform_param {
     mirror: false
     crop_size: 224
-    mean_file: "../../../imagenet_lmdb/imagenet_mean.binaryproto"
+    mean_file: "/home/export/online1/swyf/swdnn/imagenet_lmdb/imagenet_mean.binaryproto"
   }
   data_param {
-    source: "../../../imagenet_lmdb/val_lmdb"
+    source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/val_lmdb"
     batch_size: 16
     backend: LMDB
   }
