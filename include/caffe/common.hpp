@@ -21,6 +21,10 @@
 #ifdef SWMPI
 #include <mpi.h>
 #endif
+#ifdef SW4CG
+#include "caffe/util/multithread.hpp"
+#include "caffe/util/athread.hpp"
+#endif
 
 // Convert macro to string
 #define STRINGIFY(m) #m
@@ -183,6 +187,11 @@ class Caffe {
   inline static int mpi_rs_num() { return Get().mpi_rs_num_; }
   inline static MPI_Request* mpi_request(int i) { return &(Get().mpi_request_[i]); }
   inline static MPI_Status* mpi_status(int i) { return &(Get().mpi_status_[i]); }
+#endif
+
+#ifdef SW4CG
+  inline static int solver_cgid() {return caffe_get_cgid();}
+  inline static int solver_threadidx(){return (caffe_get_cgid()-1)<0?3:(caffe_get_cgid()-1);}
 #endif
 
 

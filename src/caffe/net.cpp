@@ -571,27 +571,8 @@ Dtype Net<Dtype>::ForwardBackward(){
 #endif
             MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
           }
-          //if((layers_[i]->blobs()).size() > 1){
-            //markformpi++;
-            //caffe_mpi_ireduce<Dtype>(
-                //MPI_IN_PLACE,
-                //layers_[i]->blobs()[1]->mutable_cpu_diff(),
-                //layers_[i]->blobs()[1]->count(),
-                //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-//#ifdef DEBUG_VERBOSE_6
-            //LOG(INFO) << "MPIRoot: layer " << i <<
-              //" name: " << layer_type <<
-              //" biasdiff addr " << layers_[i]->blobs()[1]->mutable_cpu_diff() <<
-              //" biasdiff count " << layers_[i]->blobs()[1]->count() <<
-              //" mpirequest[" << markformpi <<
-              //"] " << Caffe::mpi_request(markformpi) <<
-              //" " << *(Caffe::mpi_request(markformpi));
-//#endif
-            //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
-          //}
         }
       }
-      //MPI_Waitall(Caffe::mpi_rs_num(), Caffe::mpi_request(0), Caffe::mpi_status(0));
     } else {
       Forward(&loss);
       caffe_mpi_ireduce<Dtype>(&loss, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
@@ -602,7 +583,6 @@ Dtype Net<Dtype>::ForwardBackward(){
 #endif
       MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
       Backward();
-      //MPI_Waitall(Caffe::mpi_rs_num(), Caffe::mpi_request(0), Caffe::mpi_status(0));
     }
 #endif
     return loss;
@@ -733,22 +713,6 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
 #endif
           MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
         }
-        //markformpi++;
-        //caffe_mpi_ireduce<Dtype>(
-            //layers_[i]->blobs()[1]->mutable_cpu_diff(),
-            //layers_[i]->blobs()[1]->mutable_cpu_diff(),
-            //layers_[i]->blobs()[1]->count(),
-            //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-//#ifdef DEBUG_VERBOSE_6
-        //LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
-          //" name: " << layer_type <<
-          //" biasdiff addr " << layers_[i]->blobs()[1]->mutable_cpu_diff() <<
-          //" biasdiff count " << layers_[i]->blobs()[1]->count() <<
-          //" mpirequest[" << markformpi <<
-          //"] " << Caffe::mpi_request(markformpi) <<
-          //" " << *Caffe::mpi_request(markformpi);
-//#endif
-        //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
       }
     }
     else {
@@ -930,6 +894,328 @@ void Net<Dtype>::Backward() {
                << "L2 norm = (" << l2norm_data << ", " << l2norm_diff << ")";
   }
 }
+
+
+/*==================SW4CG functions start================*/
+
+#ifdef SW4CG
+//zwl 4cg
+template <typename Dtype>
+void* Net<Dtype>::ForwardBackward_1cg(void* net_){
+  Net<Dtype>* net_ptr = (caffe::Net<Dtype>*) net_;
+  int tid = Caffe::solver_cgid()-1;
+  //caffe_athread_init();
+  //athread_init();
+  if(!athread_get_max_threads()) athread_init();
+  if(tid<0) tid = 3;
+#ifdef DEBUG_VERBOSE_8
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : "
+    << "Thread id "<< tid << " : "
+    << "On CG "<<caffe_get_cgid()<<". "
+    << "Max available threas " << athread_get_max_threads()
+    << ". Starting forwardbackward process..";
+#endif
+  if(Caffe::solver_cgid()==0){
+    net_ptr->Forward_4cg(&(net_ptr->loss));
+#ifdef SWMPI
+    caffe_mpi_ireduce<Dtype>(&(net_ptr->loss), &(net_ptr->loss), 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
+#ifdef DEBUG_VERBOSE_6
+    LOG_IF(INFO, Caffe::mpi_rank() == 1) << "Rank 1: " <<
+      " mpirequest[0] " << Caffe::mpi_request(0) <<
+      " " << *(Caffe::mpi_request(0));
+#endif
+    MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
+#endif
+  }else{
+    net_ptr->Forward_4cg(NULL);
+  }
+  
+
+  net_ptr->Backward_4cg();
+  pthread_exit(0);
+}
+
+template <typename Dtype>
+Dtype Net<Dtype>::ForwardBackward_4cg(){
+  loss = 0;
+#ifndef SWMPI
+  pthread_t* pthread_handler_p = new pthread_t[NThread];
+#ifdef DEBUG_VERBOSE_8
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : "
+    << "Initializing "<< NThread<<" threads..."
+    << "On CG "<<caffe_get_cgid();
+#endif
+  for(int i=0; i<NThread; i++){
+    pthread_create(&pthread_handler_p[i],NULL, caffe::Net<Dtype>::ForwardBackward_1cg, (void*)(this));
+  }
+
+  for(int i=0; i<NThread; i++){
+    pthread_join(pthread_handler_p[i], NULL);
+  }
+#ifdef DEBUG_VERBOSE_8
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : "
+    << "Joining "<<NThread<<" threads...";
+#endif
+#else
+    if (Caffe::mpi_root_solver()) {
+      caffe_mpi_ireduce<Dtype>(MPI_IN_PLACE, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
+#ifdef DEBUG_VERBOSE_6
+      LOG(INFO) << "MPIRoot: " <<
+        " mpirequest[0] " << Caffe::mpi_request(0) <<
+        " " << *Caffe::mpi_request(0);
+#endif
+      MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
+      int markformpi = 0;
+      for (int i = layers_.size() - 1; i >= 0; --i) {
+        std::string layer_type = layers_[i]->type();
+#ifdef DEBUG_VERBOSE_6
+      LOG(INFO) << "MPIRoot: before ireduce " <<
+        " layer "<< i <<
+        " layer type "<<layer_type<<
+        " blobs num "<<layers_[i]->blobs().size();
+#endif
+        if ((layer_type == std::string("InnerProduct")) ||
+            layer_type == std::string("Convolution") ||
+            layer_type == std::string("BatchNorm")||
+            layer_type == std::string("Scale"))
+        {
+          for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
+            markformpi++;
+            caffe_mpi_ireduce<Dtype>(
+                MPI_IN_PLACE,
+                layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+                layers_[i]->blobs()[nblobs]->count(),
+                MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+#ifdef DEBUG_VERBOSE_6
+            LOG(INFO) << "MPIRoot: layer " << i <<
+              " name: " << layer_type <<
+              " diff "<< nblobs<< " addr " << layers_[i]->blobs()[nblobs]->mutable_cpu_diff() <<
+              " diff "<< nblobs<< " count " << layers_[i]->blobs()[nblobs]->count() <<
+              " mpirequest[" << markformpi <<
+              "] " << Caffe::mpi_request(markformpi) <<
+              " " << *Caffe::mpi_request(markformpi);
+#endif
+            MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+          }
+        }
+      }
+    } else {
+      pthread_t* pthread_handler_p = new pthread_t[NThread];
+#ifdef DEBUG_VERBOSE_8
+      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : "
+        << "Initializing "<< NThread<<" threads..."
+        << "On CG "<<caffe_get_cgid();
+#endif
+      for(int i=0; i<NThread; i++){
+        pthread_create(&pthread_handler_p[i],NULL, caffe::Net<Dtype>::ForwardBackward_1cg, (void*)(this));
+      }
+
+      for(int i=0; i<NThread; i++){
+        pthread_join(pthread_handler_p[i], NULL);
+      }
+#ifdef DEBUG_VERBOSE_8
+      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : "
+        << "Joining "<<NThread<<" threads done";
+#endif
+    }
+#endif
+  return loss;
+}
+
+template <typename Dtype>
+Dtype Net<Dtype>::ForwardFromTo_4cg(int start, int end) {
+  CHECK_GE(start, 0);
+  CHECK_LT(end, layers_.size());
+  Dtype loss = 0;
+  //LOG(INFO) << "Rank " << Caffe::solver_rank()
+    //<< " on CG "<<Caffe::solver_cgid() 
+    //<<" : 4CG Ignore Callbacks before_forward and after_forward";
+  if(Caffe::solver_cgid() == 0){
+    for (int i = start; i <= end; ++i) {
+      for (int c = 0; c < before_forward_.size(); ++c) {
+        before_forward_[c]->run(i);
+      }
+#ifdef DEBUG_VERBOSE_2
+    struct timeval ts, te;
+    gettimeofday(&ts, NULL);
+#endif
+      Dtype layer_loss = layers_[i]->Forward_4cg(bottom_vecs_[i], top_vecs_[i]);
+#ifdef DEBUG_VERBOSE_2
+      gettimeofday(&te, NULL);
+      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+#ifdef SWMPI
+      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
+        << i << "  " << layer_names_[i]
+        << " Forward cost time: " << time << "s";
+#else
+      LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+        << i << "  " << layer_names_[i]
+        << " Forward cost time: " << time << "s";
+#endif
+#endif
+      loss += layer_loss;
+      if (debug_info_) { ForwardDebugInfo(i); }
+      for (int c = 0; c < after_forward_.size(); ++c) {
+        after_forward_[c]->run(i);
+      }
+    }
+  }else{
+    for (int i = start; i <= end; ++i) {
+      layers_[i]->Forward_4cg(bottom_vecs_[i], top_vecs_[i]); 
+    }
+  }
+  return loss;
+}
+template <typename Dtype>
+const vector<Blob<Dtype>*>& Net<Dtype>::Forward_4cg(Dtype* loss) {
+  if (loss != NULL) {
+    *loss = ForwardFromTo_4cg(0, layers_.size() - 1);
+  } else {
+    ForwardFromTo_4cg(0, layers_.size() - 1);
+  }
+  return net_output_blobs_;
+}
+
+template <typename Dtype>
+void Net<Dtype>::BackwardFromTo_4cg(int start, int end) {
+  CHECK_GE(end, 0);
+  CHECK_LT(start, layers_.size());
+#ifdef SWMPI
+  if(Caffe:solver_cgid()==0){
+    int markformpi = 0;
+    for (int i = start; i >= end; --i) {
+      for (int c = 0; c < before_backward_.size(); ++c) {
+        before_backward_[c]->run(i);
+      }
+      if (layer_need_backward_[i]) {
+#ifdef DEBUG_VERBOSE_2
+        struct timeval ts, te;
+        gettimeofday(&ts, NULL);
+#endif
+        layers_[i]->Backward_4cg(
+            top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+        if (debug_info_) { BackwardDebugInfo(i);}
+
+#ifdef DEBUG_VERBOSE_2
+        gettimeofday(&te, NULL);
+        double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+        //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+        LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
+          << i << "  " << layer_names_[i]
+          << " Backward cost time: " << time << "s";
+#endif
+
+        std::string layer_type = layers_[i]->type();
+        if ((layer_type == std::string("InnerProduct")) ||
+            layer_type == std::string("Convolution") ||
+            layer_type == std::string("BatchNorm")||
+            layer_type == std::string("Scale"))
+        {
+          for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
+            markformpi++;
+            caffe_mpi_ireduce<Dtype>(
+                layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+                layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+                layers_[i]->blobs()[nblobs]->count(),
+                MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+#ifdef DEBUG_VERBOSE_6
+            LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+              " name: " << layer_type <<
+              " diff "<< nblobs <<" addr " <<
+              layers_[i]->blobs()[nblobs]->mutable_cpu_diff() <<
+              " diff "<< nblobs <<" count " <<
+              layers_[i]->blobs()[nblobs]->count() <<
+              " mpirequest[" << markformpi <<
+              "] " << Caffe::mpi_request(markformpi) <<
+              " " << *Caffe::mpi_request(markformpi);
+#endif
+            MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+          }
+        }
+      }
+      else {
+#ifdef DEBUG_VERBOSE_2
+        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1 : layer" << i <<
+          "  " << layer_names_[i] << " needn't Backward";
+#endif
+      }
+      for (int c = 0; c < after_backward_.size(); ++c) {
+        after_backward_[c]->run(i);
+      }
+    }
+  }else{
+    for(int i=start; i>=end; --i){
+      if (layer_need_backward_[i]) {
+        layers_[i]->Backward_4cg(
+            top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+      }
+    }
+  }
+#else
+  for (int i = start; i >= end; --i) {
+    if(Caffe::solver_cgid() == 0){
+      for (int c = 0; c < before_backward_.size(); ++c) {
+        before_backward_[c]->run(i);
+      }
+#ifdef DEBUG_VERBOSE_2
+      struct timeval ts, te;
+      gettimeofday(&ts, NULL);
+#endif
+      if (layer_need_backward_[i]) {
+        layers_[i]->Backward_4cg(
+            top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+        if (debug_info_) { BackwardDebugInfo(i); }
+#ifdef DEBUG_VERBOSE_2
+        gettimeofday(&te, NULL);
+        double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+        //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+        LOG(INFO) << "Rank " << Caffe::solver_rank() 
+          <<", CG "<<Caffe::solver_cgid()
+          << " : layer"<< i << "  " << layer_names_[i]
+          << " Backward cost time: " << time << "s";
+      }
+      else {
+        //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+        LOG(INFO) << "Rank " << Caffe::solver_rank() 
+          <<", CG "<<Caffe::solver_cgid()
+          << " : layer"<< i << "  " << layer_names_[i]
+          << " needn't Backward";
+#endif
+      }
+      for (int c = 0; c < after_backward_.size(); ++c) {
+        after_backward_[c]->run(i);
+      }
+    }else{
+      if (layer_need_backward_[i]) {
+        layers_[i]->Backward_4cg(
+            top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+      }
+    } 
+  }
+#endif
+}
+template <typename Dtype>
+void Net<Dtype>::Backward_4cg() {
+  BackwardFromTo_4cg(layers_.size() - 1, 0);
+  if(Caffe::solver_cgid()==0){
+    if (debug_info_) {
+      Dtype asum_data = 0, asum_diff = 0, sumsq_data = 0, sumsq_diff = 0;
+      for (int i = 0; i < learnable_params_.size(); ++i) {
+        asum_data += learnable_params_[i]->asum_data();
+        asum_diff += learnable_params_[i]->asum_diff();
+        sumsq_data += learnable_params_[i]->sumsq_data();
+        sumsq_diff += learnable_params_[i]->sumsq_diff();
+      }
+      const Dtype l2norm_data = std::sqrt(sumsq_data);
+      const Dtype l2norm_diff = std::sqrt(sumsq_diff);
+      LOG(ERROR) << "    [Backward] All net params (data, diff): "
+        << "L1 norm = (" << asum_data << ", " << asum_diff << "); "
+          << "L2 norm = (" << l2norm_data << ", " << l2norm_diff << ")";
+    }
+  }
+}
+#endif
+/*==================SW4CG functions exit================*/
 
 template <typename Dtype>
 void Net<Dtype>::Reshape() {

@@ -31,7 +31,74 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
     this->output_shape_.push_back(output_dim);
   }
 }
-
+//#ifdef SW4CG
+//template <typename Dtype>
+//void ConvolutionLayer<Dtype>::Forward_cpu_4cg(const vector<Blob<Dtype>*>& bottom,
+      //const vector<Blob<Dtype>*>& top) {
+   ////const Dtype* weight = this->blobs_[0]->cpu_data();
+   ////for (int i = 0; i < bottom.size(); ++i) {
+      ////const Dtype* bottom_data = bottom[i]->cpu_data();
+      ////Dtype* top_data = top[i]->mutable_cpu_data();
+      ////for (int n = 0; n < this->num_; ++n) {
+        ////this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
+            ////top_data + n * this->top_dim_);
+        ////if (this->bias_term_) {
+          ////const Dtype* bias = this->blobs_[1]->cpu_data();
+          ////this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
+        ////}
+      ////}
+    ////}
+    //Sync_4cg((Dtype)0);
+    //int threadidx = Caffe::solver_cgid();
+    //CHECK_EQ((this->num_%NThread), 0);
+    //int split_num_ = this->num_/NThread;
+    //int num_offset_ = this->num_/NThread*threadidx;
+  ////if(threadidx = 0){
+    //const Dtype* weight = this->blobs_[0]->cpu_data();
+    //for (int i = 0; i < bottom.size(); ++i) {
+      //const Dtype* bottom_data = bottom[i]->cpu_data();
+      //Dtype* top_data = top[i]->mutable_cpu_data();
+//#ifdef DEBUG_VERBOSE_8
+      //LOG(INFO) << "Rank " << Caffe::solver_rank() 
+        //<<", CG "<<threadidx
+        //<<": Do conv on batch idx ["<<num_offset_<<" "<<num_offset_+split_num_<<")";
+//#endif
+      //for (int n = 0; n < split_num_; ++n) {
+//#ifdef DEBUG_VERBOSE_8
+        //struct timeval ts, te;
+        //gettimeofday(&ts, NULL);
+//#endif
+        //this->forward_cpu_gemm(bottom_data + (num_offset_+ n) * this->bottom_dim_, 
+            //weight,
+            //top_data + (num_offset_+n) * this->top_dim_);
+//#ifdef DEBUG_VERBOSE_8
+        //gettimeofday(&te, NULL);
+        //double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+        ////LOG_IF(INFO, Caffe::root_solver()) << "Root: \t\t" << i
+        //LOG(INFO) << "Rank " << Caffe::solver_rank() 
+          //<<", CG "<<Caffe::solver_cgid()
+          //<< " : " << i
+          //<< "th bottom " << n << "th iter forward_cpu_gemm in Forward_cpu cost time: " << time << "s";
+        //gettimeofday(&ts, NULL);
+//#endif
+        //if (this->bias_term_) {
+          //const Dtype* bias = this->blobs_[1]->cpu_data();
+          //this->forward_cpu_bias(top_data + (num_offset_+n) * this->top_dim_, bias);
+        //}
+//#ifdef DEBUG_VERBOSE_4
+        //gettimeofday(&te, NULL);
+        //time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+        ////LOG_IF(INFO, Caffe::root_solver()) << "Root: \t\t" << i
+        //LOG(INFO) << "Rank " << Caffe::solver_rank() 
+          //<<", CG "<<threadidx
+          //<< " : " << i
+          //<< "th bottom " << n << "th iter forward_cpu_bias in Forward_cpu cost time: " << time << "s";
+//#endif
+      //}
+    //}
+    //Sync_4cg((Dtype)0);
+//}
+//#endif
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {

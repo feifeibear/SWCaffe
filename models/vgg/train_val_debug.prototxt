@@ -14,7 +14,7 @@ layer {
   }
   data_param {
     source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/train_lmdb"
-    batch_size: 128 
+    batch_size: 32 
     backend: LMDB
   }
 }

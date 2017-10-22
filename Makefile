@@ -3,7 +3,8 @@ LINK 	= 	mpiCC
 SWCXX = 	sw5cc.new -slave -CG:pjump_all
 FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0 
 FLAGS += 	-DCPU_ONLY
-FLAGS += 	-DSWMPI
+#FLAGS += 	-DSWMPI
+FLAGS += -DSW4CG
 LDFLAGS = -lm_slave 
 LDFLAGS += -allshare
 
@@ -17,6 +18,8 @@ FLAGS += 	-DDEBUG_VERBOSE_2
 #FLAGS += 	-DDEBUG_VERBOSE_6
 #in sgd solvers data value print
 #FLAGS +=  -DDEBUG_VERBOSE_7
+#debug SW4CG
+FLAGS += -DDEBUG_VERBOSE_8
 
 
 SWBUILD_DIR=./swbuild
@@ -24,7 +27,8 @@ THIRD_PARTY_DIR=../thirdparty
 SWINC_FLAGS=-I./include -I$(THIRD_PARTY_DIR)/include
 
 SWLIBOBJ=$(THIRD_PARTY_DIR)/lib/cblas_LINUX0324.a
-SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblas0324.a
+SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblasall-2.a
+#SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblas0324.a
 #SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libhdf5.a
 #SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libhdf5_hl.a -Wl,--no-whole-archive
 SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libopencv_core.a -Wl,--no-whole-archive

@@ -48,8 +48,85 @@ class Layer {
           blobs_[i]->FromProto(layer_param_.blobs(i));
         }
       }
+#ifdef SW4CG
+      for(int i=0; i<NThread; i++){
+        sync_4cg_sig[i] = 0;
+        sync_4cg_rsp[i] = 0;
+      }
+#endif
     }
   virtual ~Layer() {}
+  /*======SW4CG function start=======*/
+#ifdef SW4CG
+  virtual void Reshape_4cg(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
+    if(Caffe::solver_cgid() == 0){
+      Reshape(bottom, top);
+    }
+  }
+  inline Dtype Forward_4cg(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top); 
+  inline void Backward_4cg(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down,
+      const vector<Blob<Dtype>*>& bottom);
+
+  virtual void Forward_cpu_4cg(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
+    if(Caffe::solver_cgid() == 0){
+      Forward_cpu(bottom, top);
+    }
+  }
+
+  virtual void Backward_cpu_4cg(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down,
+      const vector<Blob<Dtype>*>& bottom) {
+    if(Caffe::solver_cgid() == 0){
+      Backward_cpu(top, propagate_down, bottom);
+    }
+  } 
+
+  /**
+   * The signal for synchronize between 4cgs
+   */
+volatile Dtype sync_4cg_sig[NThread];
+volatile Dtype sync_4cg_rsp[NThread];
+
+inline void Sync_4cg(Dtype param){
+  int cgid = Caffe::solver_cgid();
+  if(cgid == 0){
+    for(int i=1; i<NThread; i++){
+      sync_4cg_sig[i] = 1;
+    }
+    int responds = 0;
+#ifdef DEBUG_SYNC_4CG
+    LOG(INFO) << "Rank " << Caffe::solver_rank() << " : CG "
+      << cgid << " Done setting sync signals.";
+#endif
+    while (responds < NThread-1){
+      for(int i=1; i<NThread; i++){
+        if(sync_4cg_rsp[i] == 1){
+          responds++;
+          sync_4cg_rsp[i] = 0;
+#ifdef DEBUG_SYNC_4CG
+          LOG(INFO) << "Rank " << Caffe::solver_rank() << " : CG "
+            << cgid << " Recieving rsp from CG "<< i;
+#endif
+        }
+      }
+    }
+  }
+  else{
+    while (sync_4cg_sig[cgid] != 1);
+    sync_4cg_sig[cgid] = 0;
+    sync_4cg_rsp[cgid] = 1;
+  }
+#ifdef DEBUG_SYNC_4CG
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : CG "
+    << cgid << " Done 4CG synchronize!";
+#endif
+}
+#endif
+  /*======SW4CG function end=======*/
 
   /**
    * @brief Implements common layer setup functionality.
@@ -471,6 +548,44 @@ void Layer<Dtype>::ToProto(LayerParameter* param, bool write_diff) {
     blobs_[i]->ToProto(param->add_blobs(), write_diff);
   }
 }
+
+#ifdef SW4CG
+template <typename Dtype>
+inline Dtype Layer<Dtype>::Forward_4cg(const vector<Blob<Dtype>*>& bottom,
+    const vector<Blob<Dtype>*>& top) {
+  Dtype loss = 0;
+  Reshape_4cg(bottom, top);
+  switch (Caffe::mode()) {
+  case Caffe::CPU:
+    Forward_cpu_4cg(bottom, top);
+    if(Caffe::solver_cgid() == 0){
+      for (int top_id = 0; top_id < top.size(); ++top_id) {
+        if (!this->loss(top_id)) { continue; }
+        const int count = top[top_id]->count();
+        const Dtype* data = top[top_id]->cpu_data();
+        const Dtype* loss_weights = top[top_id]->cpu_diff();
+        loss += caffe_cpu_dot(count, data, loss_weights);
+      }
+    }
+    break;
+  default:
+    LOG(FATAL) << "Unknown caffe mode.";
+  }
+  return loss;
+}
+template <typename Dtype>
+inline void Layer<Dtype>::Backward_4cg(const vector<Blob<Dtype>*>& top,
+    const vector<bool>& propagate_down,
+    const vector<Blob<Dtype>*>& bottom) {
+  switch (Caffe::mode()) {
+  case Caffe::CPU:
+    Backward_cpu_4cg(top, propagate_down, bottom);
+    break;
+  default:
+    LOG(FATAL) << "Unknown caffe mode.";
+  }
+}
+#endif
 
 }  // namespace caffe
 

@@ -329,7 +329,11 @@ void Solver<Dtype>::Step(int iters) {
     //////////////for the mpi computation and communication overlapped
     /////////////param_.iter_size() should be 1
     for (int i = 0; i < param_.iter_size(); ++i) {
-      loss += net_->ForwardBackward();
+#ifdef SW4CG
+        loss += net_->ForwardBackward_4cg();
+#else
+        loss += net_->ForwardBackward();
+#endif
     }
 
 #ifdef DEBUG_VERBOSE_1

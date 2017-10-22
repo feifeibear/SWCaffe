@@ -13,6 +13,11 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/mpi.hpp"
 
+#ifdef SW4CG
+#include "caffe/util/multithread.hpp"
+#include "caffe/util/athread.hpp"
+#endif
+
 namespace caffe {
 
 /**
@@ -43,6 +48,16 @@ class Net {
    //     << "will be removed in a future version. Use Forward().";
     return Forward(loss);
   }
+
+#ifdef SW4CG //only for training, seperate from testing
+  const vector<Blob<Dtype>*>& Forward_4cg(Dtype* loss = NULL);
+  Dtype ForwardFromTo_4cg(int start, int end);
+  void Backward_4cg();
+  void BackwardFromTo_4cg(int start, int end);
+  static void* ForwardBackward_1cg(void* net_);
+  Dtype ForwardBackward_4cg();
+  Dtype loss;
+#endif
 
   /**
    * The From and To variants of Forward and Backward operate on the

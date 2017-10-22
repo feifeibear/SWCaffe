@@ -18,6 +18,8 @@ void LMDB::Open(const string& source, Mode mode) {
   }
 #ifdef SWMPI
   flags |= MDB_NOLOCK;
+#else
+  flags |= MDB_NOLOCK;
 #endif
   int rc = mdb_env_open(mdb_env_, source.c_str(), flags, 0664);
 
