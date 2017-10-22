@@ -340,7 +340,7 @@ void Solver<Dtype>::Step(int iters) {
     tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
     calc_lapse += tmp_comm_lapse;
 #ifdef SWMPI
-    LOG(INFO) << "Rank " << Caffe::mpi_rank() << ": net ForwardBackward time is " << tmp_comm_lapse << "sec"
+    LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : net ForwardBackward time is " << tmp_comm_lapse << "sec"
               << " loss: " << loss;
 #else
     LOG_IF(INFO, Caffe::root_solver()) << "Root: net ForwardBackward time is " << tmp_comm_lapse << "sec";

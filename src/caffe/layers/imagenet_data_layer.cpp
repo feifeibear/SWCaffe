@@ -151,9 +151,9 @@ void IMAGENETDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   timer.Stop();
   batch_timer.Stop();
 #ifdef SWMPI
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Read time: " << read_time / 1000 << " ms.";
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Transform time: " << trans_time / 1000 << " ms.";
+  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Read time: " << read_time / 1000 << " ms.";
+  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Transform time: " << trans_time / 1000 << " ms.";
 #else
   DLOG(INFO) << "Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
   DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";

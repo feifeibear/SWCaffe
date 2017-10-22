@@ -1,0 +1,14 @@
+net: "models/googlenet/train_val_debug.prototxt"
+test_iter: 1
+test_interval: 8
+test_initialization: false
+display: 1
+average_loss: 4
+base_lr: 0.01
+lr_policy: "poly"
+power: 0.5
+max_iter: 16
+momentum: 0.9
+weight_decay: 0.0002
+snapshot: 16
+snapshot_prefix: "models/googlenet/sw_googlenet_quick_debug"

@@ -1,0 +1,30 @@
+Profile models:
+
+Alexnet with batchnormalization:
+model--models/alexnet/train_val_debug.prototxt
+solver--models/alexnet/solver_debug.prototxt
+script--models/alexnet/sw_runalex.sh
+command--
+run at $(YourPath)/sunwaycaffe/
+sh ./models/alexnet/sw_runalex.sh
+
+VGG-16:
+model--./models/vgg/train_val_debug.prototxt
+solver--./models/vgg/solver_debug.prototxt
+script--./models/vgg/sw_runvgg.sh
+command--
+run at $(YourPath)/sunwaycaffe/
+sh ./models/vgg/sw_runvgg.sh
+
+googlenet(bvlc_alexnet from original caffe-master):
+model--
+./models/googlenet/train_val_debug.prototxt
+solver--
+./models/googlenet/quick_solver_debug.prototxt
+script--
+./models/googlenet/sw_rungooglent.sh
+command--
+run at $(YourPath)/sunwaycaffe/
+sh ./models/googlenet/sw_rungooglent.sh
+
+

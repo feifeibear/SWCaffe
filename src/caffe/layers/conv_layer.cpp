@@ -47,8 +47,9 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
     const int* dilation_data = this->dilation_.cpu_data();
     if(bottom[0]->num() >= 128 
-        && bottom[0]->channels() >= 64 
-        && top[0]->channels() >= 64 
+        && bottom[0]->channels() >= 64 && bottom[0]->channels() % 32 == 0 
+        && top[0]->channels() >= 64 && top[0]->channels() % 32 == 0
+        && this->group_==1
       ){
       const Dtype* bottom_data  = bottom[i]->cpu_data();
       Dtype* top_data           = top[i]->mutable_cpu_data();
@@ -273,7 +274,8 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
     if(    bottom[0]->num() >= 64 && bottom[0]->num() % 32 == 0 
         && bottom[0]->channels() >= 128 && bottom[0]->channels()%128 == 0
-        && top[0]->channels() >= 64 && top[0]->channels() % 32 == 0 ){
+        && top[0]->channels() >= 64 && top[0]->channels() % 32 == 0 
+        && this->group_==1){
 
       if (this->param_propagate_down_[0] || propagate_down[i]) {
         if(sizeof(Dtype)== sizeof(double))

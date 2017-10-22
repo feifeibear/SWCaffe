@@ -1,0 +1,164 @@
+Rank 0 : Broadcast net param time is 0.065999sec
+Rank 1 : Broadcast net param time is 0.066009sec
+Rank 1 Fetch batch: 2339 ms.
+Rank 1 Read time: 625.165 ms.
+Rank 1 Transform time: 1706.93 ms.
+Rank 1 : layer0  data Forward cost time: 2.34035s
+Rank 1 : layer1  label_data_1_split Forward cost time: 1.3e-05s
+Rank 1 : layer2  conv1 Forward cost time: 0.826079s
+Rank 1 : layer3  conv1/bn Forward cost time: 2.65919s
+Rank 1 : layer4  conv1/scale Forward cost time: 1.77785s
+Rank 1 : layer5  relu1 Forward cost time: 0.022657s
+Rank 1 : layer6  pool1 Forward cost time: 0.335253s
+Rank 1 : layer7  conv2 Forward cost time: 1.04738s
+Rank 1 : layer8  conv2/bn Forward cost time: 1.78882s
+Rank 1 : layer9  conv2/scale Forward cost time: 2.4081s
+Rank 1 : layer10  relu2 Forward cost time: 0.014676s
+Rank 1 : layer11  pool2 Forward cost time: 0.208509s
+Rank 1 : layer12  conv3 Forward cost time: 0.31367s
+Rank 1 : layer13  conv3/bn Forward cost time: 0.762997s
+Rank 1 : layer14  conv3/scale Forward cost time: 3.02987s
+Rank 1 : layer15  relu3 Forward cost time: 0.00512s
+Rank 1 : layer16  conv4 Forward cost time: 0.700356s
+Rank 1 : layer17  conv4/bn Forward cost time: 0.763281s
+Rank 1 : layer18  conv4/scale Forward cost time: 3.0317s
+Rank 1 : layer19  relu4 Forward cost time: 0.005097s
+Rank 1 : layer20  conv5 Forward cost time: 0.664508s
+Rank 1 : layer21  conv5/bn Forward cost time: 0.512731s
+Rank 1 : layer22  conv5/scale Forward cost time: 2.02259s
+Rank 1 : layer23  relu5 Forward cost time: 0.003455s
+Rank 1 : layer24  pool5 Forward cost time: 0.049399s
+Rank 1 : layer25  fc6 Forward cost time: 0.044764s
+Rank 1 : layer26  relu6 Forward cost time: 0.000383s
+Rank 1 : layer27  drop6 Forward cost time: 0.044825s
+Rank 1 : layer28  fc7 Forward cost time: 0.023396s
+Rank 1 : layer29  relu7 Forward cost time: 0.000383s
+Rank 1 : layer30  drop7 Forward cost time: 0.044805s
+Rank 1 : layer31  fc8 Forward cost time: 0.006113s
+Rank 1 : layer32  fc8_fc8_0_split Forward cost time: 1.5e-05s
+Rank 1 : layer33  loss Forward cost time: 0.031048s
+Rank 1 : layer34  top-1 Forward cost time: 0.017008s
+Rank 1 : layer34  top-1 needn't Backward
+Rank 1 : layer33  loss Backward cost time: 0.002092s
+Rank 1 : layer32  fc8_fc8_0_split Backward cost time: 0.0037s
+Rank 1 : layer31  fc8 Backward cost time: 0.020828s
+Rank 1 : layer30  drop7 Backward cost time: 0.013943s
+Rank 1 : layer29  relu7 Backward cost time: 0.00059s
+Rank 1 : layer28  fc7 Backward cost time: 0.066182s
+Rank 1 : layer27  drop6 Backward cost time: 0.010799s
+Rank 1 : layer26  relu6 Backward cost time: 0.000579s
+Rank 1 : layer25  fc6 Backward cost time: 0.153179s
+Rank 1 : layer24  pool5 Backward cost time: 0.051179s
+Rank 1 : layer23  relu5 Backward cost time: 0.005293s
+Rank 1 : layer22  conv5/scale Backward cost time: 1.74258s
+Rank 1 : layer21  conv5/bn Backward cost time: 0.598365s
+Rank 1 : layer20  conv5 Backward cost time: 1.73406s
+Rank 1 : layer19  relu4 Backward cost time: 0.00792s
+Rank 1 : layer18  conv4/scale Backward cost time: 2.64414s
+Rank 1 : layer17  conv4/bn Backward cost time: 0.87091s
+Rank 1 : layer16  conv4 Backward cost time: 1.79377s
+Rank 1 : layer15  relu3 Backward cost time: 0.007935s
+Rank 1 : layer14  conv3/scale Backward cost time: 2.60689s
+Rank 1 : layer13  conv3/bn Backward cost time: 0.903738s
+Rank 1 : layer12  conv3 Backward cost time: 0.521979s
+Rank 1 : layer11  pool2 Backward cost time: 0.182616s
+Rank 1 : layer10  relu2 Backward cost time: 0.022705s
+Rank 1 : layer9  conv2/scale Backward cost time: 2.25127s
+Rank 1 : layer8  conv2/bn Backward cost time: 2.41269s
+Rank 1 : layer7  conv2 Backward cost time: 2.83079s
+Rank 1 : layer6  pool1 Backward cost time: 0.282879s
+Rank 1 : layer5  relu1 Backward cost time: 0.035052s
+Rank 1 : layer4  conv1/scale Backward cost time: 1.53333s
+Rank 1 : layer3  conv1/bn Backward cost time: 3.61256s
+Rank 1 : layer2  conv1 Backward cost time: 0.560197s
+Rank 1 : layer1  label_data_1_split needn't Backward
+Rank 1 : layer0  data needn't Backward
+Rank 0: net ForwardBackward time is 53.8516sec loss: 6.91536
+Rank 1: net ForwardBackward time is 53.8516sec loss: 6.91536
+MPIRoot: Iteration 0 (0 iter/s, 54.13s/1 iters), loss = 6.91536
+    Train net output #0: accuracy/top-1 = 0
+    Train net output #1: loss = 0 (* 1 = 0 loss)
+MPIRoot: Iteration 0, lr = 0.01
+
+#70s/iter
+Rank 0 : Broadcast net param time is 0.06593sec
+Rank 1 : Broadcast net param time is 0.065937sec
+Rank 1 Fetch batch: 3247 ms.
+Rank 1 Read time: 1527.26 ms.
+Rank 1 Transform time: 1714.19 ms.
+Rank 1 : layer0  data Forward cost time: 3.24803s
+Rank 1 : layer1  label_data_1_split Forward cost time: 8e-06s
+Rank 1 : layer2  conv1 Forward cost time: 0.692903s
+Rank 1 : layer3  conv1/bn Forward cost time: 2.40086s
+Rank 1 : layer4  conv1/scale Forward cost time: 2.29053s
+Rank 1 : layer5  relu1 Forward cost time: 0.022714s
+Rank 1 : layer6  pool1 Forward cost time: 0.273338s
+Rank 1 : layer7  conv2 Forward cost time: 0.961431s
+Rank 1 : layer8  conv2/bn Forward cost time: 1.62421s
+Rank 1 : layer9  conv2/scale Forward cost time: 4.06675s
+Rank 1 : layer10  relu2 Forward cost time: 0.0146s
+Rank 1 : layer11  pool2 Forward cost time: 0.170205s
+Rank 1 : layer12  conv3 Forward cost time: 0.277939s
+Rank 1 : layer13  conv3/bn Forward cost time: 0.705883s
+Rank 1 : layer14  conv3/scale Forward cost time: 5.6216s
+Rank 1 : layer15  relu3 Forward cost time: 0.005139s
+Rank 1 : layer16  conv4 Forward cost time: 0.670393s
+Rank 1 : layer17  conv4/bn Forward cost time: 0.705803s
+Rank 1 : layer18  conv4/scale Forward cost time: 5.61278s
+Rank 1 : layer19  relu4 Forward cost time: 0.005104s
+Rank 1 : layer20  conv5 Forward cost time: 0.643922s
+Rank 1 : layer21  conv5/bn Forward cost time: 0.474534s
+Rank 1 : layer22  conv5/scale Forward cost time: 3.73544s
+Rank 1 : layer23  relu5 Forward cost time: 0.003434s
+Rank 1 : layer24  pool5 Forward cost time: 0.04121s
+Rank 1 : layer25  fc6 Forward cost time: 0.042916s
+Rank 1 : layer26  relu6 Forward cost time: 0.000387s
+Rank 1 : layer27  drop6 Forward cost time: 0.042938s
+Rank 1 : layer28  fc7 Forward cost time: 0.021553s
+Rank 1 : layer29  relu7 Forward cost time: 0.000377s
+Rank 1 : layer30  drop7 Forward cost time: 0.042978s
+Rank 1 : layer31  fc8 Forward cost time: 0.005676s
+Rank 1 : layer32  fc8_fc8_0_split Forward cost time: 9e-06s
+Rank 1 : layer33  loss Forward cost time: 0.030657s
+Rank 1 : layer34  top-1 Forward cost time: 0.016917s
+Rank 1 : layer34  top-1 needn't Backward
+Rank 1 : layer33  loss Backward cost time: 0.001712s
+Rank 1 : layer32  fc8_fc8_0_split Backward cost time: 0.002505s
+Rank 1 : layer31  fc8 Backward cost time: 0.019089s
+Rank 1 : layer30  drop7 Backward cost time: 0.013944s
+Rank 1 : layer29  relu7 Backward cost time: 0.000576s
+Rank 1 : layer28  fc7 Backward cost time: 0.064369s
+Rank 1 : layer27  drop6 Backward cost time: 0.01078s
+Rank 1 : layer26  relu6 Backward cost time: 0.000572s
+Rank 1 : layer25  fc6 Backward cost time: 0.14888s
+Rank 1 : layer24  pool5 Backward cost time: 0.032004s
+Rank 1 : layer23  relu5 Backward cost time: 0.005296s
+Rank 1 : layer22  conv5/scale Backward cost time: 3.18256s
+Rank 1 : layer21  conv5/bn Backward cost time: 0.57934s
+Rank 1 : layer20  conv5 Backward cost time: 1.70496s
+Rank 1 : layer19  relu4 Backward cost time: 0.007893s
+Rank 1 : layer18  conv4/scale Backward cost time: 4.8033s
+Rank 1 : layer17  conv4/bn Backward cost time: 0.842592s
+Rank 1 : layer16  conv4 Backward cost time: 1.76497s
+Rank 1 : layer15  relu3 Backward cost time: 0.007956s
+Rank 1 : layer14  conv3/scale Backward cost time: 4.77945s
+Rank 1 : layer13  conv3/bn Backward cost time: 0.874556s
+Rank 1 : layer12  conv3 Backward cost time: 0.515529s
+Rank 1 : layer11  pool2 Backward cost time: 0.100014s
+Rank 1 : layer10  relu2 Backward cost time: 0.022832s
+Rank 1 : layer9  conv2/scale Backward cost time: 3.71201s
+Rank 1 : layer8  conv2/bn Backward cost time: 2.33038s
+Rank 1 : layer7  conv2 Backward cost time: 2.7999s
+Rank 1 : layer6  pool1 Backward cost time: 0.153891s
+Rank 1 : layer5  relu1 Backward cost time: 0.034907s
+Rank 1 : layer4  conv1/scale Backward cost time: 2.08794s
+Rank 1 : layer3  conv1/bn Backward cost time: 3.48266s
+Rank 1 : layer2  conv1 Backward cost time: 0.491702s
+Rank 1 : layer1  label_data_1_split needn't Backward
+Rank 0: net ForwardBackward time is 69.9046sec loss: 6.93682
+Rank 1 : layer0  data needn't Backward
+Rank 1: net ForwardBackward time is 69.9046sec loss: 6.93682
+MPIRoot: Iteration 1 (0.0141599 iter/s, 70.622s/1 iters), loss = 6.93682
+    Train net output #0: accuracy/top-1 = 0
+    Train net output #1: loss = 0 (* 1 = 0 loss)
+MPIRoot: Iteration 1, lr = 0.01
