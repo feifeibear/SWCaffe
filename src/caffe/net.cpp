@@ -135,6 +135,11 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
         LOG_IF(INFO, Caffe::root_solver())
             << "    with loss weight " << layer->loss(top_id);
       }
+#ifdef SW4CG
+      //call for pre memory alloc
+      top_vecs_[layer_id][top_id]->mutable_cpu_data();
+      top_vecs_[layer_id][top_id]->mutable_cpu_diff();
+#endif 
       memory_used_ += top_vecs_[layer_id][top_id]->count();
     }
     LOG_IF(INFO, Caffe::root_solver())
@@ -902,22 +907,20 @@ void Net<Dtype>::Backward() {
 //zwl 4cg
 template <typename Dtype>
 void* Net<Dtype>::ForwardBackward_1cg(void* net_){
+#ifdef SWMPI
   Net<Dtype>* net_ptr = (caffe::Net<Dtype>*) net_;
-  int tid = Caffe::solver_cgid()-1;
+  int cgid = Caffe::solver_cgid();
   //caffe_athread_init();
   //athread_init();
   if(!athread_get_max_threads()) athread_init();
-  if(tid<0) tid = 3;
 #ifdef DEBUG_VERBOSE_8
-  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : "
-    << "Thread id "<< tid << " : "
-    << "On CG "<<caffe_get_cgid()<<". "
+  LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : "
+    << "On CG "<<cgid<<". "
     << "Max available threas " << athread_get_max_threads()
     << ". Starting forwardbackward process..";
 #endif
-  if(Caffe::solver_cgid()==0){
+  if(cgid==0){
     net_ptr->Forward_4cg(&(net_ptr->loss));
-#ifdef SWMPI
     caffe_mpi_ireduce<Dtype>(&(net_ptr->loss), &(net_ptr->loss), 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
 #ifdef DEBUG_VERBOSE_6
     LOG_IF(INFO, Caffe::mpi_rank() == 1) << "Rank 1: " <<
@@ -925,14 +928,32 @@ void* Net<Dtype>::ForwardBackward_1cg(void* net_){
       " " << *(Caffe::mpi_request(0));
 #endif
     MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
-#endif
   }else{
     net_ptr->Forward_4cg(NULL);
   }
-  
 
   net_ptr->Backward_4cg();
   pthread_exit(0);
+#else
+  Net<Dtype>* net_ptr = (caffe::Net<Dtype>*) net_;
+  int cgid = Caffe::solver_cgid();
+  //caffe_athread_init();
+  //athread_init();
+  if(!athread_get_max_threads()) athread_init();
+#ifdef DEBUG_VERBOSE_8
+  LOG(INFO) << "Rank " << Caffe::solver_rank() << " : "
+    << "On CG "<<cgid<<". "
+    << "Max available threas " << athread_get_max_threads()
+    << ". Starting forwardbackward process..";
+#endif
+  if(cgid==0){
+    net_ptr->Forward_4cg(&(net_ptr->loss));
+  }else{
+    net_ptr->Forward_4cg(NULL);
+  }
+  net_ptr->Backward_4cg();
+  pthread_exit(0);
+#endif
 }
 
 template <typename Dtype>
@@ -1081,7 +1102,7 @@ void Net<Dtype>::BackwardFromTo_4cg(int start, int end) {
   CHECK_GE(end, 0);
   CHECK_LT(start, layers_.size());
 #ifdef SWMPI
-  if(Caffe:solver_cgid()==0){
+  if(Caffe::solver_cgid()==0){
     int markformpi = 0;
     for (int i = start; i >= end; --i) {
       for (int c = 0; c < before_backward_.size(); ++c) {

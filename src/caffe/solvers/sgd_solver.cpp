@@ -141,17 +141,36 @@ void SGDSolver<Dtype>::ApplyUpdate() {
 #else
   Dtype rate = GetLearningRate();
   if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
-#ifdef SWMPI
-    LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Iteration " << this->iter_
+    LOG_IF(INFO, Caffe::root_solver()) << "Root: Iteration " << this->iter_
         << ", lr = " << rate;
-#else
-    LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << this->iter_
-        << ", lr = " << rate;
-#endif
   }
   ClipGradients();
   for (int param_id = 0; param_id < this->net_->learnable_params().size();
        ++param_id) {
+#ifdef DEBUG_VERBOSE_7
+    if((this->net_->learnable_params()[param_id])->count() > 4){
+      LOG(INFO) << "Root: In ApplyUpdate param "<< param_id
+        << " param size "<<(this->net_->learnable_params()[param_id])->count()
+        << " param examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[0]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[1]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[2]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[3]<<" "
+        << " paramdiff examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[0]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[1]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[2]<<" "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[3]<<" ";
+
+    }else{
+      LOG(INFO) << "Root: In ApplyUpdate param "<< param_id
+        << " param size "<<(this->net_->learnable_params()[param_id])->count()
+        << " param examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_data())[0]<<" "
+        << " paramdiff examples: "
+        << ((this->net_->learnable_params()[param_id])->cpu_diff())[0]<<" ";
+    }
+#endif
     Normalize(param_id);
     Regularize(param_id);
     ComputeUpdateValue(param_id, rate);

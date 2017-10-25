@@ -26,8 +26,8 @@ void sw_slave_memcpy_d(MemcpyPara *para) {
   int count = para->count;
   int local_count = count/SPNUM + (id<(count%SPNUM));
   int start = id*count/SPNUM + (id<(count%SPNUM)?id:(count%SPNUM));
-  double* src_ptr = &((double*)para->src)[start];
-  double*  dst_ptr = &((double *)para->dst)[start];
+  double* src_ptr = &(((double*)para->src)[start]);
+  double*  dst_ptr = &(((double *)para->dst)[start]);
   int blockNum = local_count/BUFFSIZE;
   int restNum = local_count - blockNum*BUFFSIZE;
   volatile int input_replyget=0, replyput=0;
@@ -93,8 +93,8 @@ void sw_slave_memcpy_f(MemcpyPara *para) {
   int count = para->count;
   int local_count = count/SPNUM + (id<(count%SPNUM));
   int start = id*count/SPNUM + (id<(count%SPNUM)?id:(count%SPNUM));
-  float * src_ptr = &((float *)para->src)[start];
-  float * dst_ptr = &((float *)para->dst)[start];
+  float * src_ptr = &(((float *)para->src)[start]);
+  float * dst_ptr = &(((float *)para->dst)[start]);
   int blockNum = local_count/BUFFSIZE;
   int restNum = local_count - blockNum*BUFFSIZE;
   volatile int input_replyget=0, replyput=0;

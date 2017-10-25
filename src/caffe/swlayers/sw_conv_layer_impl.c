@@ -202,22 +202,22 @@ void sw_conv_forward_pad_impl_f(
     float* my_out     = (float*)malloc(sizeof(float)*Ro*Co*No*B);
     float* my_weight  = (float*)malloc(sizeof(float)*K*K*No*Ni);
 
-#ifdef MPE_TRANS
 #ifdef DEBUG_VERBOSE_SWDNN
-    printf("in_trans before");
+    printf("in_trans before\n");
 #endif
+#ifdef MPE_TRANS
     for(cRi = 0; cRi < Ri; ++cRi)
       for(cCi = 0; cCi < Ci; ++cCi)
         for(cNi = 0; cNi < Ni; ++cNi)
           for(cB = 0; cB < B; ++cB)
             my_in[image_swdnn_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)] = 
               in[image_caffe_offset(cB, cNi, cRi, cCi, B, Ni, Ri, Ci)];
-#ifdef DEBUG_VERBOSE_SWDNN
-    printf("in_trans OVER");
-#endif
 #elif SW_TRANS
     image_caffe_to_swdnn_f((float*)in,my_in,B,Ni,Ri,Ci);
 #else
+#endif
+#ifdef DEBUG_VERBOSE_SWDNN
+    printf("in_trans over\n");
 #endif
 
 
@@ -228,15 +228,18 @@ void sw_conv_forward_pad_impl_f(
           for(cKc = 0; cKc < K; ++cKc)
               my_weight[weight_swdnn_offset(cNo, cNi, cKr, cKc, No, Ni, K)] = 
                 weight[weight_caffe_offset(cNo, cNi, cKr, cKc, No, Ni, K)];
-#ifdef DEBUG_VERBOSE_SWDNN
-    printf("weight_trans OVER");
-#endif
 #elif SW_TRANS
     weight_caffe_to_swdnn_f((float*)weight,my_weight,No,Ni,K,K);
 #else
 #endif
+#ifdef DEBUG_VERBOSE_SWDNN
+    printf("weight_trans over\n");
+#endif
 
     ConvData* param = (ConvData*)malloc(sizeof(ConvData));
+#ifdef DEBUG_VERBOSE_SWDNN
+    printf("calc before\n");
+#endif
     param->input =  my_in;
     param->weight = my_weight;
     param->output = my_out;
@@ -249,6 +252,9 @@ void sw_conv_forward_pad_impl_f(
 	  param->_Co = Ci+2*pad-K+1;
 	  param->_B  = B;
     param->_pad = pad;
+#ifdef DEBUG_VERBOSE_SWDNN
+    printf("calc before\n");
+#endif
 
     assert(param->_B >= 128 && param->_B%128 == 0);
     assert(param->_Ni >= 64 && param->_Ni%32 == 0);
@@ -260,15 +266,18 @@ void sw_conv_forward_pad_impl_f(
     assert(Costride > 0);
 	  int ldm_consume = 8*(Ni*No + No*B*Costride + Ni*B);
 	  assert(ldm_consume < 64*1024*64);
+#ifdef DEBUG_VERBOSE_SWDNN
+    printf("calc before\n");
+#endif
 
 #ifdef DEBUG_VERBOSE_3
     struct timeval ts, te;
     gettimeofday(&ts, NULL);
 #endif
     //float impl
-	  athread_spawn(conv_pad_float, param);
+    athread_spawn(conv_pad_float, param);
     //float2double impl
-	  //athread_spawn(conv_pad_float__, param);
+    /*athread_spawn(conv_pad_float__, param);*/
 	  //athread_spawn(conv_pad, param);
 	  athread_join();
 #ifdef DEBUG_VERBOSE_3
@@ -277,6 +286,9 @@ void sw_conv_forward_pad_impl_f(
 #ifdef DEBUG_VERBOSE_SWDNN
     printf("forward swDNN conv float athread time %lf s\n", time);
 #endif
+#endif
+#ifdef DEBUG_VERBOSE_SWDNN
+    printf("calc after\n");
 #endif
 
 #ifdef MPE_TRANS
@@ -765,20 +777,18 @@ void sw_conv_backward_pad_impl_f(
     assert(Costride > 0);
 
     // weight_diff = conv(pad(in), out_grad, 'valid')
-#ifdef DEBUG_VERBOSE_3
+#ifdef DEBUG_VERBOSE_SWDNN
     struct timeval ts, te;
     gettimeofday(&ts, NULL);
 #endif
 	  athread_spawn(conv_pad_float__, param);
 	  athread_join();
-#ifdef DEBUG_VERBOSE_3
+#ifdef DEBUG_VERBOSE_SWDNN
     gettimeofday(&te, NULL);
     double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
     double gflop = 2.0*B*Ni*No*K*K*(Ci+2*pad-K+1)*(Co+2*pad-K+1)/1e9;
-#ifdef DEBUG_VERBOSE_SWDNN
     printf("Backward swDNN weight_diff float athread time %lf s, gflops %lf GFLOSP, Costride %d \n",
         time, gflop/time, Costride);
-#endif
 #endif
 
 #ifdef MPE_TRANS
@@ -842,18 +852,16 @@ void sw_conv_backward_pad_impl_f(
     // pad_inv(in_grad) = conv(out_grad, rot180(weight), 'full')
 	  //  athread_spawn(conv_full_pad, param);
 
-#ifdef DEBUG_VERBOSE_3
+#ifdef DEBUG_VERBOSE_SWDNN
     gettimeofday(&ts, NULL);
 #endif
 	  //athread_spawn(conv_full_pad_float,param);
 	  athread_spawn(conv_full_pad_float_v2,param);
     athread_join();
-#ifdef DEBUG_VERBOSE_3
+#ifdef DEBUG_VERBOSE_SWDNN
     gettimeofday(&te, NULL);
     time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
-#ifdef DEBUG_VERBOSE_SWDNN
     printf("Backward swDNN in_diff float athread time %lf s\n", time);
-#endif
 #endif
 
 #ifdef MPE_TRANS

@@ -9,6 +9,7 @@
 
 #include "caffe/layers/base_conv_layer.hpp"
 
+
 namespace caffe {
 
 /**
@@ -67,6 +68,16 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
   virtual inline const char* type() const { return "Convolution"; }
 
  protected:
+#ifdef SW4CG
+#ifdef SW4CG_CONV_FW
+  virtual void Forward_cpu_4cg(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+#endif
+#ifdef SW4CG_CONV_BW
+  virtual void Backward_cpu_4cg(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+#endif
+#endif
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,

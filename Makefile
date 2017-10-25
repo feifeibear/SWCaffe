@@ -3,8 +3,7 @@ LINK 	= 	mpiCC
 SWCXX = 	sw5cc.new -slave -CG:pjump_all
 FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0 
 FLAGS += 	-DCPU_ONLY
-#FLAGS += 	-DSWMPI
-FLAGS += -DSW4CG
+FLAGS += 	-DSWMPI
 LDFLAGS = -lm_slave 
 LDFLAGS += -allshare
 
@@ -15,11 +14,21 @@ FLAGS += 	-DDEBUG_VERBOSE_2
 #print timer in sw_conv_layer_impl
 #FLAGS += 	-DDEBUG_VERBOSE_3
 #address and length of mpibuff
-#FLAGS += 	-DDEBUG_VERBOSE_6
+FLAGS += 	-DDEBUG_VERBOSE_6
 #in sgd solvers data value print
-#FLAGS +=  -DDEBUG_VERBOSE_7
+FLAGS +=  -DDEBUG_VERBOSE_7
+
+
+FLAGS += -DSW4CG
+FLAGS += -DSW4CG_CONV_FW
+FLAGS += -DSW4CG_CONV_BW
 #debug SW4CG
 FLAGS += -DDEBUG_VERBOSE_8
+#FLAGS += -DDEBUG_SYNC_4CG
+
+#debug swpooling
+#FLAGS += -DDEBUG_VERBOSE_9
+#FLAGS += -DDEBUG_VERBOSE_SWDNN
 
 
 SWBUILD_DIR=./swbuild
@@ -27,7 +36,9 @@ THIRD_PARTY_DIR=../thirdparty
 SWINC_FLAGS=-I./include -I$(THIRD_PARTY_DIR)/include
 
 SWLIBOBJ=$(THIRD_PARTY_DIR)/lib/cblas_LINUX0324.a
+#swblas for all share mode!!
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblasall-2.a
+#swblas for 1cg
 #SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblas0324.a
 #SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libhdf5.a
 #SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libhdf5_hl.a -Wl,--no-whole-archive

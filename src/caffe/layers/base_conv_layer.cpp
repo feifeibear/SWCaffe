@@ -179,6 +179,23 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   weight_offset_ = conv_out_channels_ * kernel_dim_ / group_;
   // Propagate gradients to the parameters (as directed by backward pass).
   this->param_propagate_down_.resize(this->blobs_.size(), true);
+
+
+#ifdef SW4CG
+#ifdef SW4CG_CONV_BW
+#ifndef SW4CG_NAIVE_BW
+  // Alloc space for sw4cg backward
+  for(int i=0; i<NThread; i++){
+    tmp_weight_diff[i] = (Dtype*) malloc(this->blobs_[0]->count()*sizeof(Dtype));
+    caffe_set(this->blobs_[0]->count(), static_cast<Dtype>(0), tmp_weight_diff[i]);
+    if(bias_term_){
+      tmp_bias_diff[i] = (Dtype*) malloc(this->blobs_[1]->count()*sizeof(Dtype));
+      caffe_set(this->blobs_[1]->count(), static_cast<Dtype>(0), tmp_bias_diff[i]);
+    }
+  }
+#endif
+#endif
+#endif
 }
 
 template <typename Dtype>
@@ -238,6 +255,13 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     }
   }
   col_buffer_.Reshape(col_buffer_shape_);
+#ifdef SW4CG
+  //init tmp col buff for 4cg
+  for(int i=0;i<NThread;i++){
+    col_buffers_[i].Reshape(col_buffer_shape_);
+    
+  }
+#endif 
   bottom_dim_ = bottom[0]->count(channel_axis_);
   top_dim_ = top[0]->count(channel_axis_);
   num_kernels_im2col_ = conv_in_channels_ * conv_out_spatial_dim_;
@@ -251,6 +275,77 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.mutable_cpu_data());
   }
 }
+#ifdef SW4CG
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::forward_cpu_gemm_4cg(const Dtype* input,
+    const Dtype* weights, Dtype* output, bool skip_im2col) {
+  int cgid = Caffe::solver_cgid();
+  const Dtype* col_buff = input;
+  if (!is_1x1_) {
+    if (!skip_im2col) {
+      conv_im2col_cpu(input, col_buffers_[cgid].mutable_cpu_data());
+    }
+    col_buff = col_buffers_[cgid].cpu_data();
+  }
+  for (int g = 0; g < group_; ++g) {
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ /
+        group_, conv_out_spatial_dim_, kernel_dim_,
+        (Dtype)1., weights + weight_offset_ * g, col_buff + col_offset_ * g,
+        (Dtype)0., output + output_offset_ * g);
+  }
+}
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::forward_cpu_bias_4cg(Dtype* output,
+    const Dtype* bias) {
+  caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
+      out_spatial_dim_, 1, (Dtype)1., bias, bias_multiplier_.cpu_data(),
+      (Dtype)1., output);
+}
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::backward_cpu_gemm_4cg(const Dtype* output,
+    const Dtype* weights, Dtype* input) {
+  int cgid = Caffe::solver_cgid();
+  Dtype* col_buff = col_buffers_[cgid].mutable_cpu_data();
+  if (is_1x1_) {
+    col_buff = input;
+  }
+  for (int g = 0; g < group_; ++g) {
+    caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, kernel_dim_,
+        conv_out_spatial_dim_, conv_out_channels_ / group_,
+        (Dtype)1., weights + weight_offset_ * g, output + output_offset_ * g,
+        (Dtype)0., col_buff + col_offset_ * g);
+  }
+  if (!is_1x1_) {
+    conv_col2im_cpu(col_buff, input);
+  }
+}
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::weight_cpu_gemm_4cg(const Dtype* input,
+    const Dtype* output, Dtype* weights) {
+  int cgid = Caffe::solver_cgid();
+  const Dtype* col_buff = input;
+  if (!is_1x1_) {
+    conv_im2col_cpu(input, col_buffers_[cgid].mutable_cpu_data());
+    col_buff = col_buffers_[cgid].cpu_data();
+  }
+  for (int g = 0; g < group_; ++g) {
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, conv_out_channels_ / group_,
+        kernel_dim_, conv_out_spatial_dim_,
+        (Dtype)1., output + output_offset_ * g, col_buff + col_offset_ * g,
+        (Dtype)1., weights + weight_offset_ * g);
+  }
+}
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::backward_cpu_bias_4cg(Dtype* bias,
+    const Dtype* input) {
+  caffe_cpu_gemv<Dtype>(CblasNoTrans, num_output_, out_spatial_dim_, 1.,
+      input, bias_multiplier_.cpu_data(), 1., bias);
+}
+#endif
 
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_cpu_gemm(const Dtype* input,

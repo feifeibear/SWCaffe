@@ -45,6 +45,16 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void weight_cpu_gemm(const Dtype* input, const Dtype* output, Dtype*
       weights);
   void backward_cpu_bias(Dtype* bias, const Dtype* input);
+#ifdef SW4CG
+  void forward_cpu_gemm_4cg(const Dtype* input, const Dtype* weights,
+      Dtype* output, bool skip_im2col = false);
+  void forward_cpu_bias_4cg(Dtype* output, const Dtype* bias);
+  void backward_cpu_gemm_4cg(const Dtype* input, const Dtype* weights,
+      Dtype* output);
+  void weight_cpu_gemm_4cg(const Dtype* input, const Dtype* output, Dtype*
+      weights);
+  void backward_cpu_bias_4cg(Dtype* bias, const Dtype* input);
+#endif
 
 #ifndef CPU_ONLY
   void forward_gpu_gemm(const Dtype* col_input, const Dtype* weights,
@@ -97,6 +107,15 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   bool bias_term_;
   bool is_1x1_;
   bool force_nd_im2col_;
+
+#ifdef SW4CG
+#ifdef SW4CG_CONV_BW
+#ifndef SW4CG_NAIVE_BW
+  Dtype* tmp_bias_diff[NThread];
+  Dtype* tmp_weight_diff[NThread];
+#endif
+#endif
+#endif
 
  private:
   // wrap im2col/col2im so we don't have to remember the (long) argument lists
@@ -227,6 +246,9 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   int col_offset_;
   int output_offset_;
 
+#ifdef SW4CG
+  Blob<Dtype> col_buffers_[NThread];
+#endif
   Blob<Dtype> col_buffer_;
   Blob<Dtype> bias_multiplier_;
 };
