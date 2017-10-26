@@ -1,12 +1,35 @@
 CXX 	=  	mpiCC -host -CG:pjump_all 
 LINK 	= 	mpiCC 
 SWCXX = 	sw5cc.new -slave -CG:pjump_all
+#basic compilation flags with sw5cc
 FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0 
+#caffe compilation flags
 FLAGS += 	-DCPU_ONLY
-FLAGS += 	-DSWMPI
-LDFLAGS = -lm_slave 
-LDFLAGS += -allshare
+FLAGS += -DUSE_OPENCV
+FLAGS += -DUSE_LMDB
 
+#SW Opt Flags
+FLAGS += -DUSE_SWDNN
+FLAGS += -DSW_TRANS
+FLAGS += -DUSE_SWPOOL
+FLAGS += -DUSE_SWRELU
+FLAGS += -DUSE_SWIM2COL
+FLAGS += -DUSE_SWPRELU
+FLAGS += -DUSE_SWSOFTMAX
+FLAGS += -DDEBUG_PRINT_TIME
+
+#Distributed Support
+#FLAGS += 	-DSWMPI
+
+#4CG Support
+#only SW4CG mode: 1CG on 4CGs
+FLAGS += -DSW4CG
+#4CG support for each layer
+FLAGS += -DSW4CG_CONV_FW
+FLAGS += -DSW4CG_CONV_BW
+
+
+#Debug Flags
 #alogrithm logic and forbackward time
 FLAGS += 	-DDEBUG_VERBOSE_1
 #time of each layer
@@ -14,21 +37,20 @@ FLAGS += 	-DDEBUG_VERBOSE_2
 #print timer in sw_conv_layer_impl
 #FLAGS += 	-DDEBUG_VERBOSE_3
 #address and length of mpibuff
-FLAGS += 	-DDEBUG_VERBOSE_6
+#FLAGS += 	-DDEBUG_VERBOSE_6
 #in sgd solvers data value print
 FLAGS +=  -DDEBUG_VERBOSE_7
-
-
-FLAGS += -DSW4CG
-FLAGS += -DSW4CG_CONV_FW
-FLAGS += -DSW4CG_CONV_BW
 #debug SW4CG
-FLAGS += -DDEBUG_VERBOSE_8
+#FLAGS += -DDEBUG_VERBOSE_8
 #FLAGS += -DDEBUG_SYNC_4CG
-
-#debug swpooling
+#debug SWDNN
 #FLAGS += -DDEBUG_VERBOSE_9
 #FLAGS += -DDEBUG_VERBOSE_SWDNN
+
+
+#basic load flags with sw5cc
+LDFLAGS = -lm_slave 
+LDFLAGS += -allshare
 
 
 SWBUILD_DIR=./swbuild
@@ -36,14 +58,13 @@ THIRD_PARTY_DIR=../thirdparty
 SWINC_FLAGS=-I./include -I$(THIRD_PARTY_DIR)/include
 
 SWLIBOBJ=$(THIRD_PARTY_DIR)/lib/cblas_LINUX0324.a
-#swblas for all share mode!!
+#swblas for 4CG(all share mode!!)
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblasall-2.a
 #swblas for 1cg
 #SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblas0324.a
-#SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libhdf5.a
-#SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libhdf5_hl.a -Wl,--no-whole-archive
+
+
 SWLIBOBJ+=-Wl,--whole-archive $(THIRD_PARTY_DIR)/lib/libopencv_core.a -Wl,--no-whole-archive
-FLAGS += -DUSE_OPENCV
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libopencv_highgui.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libopencv_imgproc.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libjpeg.a
@@ -54,7 +75,6 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libboost_thread.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libboost_atomic.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libgflags.a
 #######order matters
-FLAGS += -DUSE_LMDB
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/liblmdb.a
 
 src=$(wildcard ./src/caffe/*.cpp ./src/caffe/layers/*.cpp ./src/caffe/solvers/*.cpp ./src/caffe/util/*.cpp ./src/glog/*.cpp)
@@ -64,14 +84,8 @@ SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc))
 SWDNNOBJ+=$(SWBUILD_DIR)/caffe/swlayers/gemm_asm.o
 SWDNNOBJ+=$(SWBUILD_DIR)/caffe/swlayers/gemm_asm_float.o
 SWOBJ+=$(SWDNNOBJ)
-FLAGS += -DUSE_SWDNN
-FLAGS += -DSW_TRANS
-FLAGS += -DUSE_SWPOOL
-FLAGS += -DUSE_SWRELU
-FLAGS += -DUSE_SWIM2COL
-FLAGS += -DUSE_SWPRELU
-FLAGS += -DUSE_SWSOFTMAX
-FLAGS += -DDEBUG_PRINT_TIME
+
+
 BIN_DIR=./bin
 caffe: $(BIN_DIR)/caffe_sw
 convert_imageset: $(BIN_DIR)/convert_imageset_sw

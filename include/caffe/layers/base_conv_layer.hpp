@@ -110,10 +110,8 @@ class BaseConvolutionLayer : public Layer<Dtype> {
 
 #ifdef SW4CG
 #ifdef SW4CG_CONV_BW
-#ifndef SW4CG_NAIVE_BW
   Dtype* tmp_bias_diff[NThread];
   Dtype* tmp_weight_diff[NThread];
-#endif
 #endif
 #endif
 

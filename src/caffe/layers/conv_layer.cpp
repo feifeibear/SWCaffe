@@ -84,13 +84,16 @@ void ConvolutionLayer<Dtype>::Backward_cpu_4cg(const vector<Blob<Dtype>*>& top,
     if (this->bias_term_ && this->param_propagate_down_[1]) {
       Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
       int bias_diff_size = this->blobs_[1]->count();
-      //caffe_set(bias_diff_size, static_cast<Dtype>(0), this->tmp_bias_diff[cgid]);
-      if(sizeof(Dtype) == sizeof(double)){
-        sw_memcpy_d((double*)bias_diff, (double*)this->tmp_bias_diff[cgid], bias_diff_size);
-      }else if(sizeof(Dtype)==sizeof(float)){
-        sw_memcpy_f((float*)bias_diff, (float*)this->tmp_bias_diff[cgid], bias_diff_size);
-      }else{
-        memcpy(this->tmp_bias_diff[cgid], bias_diff, bias_diff_size*sizeof(Dtype));
+      if(cgid != 0){
+        //assert(bias_diff[0] == 0);
+        caffe_set(bias_diff_size, static_cast<Dtype>(0), this->tmp_bias_diff[cgid]);
+        //if(sizeof(Dtype) == sizeof(double)){
+          //sw_memcpy_d((double*)bias_diff, (double*)this->tmp_bias_diff[cgid], bias_diff_size);
+        //}else if(sizeof(Dtype)==sizeof(float)){
+          //sw_memcpy_f((float*)bias_diff, (float*)this->tmp_bias_diff[cgid], bias_diff_size);
+        //}else{
+          //memcpy(this->tmp_bias_diff[cgid], bias_diff, bias_diff_size*sizeof(Dtype));
+        //}
       }
       for (int n = 0; n < split_num_; ++n) {
         this->backward_cpu_bias_4cg(this->tmp_bias_diff[cgid], top_diff + (num_offset_+n) * this->top_dim_);
@@ -98,13 +101,16 @@ void ConvolutionLayer<Dtype>::Backward_cpu_4cg(const vector<Blob<Dtype>*>& top,
     }
     // gradient w.r.t. weight. Note that we will accumulate diffs.
     if (this->param_propagate_down_[0]) {
-      //caffe_set(weight_diff_size, static_cast<Dtype>(0), this->tmp_weight_diff[cgid]);
-      if(sizeof(Dtype) == sizeof(double)){
-        sw_memcpy_d((double*)weight_diff, (double*)this->tmp_weight_diff[cgid], weight_diff_size);
-      }else if(sizeof(Dtype)==sizeof(float)){
-        sw_memcpy_f((float*)weight_diff, (float*)this->tmp_weight_diff[cgid], weight_diff_size);
-      }else{
-        memcpy(this->tmp_weight_diff[cgid], weight_diff, weight_diff_size*sizeof(Dtype));
+      if(cgid !=0){
+        //asserti(weight_diff[0] == 0);
+        caffe_set(weight_diff_size, static_cast<Dtype>(0), this->tmp_weight_diff[cgid]);
+        //if(sizeof(Dtype) == sizeof(double)){
+          //sw_memcpy_d((double*)weight_diff, (double*)this->tmp_weight_diff[cgid], weight_diff_size);
+        //}else if(sizeof(Dtype)==sizeof(float)){
+          //sw_memcpy_f((float*)weight_diff, (float*)this->tmp_weight_diff[cgid], weight_diff_size);
+        //}else{
+          //memcpy(this->tmp_weight_diff[cgid], weight_diff, weight_diff_size*sizeof(Dtype));
+        //}
       }
       for (int n = 0; n < split_num_; ++n) {
         this->weight_cpu_gemm_4cg(bottom_data + (num_offset_+n) * this->bottom_dim_,
@@ -124,12 +130,14 @@ void ConvolutionLayer<Dtype>::Backward_cpu_4cg(const vector<Blob<Dtype>*>& top,
     if (this->bias_term_ && this->param_propagate_down_[1]) {
       Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
       int bias_diff_size = this->blobs_[1]->count();
-      for(int j=0; j<NThread; j++){
+      assert(this->tmp_bias_diff[0]==bias_diff);
+      for(int j=1; j<NThread; j++){
         caffe_axpy<Dtype>(bias_diff_size, Dtype(1.), this->tmp_bias_diff[j], bias_diff);
       }
     }
+    assert(this->tmp_weight_diff[0]==weight_diff);
     if (this->param_propagate_down_[0]) {
-      for(int j=0; j<NThread; j++){
+      for(int j=1; j<NThread; j++){
         caffe_axpy<Dtype>(weight_diff_size, Dtype(1.), this->tmp_weight_diff[j], weight_diff);
       }
     }

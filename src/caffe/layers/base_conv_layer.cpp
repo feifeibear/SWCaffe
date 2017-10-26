@@ -183,9 +183,11 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
 #ifdef SW4CG
 #ifdef SW4CG_CONV_BW
-#ifndef SW4CG_NAIVE_BW
+  tmp_weight_diff[0] = this->blobs_[0]->mutable_cpu_diff();
+  if(bias_term_)
+    tmp_bias_diff[0] = this->blobs_[1]->mutable_cpu_diff();
   // Alloc space for sw4cg backward
-  for(int i=0; i<NThread; i++){
+  for(int i=1; i<NThread; i++){
     tmp_weight_diff[i] = (Dtype*) malloc(this->blobs_[0]->count()*sizeof(Dtype));
     caffe_set(this->blobs_[0]->count(), static_cast<Dtype>(0), tmp_weight_diff[i]);
     if(bias_term_){
@@ -193,7 +195,6 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       caffe_set(this->blobs_[1]->count(), static_cast<Dtype>(0), tmp_bias_diff[i]);
     }
   }
-#endif
 #endif
 #endif
 }
@@ -325,25 +326,30 @@ void BaseConvolutionLayer<Dtype>::backward_cpu_gemm_4cg(const Dtype* output,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::weight_cpu_gemm_4cg(const Dtype* input,
     const Dtype* output, Dtype* weights) {
+  //printf("DEBUG MPI4CG weight_cpu_gemm_4cg entering\n");
   int cgid = Caffe::solver_cgid();
   const Dtype* col_buff = input;
   if (!is_1x1_) {
     conv_im2col_cpu(input, col_buffers_[cgid].mutable_cpu_data());
     col_buff = col_buffers_[cgid].cpu_data();
   }
+  //printf("DEBUG MPI4CG weight_cpu_gemm_4cg done im2col\n");
   for (int g = 0; g < group_; ++g) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, conv_out_channels_ / group_,
         kernel_dim_, conv_out_spatial_dim_,
         (Dtype)1., output + output_offset_ * g, col_buff + col_offset_ * g,
         (Dtype)1., weights + weight_offset_ * g);
   }
+  //printf("DEBUG MPI4CG weight_cpu_gemm_4cg exiting\n");
 }
 
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::backward_cpu_bias_4cg(Dtype* bias,
     const Dtype* input) {
+  //printf("DEBUG MPI4CG backward_cpu_bias_4cg entering\n");
   caffe_cpu_gemv<Dtype>(CblasNoTrans, num_output_, out_spatial_dim_, 1.,
       input, bias_multiplier_.cpu_data(), 1., bias);
+  //printf("DEBUG MPI4CG backward_cpu_bias_4cg exiting\n");
 }
 #endif
 
