@@ -1,14 +1,25 @@
-CXX 	=  	mpiCC -host -CG:pjump_all 
+####COMPILERS####
 LINK 	= 	mpiCC 
-SWCXX = 	sw5cc.new -slave -CG:pjump_all
-#basic compilation flags with sw5cc
+CXX 	=  	mpiCC -host -CG:pjump_all 
+SWHCXX = sw5cc.new -host
+SWSCXX = 	sw5cc.new -slave -CG:pjump_all -msimd
+	
+####FLAGS####
+#basic compile flags
 FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0 
-#caffe compilation flags
+#caffe compile flags
 FLAGS += 	-DCPU_ONLY
-FLAGS += -DUSE_OPENCV
-FLAGS += -DUSE_LMDB
-
-#SW Opt Flags
+FLAGS +=  -DUSE_OPENCV
+FLAGS +=  -DUSE_LMDB
+#swcaffe compile flags
+#FLAGS += 	-DSWMPI
+#4CG Support
+#only SW4CG mode: 1CG on 4CGs
+FLAGS += -DSW4CG
+#4CG support for each layer
+FLAGS += -DSW4CG_CONV_FW
+FLAGS += -DSW4CG_CONV_BW
+#swdnn flags
 FLAGS += -DUSE_SWDNN
 FLAGS += -DSW_TRANS
 FLAGS += -DUSE_SWPOOL
@@ -18,18 +29,7 @@ FLAGS += -DUSE_SWPRELU
 FLAGS += -DUSE_SWSOFTMAX
 FLAGS += -DDEBUG_PRINT_TIME
 
-#Distributed Support
-#FLAGS += 	-DSWMPI
-
-#4CG Support
-#only SW4CG mode: 1CG on 4CGs
-FLAGS += -DSW4CG
-#4CG support for each layer
-FLAGS += -DSW4CG_CONV_FW
-FLAGS += -DSW4CG_CONV_BW
-
-
-#Debug Flags
+#debug flags
 #alogrithm logic and forbackward time
 FLAGS += 	-DDEBUG_VERBOSE_1
 #time of each layer
@@ -51,12 +51,31 @@ FLAGS +=  -DDEBUG_VERBOSE_7
 #basic load flags with sw5cc
 LDFLAGS = -lm_slave 
 LDFLAGS += -allshare
-
-
-SWBUILD_DIR=./swbuild
-THIRD_PARTY_DIR=../thirdparty
+#include flags
 SWINC_FLAGS=-I./include -I$(THIRD_PARTY_DIR)/include
 
+####DIRS####
+SRC = ./src
+SWBUILD_DIR=./swbuild
+THIRD_PARTY_DIR=../thirdparty
+BIN_DIR=./bin
+
+####SRC####
+caffesrc=$(wildcard ./src/caffe/*.cpp ./src/caffe/layers/*.cpp ./src/caffe/solvers/*.cpp ./src/caffe/util/*.cpp ./src/glog/*.cpp)
+caffepbsrc = ./src/caffe/proto/caffe.pb.cc
+swhostsrc = $(wildcard ./src/caffe/swutil/*.c)
+swslavesrc = $(wildcard ./src/caffe/swutil/slave/*.c)
+swslavessrc = $(wildcard ./src/caffe/swutil/slave/*.S)
+
+####OBJS####
+caffeobjs = $(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cpp, %.o, $(caffesrc)))
+caffepbobjs = $(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cc, %.o, $(caffepbsrc)))
+swhostobjs = $(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swhostsrc)))
+swslaveobjs = $(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swslavesrc)))
+swslavesobjs = $(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.S, %_asm.o, $(swslavessrc)))
+allobjs = $(caffeobjs) $(caffepbobjs) $(swhostobjs) $(swslaveobjs) $(swslavesobjs)
+
+#libraries
 SWLIBOBJ=$(THIRD_PARTY_DIR)/lib/cblas_LINUX0324.a
 #swblas for 4CG(all share mode!!)
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libswblasall-2.a
@@ -77,123 +96,60 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libgflags.a
 #######order matters
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/liblmdb.a
 
-src=$(wildcard ./src/caffe/*.cpp ./src/caffe/layers/*.cpp ./src/caffe/solvers/*.cpp ./src/caffe/util/*.cpp ./src/glog/*.cpp)
-SWOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.cpp, %.o, $(src))) $(SWBUILD_DIR)/caffe/proto/caffe.pb.o
-swdnnsrc=$(wildcard ./src/caffe/swlayers/*.c ./src/caffe/util/*.c)
-SWDNNOBJ=$(patsubst ./src/%, $(SWBUILD_DIR)/%, $(patsubst %.c, %.o, $(swdnnsrc)))
-SWDNNOBJ+=$(SWBUILD_DIR)/caffe/swlayers/gemm_asm.o
-SWDNNOBJ+=$(SWBUILD_DIR)/caffe/swlayers/gemm_asm_float.o
-SWOBJ+=$(SWDNNOBJ)
+####Rules####
+#debug makefile
+show:
+	echo $(caffesrc)
+	echo $(caffepbsrc)
+	echo $(swhostsrc)
+	echo $(swslavesrc)
+	echo $(swslavessrc)
+	echo $(caffeobjs)
+	echo $(caffepbobjs)
+	echo $(swhostobjs)
+	echo $(swslaveobjs)
+	echo $(swslavesobjs)
 
-
-BIN_DIR=./bin
 caffe: $(BIN_DIR)/caffe_sw
 convert_imageset: $(BIN_DIR)/convert_imageset_sw
-
 mk:
-	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/caffe $(SWBUILD_DIR)/caffe/util $(SWBUILD_DIR)/caffe/layers $(SWBUILD_DIR)/caffe/swlayers $(SWBUILD_DIR)/caffe/proto\
-		$(SWBUILD_DIR)/caffe/solvers $(SWBUILD_DIR)/glog $(SWBUILD_DIR)/swobj $(BIN_DIR)
-	mkdir -p lib/sw
-ar: $(SWOBJ) $(SWLIBOBJ)
-	swar rcs ./lib/sw/swcaffe.a $^  
+	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/caffe $(SWBUILD_DIR)/caffe/util $(SWBUILD_DIR)/caffe/layers \
+		$(SWBUILD_DIR)/caffe/swutil $(SWBUILD_DIR)/caffe/swutil/slave $(SWBUILD_DIR)/caffe/proto\
+		$(SWBUILD_DIR)/caffe/solvers $(SWBUILD_DIR)/glog  $(BIN_DIR)
 
 #caffe tools
-$(BIN_DIR)/convert_imageset_sw: $(SWBUILD_DIR)/swobj/convert_imageset_sw.o $(SWOBJ)
+$(BIN_DIR)/convert_imageset_sw: $(SWBUILD_DIR)/swobj/convert_imageset_sw.o $(allobjs)
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
-$(SWBUILD_DIR)/swobj/convert_imageset_sw.o: ./tools/convert_imageset.cpp
+$(SWBUILD_DIR)/convert_imageset_sw.o: ./tools/convert_imageset.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
+$(BIN_DIR)/caffe_sw:$(allobjs) $(SWBUILD_DIR)/caffe_sw.o
+	$(LINK) $^ $(LDFLAGS) -o $@ $(SWLIBOBJ)
+$(SWBUILD_DIR)/caffe_sw.o: ./tools/caffe.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
 
-$(BIN_DIR)/caffe_sw: $(SWBUILD_DIR)/swobj/caffe_sw.o $(SWOBJ) 
-	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
-$(SWBUILD_DIR)/swobj/caffe_sw.o: ./tools/caffe.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+$(SWBUILD_DIR)/caffe/swutil/slave/gemm_asm.o: ./src/caffe/swutil/slave/gemm.S
+	$(SWSCXX) $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
+$(SWBUILD_DIR)/caffe/swutil/slave/gemm_float_asm.o: ./src/caffe/swutil/slave/gemm_float.S
+	$(SWSCXX) $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
+$(SWBUILD_DIR)/caffe/swutil/slave/%.o: ./src/caffe/swutil/slave/%.c
+	$(SWSCXX) -c $< $(FLAGS) $(SWINC_FLAGS) -o $@
+$(SWBUILD_DIR)/caffe/swutil/%.o: ./src/caffe/swutil/%.c
+	$(SWHCXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-#sw tools
-$(SWBUILD_DIR)/caffe/swlayers/sw_pool_layer_impl.o: ./src/caffe/swlayers/sw_pool_layer_impl.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_pool.o: ./src/caffe/swlayers/sw_slave_pool.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_pool_f.o: ./src/caffe/swlayers/sw_slave_pool_f.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-
-$(SWBUILD_DIR)/caffe/util/swmatrix_trans.o: ./src/caffe/util/swmatrix_trans.c
-	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/swmatrix_trans_f.o: ./src/caffe/util/swmatrix_trans_f.c
-	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(SWBUILD_DIR)/caffe/util/sw_slave_im2col.o: ./src/caffe/util/sw_slave_im2col.c
-	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/swim2col.o: ./src/caffe/util/swim2col.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(SWBUILD_DIR)/caffe/util/sw_slave_imgnet_data_copy.o: ./src/caffe/util/sw_slave_imgnet_data_copy.c
-	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/swimgnet_data_copy.o: ./src/caffe/util/swimgnet_data_copy.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-
-$(SWBUILD_DIR)/caffe/util/matrix_trans.o: ./src/caffe/util/matrix_trans.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/swdata_type_trans.o: ./src/caffe/util/swdata_type_trans.c
-	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/data_type_trans.o: ./src/caffe/util/data_type_trans.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/sw_slave_memcpy.o: ./src/caffe/util/sw_slave_memcpy.c
-	sw5cc.new -slave -msimd -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/sw_memcpy.o: ./src/caffe/util/sw_memcpy.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_conv_layer_impl.o: ./src/caffe/swlayers/sw_conv_layer_impl.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_valid.o: ./src/caffe/swlayers/sw_slave_conv_valid.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_full.o: ./src/caffe/swlayers/sw_slave_conv_full.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_pad_float.o: ./src/caffe/swlayers/sw_slave_conv_pad_float.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_full_pad_float_v2.o: ./src/caffe/swlayers/sw_slave_conv_full_pad_float_v2.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_pad_float2double.o: ./src/caffe/swlayers/sw_slave_conv_pad_float2double.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_pad.o: ./src/caffe/swlayers/sw_slave_conv_pad.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_full_pad_float.o: ./src/caffe/swlayers/sw_slave_conv_full_pad_float.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_conv_full_pad.o: ./src/caffe/swlayers/sw_slave_conv_full_pad.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/gemm_asm.o: ./src/caffe/swlayers/gemm.S
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/gemm_asm_float.o: ./src/caffe/swlayers/gemm_float.S
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_relu_layer_impl.o: ./src/caffe/swlayers/sw_relu_layer_impl.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_relu.o: ./src/caffe/swlayers/sw_slave_relu.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_prelu_layer_impl.o: ./src/caffe/swlayers/sw_prelu_layer_impl.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_prelu.o: ./src/caffe/swlayers/sw_slave_prelu.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_softmax_layer_impl.o: ./src/caffe/swlayers/sw_softmax_layer_impl.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/swlayers/sw_slave_softmax.o: ./src/caffe/swlayers/sw_slave_softmax.c
-	$(SWCXX) $(FLAGS) $(SWINC_FLAGS) -msimd -c $< -o $@
-# Your layers compile here
-
-$(SWBUILD_DIR)/%.o: ./src/%.cpp
+$(SWBUILD_DIR)/caffe/%.o: ./src/caffe/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/caffe/layers/%.o: ./src/caffe/layers/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/%.o: ./src/caffe/util/%.cpp
-	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
-$(SWBUILD_DIR)/caffe/util/%.o: ./src/caffe/util/%.c
-	sw5cc.new -host -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/caffe/solvers/%.o: ./src/caffe/solvers/%.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+$(SWBUILD_DIR)/caffe/util/%.o: ./src/caffe/util/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/glog/%.o: ./src/glog/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/caffe/proto/%.o: ./src/caffe/proto/%.cc
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-
 clean:
-	rm -f $(SWOBJ) $(SWBUILD_DIR)/swobj/* core* $(BIN_DIR)/*
+	rm -f $(allobjs) $(SWBUILD_DIR)/*.o core* $(BIN_DIR)/*
