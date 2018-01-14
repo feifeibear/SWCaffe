@@ -4,45 +4,41 @@
 name: "GoogleNet"
 layer {
   name: "data"
-  type: "Data"
+  type: "IMAGENETData"
   top: "data"
   top: "label"
-  include {
-    phase: TRAIN
-  }
   transform_param {
+    mean_file: "/home/export/online1/swyf/swdnn/imagenet_lmdb/imagenet_mean.binaryproto"
     mirror: true
-    crop_size: 224
-    mean_value: 104
-    mean_value: 117
-    mean_value: 123
+    crop_size: 227
+    scale: 0.00390625
   }
   data_param {
     source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/train_lmdb"
-    batch_size: 128
+    batch_size: 256 
     backend: LMDB
+    #cache:   true
+    #shuffle: true 
   }
+  include { phase: TRAIN }
 }
 layer {
   name: "data"
-  type: "Data"
+  type: "IMAGENETData"
   top: "data"
   top: "label"
-  include {
-    phase: TEST
-  }
   transform_param {
+    mean_file: "/home/export/online1/swyf/swdnn/imagenet_lmdb/imagenet_mean.binaryproto"
     mirror: false
-    crop_size: 224
-    mean_value: 104
-    mean_value: 117
-    mean_value: 123
+    crop_size: 227
+    scale: 0.00390625
   }
   data_param {
     source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/val_lmdb"
-    batch_size: 50
+    batch_size:8          
     backend: LMDB
   }
+  include { phase: TEST }
 }
 layer {
   name: "conv1/7x7_s2"
