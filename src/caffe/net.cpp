@@ -921,13 +921,14 @@ void* Net<Dtype>::ForwardBackward_1cg(void* net_){
 #endif
   if(cgid==0){
     net_ptr->Forward_4cg(&(net_ptr->loss));
-    caffe_mpi_ireduce<Dtype>(&(net_ptr->loss), &(net_ptr->loss), 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
+    //caffe_mpi_ireduce<Dtype>(&(net_ptr->loss), &(net_ptr->loss), 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
+    caffe_mpi_reduce<Dtype>(&(net_ptr->loss), &(net_ptr->loss), 1, MPI_SUM, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_VERBOSE_6
     LOG_IF(INFO, Caffe::mpi_rank() == 1) << "Rank 1: " <<
       " mpirequest[0] " << Caffe::mpi_request(0) <<
       " " << *(Caffe::mpi_request(0));
 #endif
-    MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
+    //MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
   }else{
     net_ptr->Forward_4cg(NULL);
   }
@@ -979,13 +980,14 @@ Dtype Net<Dtype>::ForwardBackward_4cg(){
 #endif
 #else
     if (Caffe::mpi_root_solver()) {
-      caffe_mpi_ireduce<Dtype>(MPI_IN_PLACE, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
+      //caffe_mpi_ireduce<Dtype>(MPI_IN_PLACE, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
+      caffe_mpi_reduce<Dtype>(MPI_IN_PLACE, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_VERBOSE_6
       LOG(INFO) << "MPIRoot: " <<
         " mpirequest[0] " << Caffe::mpi_request(0) <<
         " " << *Caffe::mpi_request(0);
 #endif
-      MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
+      //MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
       int markformpi = 0;
       for (int i = layers_.size() - 1; i >= 0; --i) {
         std::string layer_type = layers_[i]->type();
@@ -1002,11 +1004,16 @@ Dtype Net<Dtype>::ForwardBackward_4cg(){
         {
           for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
             markformpi++;
-            caffe_mpi_ireduce<Dtype>(
+            caffe_mpi_reduce<Dtype>(
                 MPI_IN_PLACE,
                 layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
                 layers_[i]->blobs()[nblobs]->count(),
-                MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+                MPI_SUM, 0, MPI_COMM_WORLD);
+            //caffe_mpi_ireduce<Dtype>(
+                //MPI_IN_PLACE,
+                //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+                //layers_[i]->blobs()[nblobs]->count(),
+                //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
 #ifdef DEBUG_VERBOSE_6
             LOG(INFO) << "MPIRoot: layer " << i <<
               " name: " << layer_type <<
@@ -1016,7 +1023,7 @@ Dtype Net<Dtype>::ForwardBackward_4cg(){
               "] " << Caffe::mpi_request(markformpi) <<
               " " << *Caffe::mpi_request(markformpi);
 #endif
-            MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+            //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
           }
         }
       }
@@ -1134,11 +1141,16 @@ void Net<Dtype>::BackwardFromTo_4cg(int start, int end) {
         {
           for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
             markformpi++;
-            caffe_mpi_ireduce<Dtype>(
+            //caffe_mpi_ireduce<Dtype>(
+                //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+                //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+                //layers_[i]->blobs()[nblobs]->count(),
+                //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+            caffe_mpi_reduce<Dtype>(
                 layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
                 layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
                 layers_[i]->blobs()[nblobs]->count(),
-                MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+                MPI_SUM, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_VERBOSE_6
             LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
               " name: " << layer_type <<
@@ -1150,7 +1162,7 @@ void Net<Dtype>::BackwardFromTo_4cg(int start, int end) {
               "] " << Caffe::mpi_request(markformpi) <<
               " " << *Caffe::mpi_request(markformpi);
 #endif
-            MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+            //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
           }
         }
       }
