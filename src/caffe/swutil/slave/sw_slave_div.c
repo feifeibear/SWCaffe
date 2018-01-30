@@ -8,19 +8,19 @@
 #define SIMDTYPEF floatv4
 #define SPNUM 64
 
-__thread_local_fix dma_desc dma_get_src, dma_put_dst;
+__thread_local dma_desc dma_get_src, dma_put_dst;
 
-typedef struct addPara_st {
+typedef struct DivPara_st {
   void *src1;
   void *src2;
   void *dst;
   int count;
-}addPara;
+}DivPara;
 
-void sw_slave_add_d(addPara *para) {
+void sw_slave_div_d(DivPara *para) {
   double* local_src1 = (double*)ldm_malloc(BUFFSIZE*sizeof(double));
   double* local_src2 = (double*)ldm_malloc(BUFFSIZE*sizeof(double));
-  double* local_dst  = (double*)ldm_malloc(BUFFSIZE*sizeof(double));
+  double*  local_dst = (double*)ldm_malloc(BUFFSIZE*sizeof(double));
   SIMDTYPED vsrc1,vsrc2;
   SIMDTYPED vdst;
   int id = athread_get_id(-1);
@@ -29,7 +29,9 @@ void sw_slave_add_d(addPara *para) {
   int start = id*(count/SPNUM) + (id<(count%SPNUM)?id:(count%SPNUM));
   double* src_ptr1 = &(((double*)para->src1)[start]);
   double* src_ptr2 = &(((double*)para->src2)[start]);
-  double* dst_ptr  = &(((double *)para->dst)[start]);
+  double*  dst_ptr = &(((double*)para->dst)[start]);
+  int blockNum = local_count/BUFFSIZE;
+  int restNum = local_count - blockNum*BUFFSIZE;
   volatile int replyget=0, replyput=0;
   int i,off;
   // DMA settings
@@ -56,7 +58,8 @@ void sw_slave_add_d(addPara *para) {
     for(i=0; i<BUFFSIZE; i+=SIMDSIZE) {
       simd_load(vsrc1,&local_src1[i]);
       simd_load(vsrc2,&local_src2[i]);
-      vdst = vsrc1 + vsrc2; // 
+      //vdst = simd_vdivd(vsrc1,vsrc2); // div
+      vdst = vsrc1/vsrc2;
       simd_store(vdst,&local_dst[i]);
     }
 
@@ -74,11 +77,12 @@ void sw_slave_add_d(addPara *para) {
     for(i=0; i+SIMDSIZE-1<local_count-off; i+=SIMDSIZE) {
       simd_load(vsrc1,&local_src1[i]);
       simd_load(vsrc2,&local_src2[i]);
-      vdst = vsrc1 + vsrc2; // 
+      vdst = vsrc1/vsrc2;
+      //vdst = simd_vdivd(vsrc1,vsrc2); // div
       simd_store(vdst,&local_dst[i]);
     }
     for(;i<local_count-off;i++) {
-      local_dst[i]=local_src1[i]+local_src2[i];
+      local_dst[i]=local_src1[i]/local_src2[i];
     }
     dma_set_size(&dma_put_dst,(local_count-off)*sizeof(double));
     dma(dma_put_dst, (long)(dst_ptr+off), (long)(local_dst));
@@ -92,11 +96,10 @@ void sw_slave_add_d(addPara *para) {
 }
 #undef BUFFSIZE
 #define BUFFSIZE 4*1024
-
-void sw_slave_add_f(addPara *para) {
+void sw_slave_div_f(DivPara *para) {
   float * local_src1 = (float *)ldm_malloc(BUFFSIZE*sizeof(float ));
   float * local_src2 = (float *)ldm_malloc(BUFFSIZE*sizeof(float ));
-  float * local_dst  = (float *)ldm_malloc(BUFFSIZE*sizeof(float ));
+  float * local_dst = (float *)ldm_malloc(BUFFSIZE*sizeof(float ));
   SIMDTYPEF vsrc1,vsrc2;
   SIMDTYPEF vdst;
   int id = athread_get_id(-1);
@@ -105,7 +108,9 @@ void sw_slave_add_f(addPara *para) {
   int start = id*(count/SPNUM) + (id<(count%SPNUM)?id:(count%SPNUM));
   float * src_ptr1 = &(((float *)para->src1)[start]);
   float * src_ptr2 = &(((float *)para->src2)[start]);
-  float * dst_ptr  = &(((float *)para->dst)[start]);
+  float * dst_ptr = &(((float *)para->dst)[start]);
+  int blockNum = local_count/BUFFSIZE;
+  int restNum = local_count - blockNum*BUFFSIZE;
   volatile int replyget=0, replyput=0;
   int i,off;
   // DMA settings
@@ -132,7 +137,8 @@ void sw_slave_add_f(addPara *para) {
     for(i=0; i<BUFFSIZE; i+=SIMDSIZE) {
       simd_load(vsrc1,&local_src1[i]);
       simd_load(vsrc2,&local_src2[i]);
-      vdst = vsrc1 + vsrc2; // 
+      //vdst = vsrc1/vsrc2;
+      vdst = simd_vdivs(vsrc1,vsrc2); // div
       simd_store(vdst,&local_dst[i]);
     }
 
@@ -150,11 +156,12 @@ void sw_slave_add_f(addPara *para) {
     for(i=0; i+SIMDSIZE-1<local_count-off; i+=SIMDSIZE) {
       simd_load(vsrc1,&local_src1[i]);
       simd_load(vsrc2,&local_src2[i]);
-      vdst = vsrc1 + vsrc2; // 
+      //vdst = vsrc1/vsrc2;
+      vdst = simd_vdivs(vsrc1,vsrc2); // div
       simd_store(vdst,&local_dst[i]);
     }
     for(;i<local_count-off;i++) {
-      local_dst[i]=local_src1[i]+local_src2[i];
+      local_dst[i]=local_src1[i]/local_src2[i];
     }
     dma_set_size(&dma_put_dst,(local_count-off)*sizeof(float));
     dma(dma_put_dst, (long)(dst_ptr+off), (long)(local_dst));

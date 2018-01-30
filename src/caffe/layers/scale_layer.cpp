@@ -5,7 +5,9 @@
 #include "caffe/layer_factory.hpp"
 #include "caffe/layers/scale_layer.hpp"
 #include "caffe/util/math_functions.hpp"
-
+extern "C"{
+#include "caffe/util/sw_dnn.h"
+}
 namespace caffe {
 
 template <typename Dtype>
@@ -128,6 +130,41 @@ void ScaleLayer<Dtype>::Forward_cpu(
   const Dtype* scale_data =
       ((bottom.size() > 1) ? bottom[1] : this->blobs_[0].get())->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
+#ifdef USE_SWBASE
+    if(typeid(double) == typeid(Dtype))
+      sw_scale_layer_d((double*)bottom_data,(double*)scale_data,(double*)top_data,outer_dim_,inner_dim_,scale_dim_);
+    else
+      sw_scale_layer_f((float*)bottom_data,(float*)scale_data,(float*)top_data,outer_dim_,inner_dim_,scale_dim_);
+#ifdef DEBUG_SWSCALE
+  Dtype *pData = (Dtype*)malloc(bottom[0]->count()*sizeof(Dtype));
+  Dtype *ppData = pData;
+  for (int n = 0; n < outer_dim_; ++n) {
+    for (int d = 0; d < scale_dim_; ++d) {
+      const Dtype factor = scale_data[d];
+      caffe_cpu_scale(inner_dim_, factor, bottom_data, ppData);
+      bottom_data += inner_dim_;
+      ppData += inner_dim_;
+    }
+  }
+  ppData = pData;
+  top_data = top[0]->mutable_cpu_data();
+  double dSum1=0,dSum2=0;
+  int times = 0;
+  for(int i=0;i<bottom[0]->count();i++)
+  {
+    if(fabs(ppData[i] - top_data[i]) > 1e-4)
+    {
+      printf("%f vs %f\n",ppData[i],top_data[i]);
+      if(times++ >10) break;
+    }
+    dSum1 += ppData[i];
+    dSum2 += top_data[i];
+  }
+  free(pData);
+  printf("ScaleLayer Forward dSum1=%f dSum2=%f\n",dSum1,dSum2);
+   
+#endif
+#else
   for (int n = 0; n < outer_dim_; ++n) {
     for (int d = 0; d < scale_dim_; ++d) {
       const Dtype factor = scale_data[d];
@@ -136,6 +173,7 @@ void ScaleLayer<Dtype>::Forward_cpu(
       top_data += inner_dim_;
     }
   }
+#endif
   if (bias_layer_) {
     bias_layer_->Forward(bias_bottom_vec_, top);
   }
@@ -206,6 +244,39 @@ void ScaleLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const Dtype* top_diff = top[0]->cpu_diff();
     const Dtype* scale_data = scale->cpu_data();
     Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
+#ifdef USE_SWBASE
+    if(typeid(double) == typeid(Dtype))
+      sw_scale_layer_d((double*)top_diff,(double*)scale_data,(double*)bottom_diff,outer_dim_,inner_dim_,scale_dim_);
+    else
+      sw_scale_layer_f((float*)top_diff,(float*)scale_data,(float*)bottom_diff,outer_dim_,inner_dim_,scale_dim_);
+#ifdef DEBUG_SWSCALE
+  int count = outer_dim_*scale_dim_*inner_dim_;
+  Dtype *pData = (Dtype*)malloc(count*sizeof(Dtype));
+  Dtype *ppData = pData;
+  for (int n = 0; n < outer_dim_; ++n) {
+    for (int d = 0; d < scale_dim_; ++d) {
+      const Dtype factor = scale_data[d];
+      caffe_cpu_scale(inner_dim_, factor, top_diff, ppData);
+      ppData += inner_dim_;
+      top_diff += inner_dim_;
+    }
+  }
+  ppData = pData;
+  double dSum1=0,dSum2=0;
+  int times = 0;
+  for(int i=0;i<count;i++)
+  {
+    if(fabs(ppData[i] - bottom_diff[i]) > 1e-4){
+      printf("%f vs %f\n",ppData[i],bottom_diff[i]);
+      if(times++ >10) break;
+    }
+    dSum1 += ppData[i];
+    dSum2 += bottom_diff[i];
+  }
+  free(pData);
+  printf("ScaleLayer Backward dSum1=%f dSum2=%f\n",dSum1,dSum2);
+#endif
+#else
     for (int n = 0; n < outer_dim_; ++n) {
       for (int d = 0; d < scale_dim_; ++d) {
         const Dtype factor = scale_data[d];
@@ -214,6 +285,7 @@ void ScaleLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         top_diff += inner_dim_;
       }
     }
+#endif
   }
 }
 
