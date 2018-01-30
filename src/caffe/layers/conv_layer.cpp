@@ -10,7 +10,7 @@
 extern "C" {
 #include "caffe/swlayers/sw_conv_layer_impl.h"
 #ifdef SW4CG
-#include "caffe/util/sw_memcpy.h"
+#include "caffe/util/sw_dnn.h"
 #endif
 }
 //#endif

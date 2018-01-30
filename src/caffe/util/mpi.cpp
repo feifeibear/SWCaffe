@@ -2,6 +2,9 @@
 #include "caffe/util/mpi.hpp"
 
 #include <execinfo.h>
+extern "C"{
+#include "caffe/util/sw_dnn.h"
+}
 namespace caffe {
 
 template<>
@@ -109,10 +112,44 @@ int caffe_mpi_allreduce<double>( void *sendbuf, void *recvbuf, int count,
   return MPI_Allreduce(sendbuf, recvbuf, count, MPI_DOUBLE, op, comm);
 }
 
+//modified by zwl
 template <>
 int caffe_mpi_reduce<float>( void *sendbuf, void *recvbuf, int count,
     MPI_Op op, int root, MPI_Comm comm  ){
-  return MPI_Reduce(sendbuf, recvbuf, count, MPI_FLOAT, op, root, comm);
+
+    int comm_size,rank;
+    MPI_Status status;
+    MPI_Request send_req,recv_req;
+    MPI_Comm_size(comm, &comm_size);
+    MPI_Comm_rank(comm, &rank);
+    int mask = 0x1,source=0,tag = 10;
+    int relrank = (rank - root + comm_size) % comm_size;
+    if(sendbuf != MPI_IN_PLACE){
+      sw_memcpy_f((float*)sendbuf,(float*)recvbuf,count);
+    }
+    float * tmp_buff;
+    tmp_buff = (float*)malloc(count * sizeof(float));
+    while(mask < comm_size){
+      // Receive
+      if ((mask & relrank) == 0) {
+        source = (relrank | mask);
+        if (source < comm_size) {
+          source = (source + root) % comm_size;
+	        MPI_Irecv(tmp_buff,count,MPI_FLOAT,source,tag,comm,&recv_req);
+          MPI_Wait(&recv_req,&status);
+          sw_add_f((float*)tmp_buff,(float*)recvbuf,(float*)recvbuf,count);
+        }
+      }
+      else {
+         //I've received all that I'm going to.  Send my result to my parent 
+         source = ((relrank & (~ mask)) + root) % comm_size;
+	       MPI_Isend(recvbuf, count,MPI_FLOAT, source, tag,comm,&send_req);
+         break;
+      }
+      mask = mask << 1;
+    }
+    free(tmp_buff);
+    return 0;
 }
 
 template <>
