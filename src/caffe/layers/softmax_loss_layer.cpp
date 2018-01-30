@@ -80,6 +80,9 @@ Dtype SoftmaxWithLossLayer<Dtype>::get_normalizer(
       LOG(FATAL) << "Unknown normalization mode: "
           << LossParameter_NormalizationMode_Name(normalization_mode);
   }
+#ifdef SWMPI
+  normalizer *= Caffe::mpi_count()-1;
+#endif
   // Some users will have no labels for some examples in order to 'turn off' a
   // particular loss in a multi-task setup. The max prevents NaNs in that case.
   return std::max(Dtype(1.0), normalizer);

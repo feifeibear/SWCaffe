@@ -354,7 +354,7 @@ void Solver<Dtype>::Step(int iters) {
 #ifdef SWMPI
     if (Caffe::mpi_rank() == 0) {
       loss /= param_.iter_size();
-      loss /= (Caffe::mpi_count() - 1);
+      //loss /= (Caffe::mpi_count() - 1);
       // average the loss across iterations for smoothed reporting
       UpdateSmoothedLoss(loss, start_iter, average_loss);
       if (display) {
