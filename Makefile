@@ -15,7 +15,7 @@ FLAGS +=  -DUSE_LMDB
 FLAGS += 	-DSWMPI
 #4CG Support
 #only SW4CG mode: 1CG on 4CGs
-FLAGS += -DSW4CG
+#FLAGS += -DSW4CG
 #4CG support for each layer
 FLAGS += -DSW4CG_CONV_FW
 FLAGS += -DSW4CG_CONV_BW
