@@ -60,7 +60,7 @@ void IMAGENETDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
   if (this->layer_param_.phase() == TRAIN){
     nbatch = 0;
     batchidx = 0;
-    pre_load_batch(18);
+    pre_load_batch(20);
   }
 #endif
 }
@@ -152,7 +152,20 @@ void IMAGENETDataLayer<Dtype>::pre_load_batch(int num_batch) {
 
   int size = Caffe::mpi_count()-1;
   int rank = Caffe::mpi_rank()-1;
-  if(rank == -1) return;
+  if(rank == -1){
+    int total_samples = 0;
+    cursor_->SeekToFirst();
+    while(cursor_->valid()){
+      total_samples ++;
+      cursor_->Next();
+    }
+    DLOG(INFO) <<" MPIRoot : "<< " Total number of samples is "<<total_samples
+      <<". Number of workers is "<<size
+      <<". Number of prefetched batch is "<<total_samples/(batch_size*size)
+      <<". (Max at "<<num_batch<<").";
+
+    return;
+  }
   offset_ = 0;
   nbatch = 0;
   cursor_->SeekToFirst();
@@ -182,7 +195,8 @@ void IMAGENETDataLayer<Dtype>::pre_load_batch(int num_batch) {
     for (int item_id = 0; item_id < batch_size; ++item_id) {
       if(!cursor_->valid()){
         full = false;
-        break;
+        cursor_->SeekToFirst();
+        offset_ = 0;
       }
 
       timer.Start();
