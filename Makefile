@@ -50,7 +50,7 @@ FLAGS += -DDEBUG_VERBOSE_8
 #debug SWDNN
 #FLAGS += -DDEBUG_VERBOSE_9
 #FLAGS += -DDEBUG_VERBOSE_SWDNN
-
+FLAGS += -DWARMUP_DEBUG
 
 #basic load flags with sw5cc
 LDFLAGS = -lm_slave 

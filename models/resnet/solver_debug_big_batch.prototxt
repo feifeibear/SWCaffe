@@ -1,6 +1,6 @@
 net: "models/resnet/ResNet_50_train_val.prototxt"
 test_iter: 1 	
-test_interval: 8 
+test_interval: 800
 test_initialization: false
 
 display:  1
