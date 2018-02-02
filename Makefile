@@ -13,14 +13,16 @@ FLAGS +=  -DUSE_OPENCV
 FLAGS +=  -DUSE_LMDB
 #swcaffe compile flags
 FLAGS += 	-DSWMPI
+#support prefetch data for SWMPI
+FLAGS +=  -DDATAPREFETCH
 #4CG Support
 #only SW4CG mode: 1CG on 4CGs
 #FLAGS += -DSW4CG
 #4CG support for each layer
-FLAGS += -DSW4CG_CONV_FW
-FLAGS += -DSW4CG_CONV_BW
+#FLAGS += -DSW4CG_CONV_FW
+#FLAGS += -DSW4CG_CONV_BW
 #swdnn flags
-FLAGS += -DUSE_SWDNN
+#FLAGS += -DUSE_SWDNN
 FLAGS += -DSW_TRANS
 FLAGS += -DUSE_SWBASE
 #FLAGS += -DDEBUG_SWBASE
@@ -41,7 +43,7 @@ FLAGS += 	-DDEBUG_VERBOSE_2
 #address and length of mpibuff
 #FLAGS += 	-DDEBUG_VERBOSE_6
 #in sgd solvers data value print
-#FLAGS +=  -DDEBUG_VERBOSE_7
+FLAGS +=  -DDEBUG_VERBOSE_7
 #debug SW4CG
 FLAGS += -DDEBUG_VERBOSE_8
 #FLAGS += -DDEBUG_SYNC_4CG

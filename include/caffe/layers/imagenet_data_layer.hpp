@@ -43,6 +43,12 @@ class IMAGENETDataLayer : public BaseDataLayer<Dtype> {
   void load_batch(Batch<Dtype>* batch);
   shared_ptr<db::DB> db_;
   shared_ptr<db::Cursor> cursor_;
+#ifdef DATAPREFETCH 
+  void pre_load_batch(int num_batch);
+  int nbatch;
+  int batchidx;
+  vector<Batch<Dtype>*> fetch_ptr_;
+#endif
   shared_ptr<Batch<Dtype> > fetch_;
   Blob<Dtype> transformed_data_;
   uint64_t offset_;

@@ -619,7 +619,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     gettimeofday(&te, NULL);
     double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
 #ifdef SWMPI
-    LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
+    LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank " << Caffe::mpi_rank() << " : layer"
       << i << "  " << layer_names_[i]
       << " Forward cost time: " << time << "s";
 #else
