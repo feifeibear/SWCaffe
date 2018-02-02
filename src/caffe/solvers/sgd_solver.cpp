@@ -283,7 +283,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
   const vector<float>& net_params_lr = this->net_->params_lr();
   Dtype momentum = this->param_.momentum();
   const string& lr_policy = this->param_.lr_policy();
-  if(lr_policy == "warmup" && this->iter_ > 0) {
+  if(lr_policy == "warmup" && this->iter_ > 0 && this->iter_ < this->param_.stepsize()) {
     int size = Caffe::mpi_count() - 1;
     Dtype increment = (this->param_.base_lr() * (Dtype)size - this->param_.base_lr()) / (this->param_.stepsize() - 1);
     Dtype lr_new = this->param_.base_lr() + this->iter_ * increment;
@@ -296,8 +296,8 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
 #endif
     momentum = momentum * scale_param;
   }
-  //Dtype local_rate = rate * net_params_lr[param_id];
-  Dtype local_rate = rate * GetLocalRate(param_id);
+  Dtype local_rate = rate * net_params_lr[param_id];
+  //Dtype local_rate = rate * GetLocalRate(param_id);
   // Compute the update to history, then copy it to the parameter diff.
   switch (Caffe::mode()) {
   case Caffe::CPU: {
@@ -325,7 +325,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
   }
 }
 
-template <typename Dtype>
+/*template <typename Dtype>
 float  SGDSolver<Dtype>::GetLocalRate(int param_id) const {
     const vector<float>& net_params_lr = this->net_->params_lr();
       float local_lr = net_params_lr[param_id];
@@ -345,7 +345,7 @@ float  SGDSolver<Dtype>::GetLocalRate(int param_id) const {
       }
       //LOG(INFO) << "Local learning rate is: " << local_lr;
       return local_lr;
-}
+}*/
 
 template <typename Dtype>
 void SGDSolver<Dtype>::SnapshotSolverState(const string& model_filename) {
