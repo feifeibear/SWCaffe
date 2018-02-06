@@ -1,0 +1,24 @@
+net: "models/resnet/ResNet_50_train_val.prototxt"
+test_iter: 1 	
+test_interval: 800
+test_initialization: false
+
+display:  1
+
+max_iter: 1688
+
+lr_policy: "warmup"
+
+stepsize: 94
+base_lr:  0.025
+momentum: 0.9
+weight_decay: 0.0001
+
+stepvalue: 563
+stepvalue: 1125
+stepvalue: 1500
+
+snapshot: 320
+snapshot_prefix: "models/resnet/sw_resnet_debug"
+snapshot_after_train: false
+solver_mode: CPU
