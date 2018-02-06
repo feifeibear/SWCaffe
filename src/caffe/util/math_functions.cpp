@@ -54,104 +54,17 @@ void caffe_cpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
 template <>
 void caffe_axpy<float>(const int N, const float alpha, const float* X,
     float* Y) { 
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(N*sizeof(Dtype));
-      cblas_saxpy(N, alpha, X, 1, Y, 1); 
-#endif
-  if(N >MIN_SIZE)
-    sw_axpy_f(alpha,X,Y,N);
-  else
-    cblas_saxpy(N, alpha, X, 1, Y, 1); 
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<N;i++){
-        if(fabs(Y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",Y[i],p_data[i]);
-        }
-        dSum1 += Y[i];
-        dSum2 += p_data[i];
-      }
-      printf("axpy dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-#else
   cblas_saxpy(N, alpha, X, 1, Y, 1); 
-#endif
 }
 
 template <>
 void caffe_axpy<double>(const int N, const double alpha, const double* X,
     double* Y) { 
-#ifdef USE_SWBASE1
-  if(N >MIN_SIZE)
-    sw_axpy_d(alpha,X,Y,N);
-  else
-    cblas_daxpy(N, alpha, X, 1, Y, 1); 
-#else
   cblas_daxpy(N, alpha, X, 1, Y, 1); 
-#endif
 }
 
 template <typename Dtype>
 void caffe_set(const int N, const Dtype alpha, Dtype* Y) {
-#ifdef USE_SWBASE1 //NOT USE ATHREAD !!!
-    if(N > MIN_SIZE)
-    {
-       if(typeid(Dtype) == typeid(double))
-         sw_memset_d((double*)Y,(const double)alpha,N);
-       else if(typeid(Dtype) == typeid(float)){
-         sw_memset_f((float*)Y,(const float)alpha,N);
-       }
-       else if(typeid(Dtype) == typeid(int)){  
-         sw_memset_i((int*)Y,(const int)alpha,N);
-       }
-       else
-       {
-         if (alpha == 0) {
-           memset(Y, 0, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
-           return;
-         }
-         for (int i = 0; i < N; ++i) {
-           Y[i] = alpha;
-         }
-       }
-    }
-    else{
-      if (alpha == 0) {
-        memset(Y, 0, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
-        return;
-      }
-      for (int i = 0; i < N; ++i) {
-        Y[i] = alpha;
-      }
-    }
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(N*sizeof(Dtype));
-      if(alpha == 0) 
-        memset(p_data, 0, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
-      else {
-        for (int i = 0; i < N; ++i) {
-          p_data[i] = alpha;
-        }
-      }
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<N;i++){
-        if(fabs(Y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",Y[i],p_data[i]);
-        }
-        dSum1 += Y[i];
-        dSum2 += p_data[i];
-      }
-      printf("memset dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
   if (alpha == 0) {
     memset(Y, 0, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
     return;
@@ -159,7 +72,6 @@ void caffe_set(const int N, const Dtype alpha, Dtype* Y) {
   for (int i = 0; i < N; ++i) {
     Y[i] = alpha;
   }
-#endif
 }
 
 template void caffe_set<int>(const int N, const int alpha, int* Y);
@@ -168,57 +80,16 @@ template void caffe_set<double>(const int N, const double alpha, double* Y);
 
 template <>
 void caffe_add_scalar(const int N, const float alpha, float* Y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      float * p_data = (float*)malloc(N*sizeof(float));
-      memcpy(p_data,Y,sizeof(float)*N);
-      for (int i = 0; i < N; ++i) {
-       p_data[i] += alpha;
-      }
-#endif
-  if(N >MIN_SIZE)
-    sw_add_scalar_f(alpha,Y,N);
-  else{
-    for (int i = 0; i < N; ++i) {
-      Y[i] += alpha;
-    }
-  }
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<N;i++){
-        if(fabs(Y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",Y[i],p_data[i]);
-        }
-        dSum1 += Y[i];
-        dSum2 += p_data[i];
-      }
-      printf("add scalar dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-#else
   for (int i = 0; i < N; ++i) {
     Y[i] += alpha;
   }
-#endif
 }
 
 template <>
 void caffe_add_scalar(const int N, const double alpha, double* Y) {
-#ifdef USE_SWBASE1
-  if(N >MIN_SIZE)
-    sw_add_scalar_d(alpha,Y,N);
-  else{
-    for (int i = 0; i < N; ++i) {
-      Y[i] += alpha;
-    }
-  }
-#else
   for (int i = 0; i < N; ++i) {
     Y[i] += alpha;
   }
-#endif
 }
 
 template <typename Dtype>
@@ -233,40 +104,20 @@ void caffe_copy(const int N, const Dtype* X, Dtype* Y) {
 #endif
     } else {
 #ifdef USE_SWBASE
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(N*sizeof(Dtype));
-      memcpy(p_data,X, sizeof(Dtype) * N); 
-#endif
-    if(N > MIN_SIZE)
-    {
-       if(typeid(Dtype) == typeid(double))
-         sw_memcpy_d((double*)X,(double*)Y,N);
-       else if(typeid(Dtype) == typeid(float))
-         sw_memcpy_f((float*)X,(float*)Y,N);
-       else if(typeid(Dtype) == typeid(int))  
-         sw_memcpy_i((int*)X,(int*)Y,N);
-       else if(typeid(unsigned int) == typeid(unsigned int))  
-         sw_memcpy_ui((unsigned int*)X,(unsigned int*)Y,N);
-       else
+      if(typeid(Dtype) == typeid(float)){
+        sw_memcpy_f((float*)X,(float*)Y,N);
+      }else if(N > MIN_SIZE){
+        if(typeid(Dtype) == typeid(double))
+          sw_memcpy_d((double*)X,(double*)Y,N);
+        else if(typeid(Dtype) == typeid(int))  
+          sw_memcpy_i((int*)X,(int*)Y,N);
+        else if(typeid(unsigned int) == typeid(unsigned int))  
+          sw_memcpy_ui((unsigned int*)X,(unsigned int*)Y,N);
+        else
           memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
-    }
-    else
-      memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<N;i++){
-        if(fabs(Y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",Y[i],p_data[i]);
-        }
-        dSum1 += Y[i];
-        dSum2 += p_data[i];
       }
-      printf("memcpy dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
+      else
+        memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
 #else
       memcpy(Y, X, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
 #endif
