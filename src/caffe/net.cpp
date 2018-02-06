@@ -549,14 +549,13 @@ Dtype Net<Dtype>::ForwardBackward(){
       for (int i = layers_.size() - 1; i >= 0; --i) {
         std::string layer_type = layers_[i]->type();
 #ifdef DEBUG_VERBOSE_6
-      LOG(INFO) << "MPIRoot: before ireduce " <<
+      LOG(INFO) << "MPIRoot: before reduce " <<
         " layer "<< i <<
         " layer type "<<layer_type<<
         " blobs num "<<layers_[i]->blobs().size();
 #endif
         if ((layer_type == std::string("InnerProduct")) ||
             layer_type == std::string("Convolution") ||
-            layer_type == std::string("BatchNorm")||
             layer_type == std::string("Scale"))
         {
           for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
@@ -582,6 +581,17 @@ Dtype Net<Dtype>::ForwardBackward(){
 #endif
             //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
           }
+        }else if(layer_type == std::string("BatchNorm")){
+          for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
+            caffe_set(layers_[i]->blobs()[nblobs]->count(), Dtype(0),layers_[i]->blobs()[nblobs]->mutable_cpu_data());
+            markformpi++;
+            caffe_mpi_reduce<Dtype>(
+                MPI_IN_PLACE,
+                layers_[i]->blobs()[nblobs]->mutable_cpu_data(),
+                layers_[i]->blobs()[nblobs]->count(),
+                MPI_SUM, 0, MPI_COMM_WORLD);
+          }
+          
         }
       }
     } else {
@@ -703,7 +713,6 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
       std::string layer_type = layers_[i]->type();
       if ((layer_type == std::string("InnerProduct")) ||
           layer_type == std::string("Convolution") ||
-          layer_type == std::string("BatchNorm")||
           layer_type == std::string("Scale"))
       {
         for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
@@ -730,6 +739,31 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
             " " << *Caffe::mpi_request(markformpi);
 #endif
           //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
+        }
+      }else if (layer_type == std::string("BatchNorm")){
+        for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
+          markformpi++;
+          //caffe_mpi_ireduce<Dtype>(
+              //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+              //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+              //layers_[i]->blobs()[nblobs]->count(),
+              //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
+          caffe_mpi_reduce<Dtype>(
+              layers_[i]->blobs()[nblobs]->mutable_cpu_data(),
+              layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
+              layers_[i]->blobs()[nblobs]->count(),
+              MPI_SUM, 0, MPI_COMM_WORLD);
+#ifdef DEBUG_VERBOSE_6
+          LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
+            " name: " << layer_type <<
+            " diff "<< nblobs <<" addr " <<
+            layers_[i]->blobs()[nblobs]->mutable_cpu_data() <<
+            " diff "<< nblobs <<" count " <<
+            layers_[i]->blobs()[nblobs]->count() <<
+            " mpirequest[" << markformpi <<
+            "] " << Caffe::mpi_request(markformpi) <<
+            " " << *Caffe::mpi_request(markformpi);
+#endif 
         }
       }
 #ifdef DEBUG_VERBOSE_2
