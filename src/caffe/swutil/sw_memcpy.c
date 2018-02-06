@@ -18,9 +18,10 @@ typedef struct MemcpyTransPara_st {
   void *src;
   void *dst;
   int count,num;
-}MemcpyPara;
+}MemcpyPara __attribute__((__aligned__(16)));
 // Precondition: already athread_init()
 void sw_repeat_memcpy_f(const float* src, float* dst,const int count,int num) {
+  printf("Alert: Unchecked implementation of sw_repeat_memcpy_f()\n");
   MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
   para->src = src;
   para->dst = dst;
@@ -31,6 +32,7 @@ void sw_repeat_memcpy_f(const float* src, float* dst,const int count,int num) {
   free(para);
 }
 void sw_repeat_memcpy_d(const double* src, double* dst,const int count,int num) {
+  printf("Alert: Unchecked implementation of sw_repeat_memcpy_d()\n");
   MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
   para->src = src;
   para->dst = dst;
@@ -41,6 +43,7 @@ void sw_repeat_memcpy_d(const double* src, double* dst,const int count,int num) 
   free(para);
 }
 void sw_memcpy_d(const double* src, double* dst,const int count) {
+  printf("Alert: Unchecked implementation of sw_memcpy_d()\n");
   MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
   para->src = src;
   para->dst = dst;
@@ -50,15 +53,24 @@ void sw_memcpy_d(const double* src, double* dst,const int count) {
   free(para);
 }
 void sw_memcpy_f(const float* src, float* dst,const int count) {
-  MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
-  para->src = src;
-  para->dst = dst;
-  para->count = count;
-  athread_spawn(sw_slave_memcpy_f,para);
-  athread_join();
-  free(para);
+  //modified by zwl
+  if(count < 256){
+    memcpy(dst, src, (long)count*sizeof(float));
+  }else{
+    MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
+    para->src = src+count%256;
+    para->dst = dst+count%256;
+    para->count = count-count%256;
+    athread_spawn(sw_slave_memcpy_f,para);
+    if(count % 256 != 0){
+      memcpy(dst, src, (long)(count%256)*sizeof(float));
+    }
+    athread_join();
+    free(para); 
+  } 
 }
 void sw_memcpy_i(const int* src, int* dst,const int count) {
+  printf("Alert: Unchecked implementation of sw_memcpy_i()\n");
   MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
   para->src = src;
   para->dst = dst;
@@ -68,6 +80,7 @@ void sw_memcpy_i(const int* src, int* dst,const int count) {
   free(para);
 }
 void sw_memcpy_ui(const unsigned int* src,unsigned int* dst,const int count) {
+  printf("Alert: Unchecked implementation of sw_memcpy_ui()\n");
   MemcpyPara *para = (MemcpyPara*)malloc(sizeof(MemcpyPara));
   para->src = src;
   para->dst = dst;
