@@ -24,6 +24,7 @@ FLAGS +=  -DDATAPREFETCH
 #swdnn flags
 #FLAGS += -DUSE_SWDNN
 FLAGS += -DSW_TRANS
+#use sw based basic functions in src/caffe/util/math_functions.cpp
 FLAGS += -DUSE_SWBASE
 #FLAGS += -DDEBUG_SWBASE
 FLAGS += -DUSE_SWPOOL

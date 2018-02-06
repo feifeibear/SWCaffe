@@ -374,30 +374,8 @@ void caffe_cpu_axpby<double>(const int N, const double alpha, const double* X,
 template <>
 void caffe_add<float>(const int n, const float* a, const float* b,
     float* y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(n*sizeof(Dtype));
-      vsAdd(n, a, b, p_data);
-#endif
-    if(n > MIN_SIZE)
-      sw_add_f(a,b,y,n);
-    else
-      vsAdd(n, a, b, y);
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("add dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
+#ifdef USE_SWBASE
+    sw_add_f(a,b,y,n);
 #else
     vsAdd(n, a, b, y);
 #endif
@@ -406,15 +384,7 @@ void caffe_add<float>(const int n, const float* a, const float* b,
 template <>
 void caffe_add<double>(const int n, const double* a, const double* b,
     double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_add_d(a,b,y,n);
-    else
-      vdAdd(n, a, b, y);
-      
-#else
     vdAdd(n, a, b, y);
-#endif
 }
 
 template <>
