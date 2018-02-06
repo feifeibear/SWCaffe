@@ -57,7 +57,7 @@ void IMAGENETDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
     this->fetch_->label_.Reshape(label_shape);
   }
 #ifdef DATAPREFETCH
-  if (this->layer_param_.phase() == TRAIN){
+  if (this->layer_param_.phase() == TRAIN && !Caffe::mpi_root_solver()){
     nbatch = 0;
     batchidx = 0;
     pre_load_batch(20);
@@ -111,8 +111,10 @@ bool IMAGENETDataLayer<Dtype>::Skip() {
   int size = Caffe::mpi_count()-1;
   int rank = Caffe::mpi_rank()-1;
   bool keep = (offset_ % size) == rank ||
+#ifndef SWMPITEST
               // In test mode, only rank 0 runs, so avoid skipping
               this->layer_param_.phase() == TEST ||
+#endif
               // For the train iteration after optimization in server
               rank == -1;
   return !keep;

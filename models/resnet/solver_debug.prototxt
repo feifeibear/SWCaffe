@@ -1,7 +1,7 @@
 net: "models/resnet/ResNet_50_train_val.prototxt"
-test_iter: 1 	
-test_interval: 8 
-test_initialization: false
+test_iter: 6
+test_interval: 1 
+#test_initialization: false
 
 display:  1
 
@@ -16,5 +16,5 @@ weight_decay: 0.0005
 
 snapshot: 16 
 snapshot_prefix: "models/resnet/sw_resnet_debug"
-snapshot_after_train: false
+snapshot_after_train: true
 solver_mode: CPU

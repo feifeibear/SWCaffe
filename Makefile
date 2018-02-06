@@ -14,7 +14,8 @@ FLAGS +=  -DUSE_LMDB
 #swcaffe compile flags
 FLAGS += 	-DSWMPI
 #support prefetch data for SWMPI
-#FLAGS +=  -DDATAPREFETCH
+FLAGS +=  -DDATAPREFETCH
+FLAGS +=  -DSWMPITEST
 #4CG Support
 #only SW4CG mode: 1CG on 4CGs
 #FLAGS += -DSW4CG
@@ -32,13 +33,13 @@ FLAGS += -DUSE_SWRELU
 FLAGS += -DUSE_SWIM2COL
 FLAGS += -DUSE_SWPRELU
 FLAGS += -DUSE_SWSOFTMAX
-FLAGS += -DDEBUG_PRINT_TIME
+#FLAGS += -DDEBUG_PRINT_TIME
 
 #debug flags
 #alogrithm logic and forbackward time
-FLAGS += 	-DDEBUG_VERBOSE_1
+#FLAGS += 	-DDEBUG_VERBOSE_1
 #time of each layer
-FLAGS += 	-DDEBUG_VERBOSE_2
+#FLAGS += 	-DDEBUG_VERBOSE_2
 #print timer in sw_conv_layer_impl
 #FLAGS += 	-DDEBUG_VERBOSE_3
 #address and length of mpibuff

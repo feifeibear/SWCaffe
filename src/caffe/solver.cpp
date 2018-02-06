@@ -60,10 +60,18 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
 #ifdef SWMPI
   MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : init train net done...";
+#ifndef SWMPITEST
   if (Caffe::mpi_root_solver()) {
     InitTestNets();
     LOG(INFO) << "MPIRoot: init test net done...";
   }
+#else
+  if(!Caffe::mpi_root_solver()){
+    InitTestNets();
+    LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : init test net done...";
+  }
+  
+#endif
   MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : Solver scaffolding done.";
 #else
@@ -215,7 +223,8 @@ void Solver<Dtype>::Step(int iters) {
 
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
-      if (Caffe::mpi_root_solver()) {
+#ifndef SWMPITEST
+      if (Caffe::mpi_root_solver()){
 #ifdef DEBUG_VERBOSE_1
         gettimeofday(&ts, NULL);
 #endif
@@ -230,6 +239,19 @@ void Solver<Dtype>::Step(int iters) {
         // Break out of the while loop because stop was requested while testing.
         break;
       }
+#else
+      if (!Caffe::mpi_root_solver()){
+#ifdef DEBUG_VERBOSE_1
+        gettimeofday(&ts, NULL);
+#endif
+        TestAll();
+#ifdef DEBUG_VERBOSE_1
+        gettimeofday(&te, NULL);
+        tmp_comm_lapse = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+        LOG(INFO) << "Rank "<<Caffe::mpi_rank()<<" : Test cost time is " << tmp_comm_lapse << "sec";
+#endif
+      }
+#endif
     }
 #else
 
@@ -522,7 +544,11 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   // updated the parameters "max_iter" times -- this final pass is only done to
   // display the loss, which is computed in the forward pass.
 #ifdef SWMPI
+#ifndef SWMPITEST
   if (Caffe::mpi_root_solver()) {
+#else
+  if (!Caffe::mpi_root_solver()){
+#endif
     if (param_.display() && iter_ % param_.display() == 0) {
       int average_loss = this->param_.average_loss();
       Dtype loss;
@@ -565,9 +591,15 @@ void Solver<Dtype>::TestAll() {
 
 template <typename Dtype>
 void Solver<Dtype>::Test(const int test_net_id) {
+#ifndef SWMPITEST
   CHECK(Caffe::root_solver());
   LOG(INFO) << "Iteration " << iter_
             << ", Testing net (#" << test_net_id << ")";
+#else
+  LOG(INFO) << "Rank "<< Caffe::mpi_rank() 
+    <<" : Iteration " << iter_
+    << ", Testing net (#" << test_net_id << ")";
+#endif
   CHECK_NOTNULL(test_nets_[test_net_id].get())->
       ShareTrainedLayersWith(net_.get());
   vector<Dtype> test_score;
@@ -620,7 +652,12 @@ void Solver<Dtype>::Test(const int test_net_id) {
   }
   if (param_.test_compute_loss()) {
     loss /= param_.test_iter(test_net_id);
+#ifndef SWMPITEST
     LOG(INFO) << "Test loss: " << loss;
+#else
+    LOG(INFO) << "Rank "<<Caffe::mpi_rank()
+      <<" : Test loss: "<<loss;
+#endif
   }
   for (int i = 0; i < test_score.size(); ++i) {
     const int output_blob_index =
@@ -633,8 +670,14 @@ void Solver<Dtype>::Test(const int test_net_id) {
       loss_msg_stream << " (* " << loss_weight
                       << " = " << loss_weight * mean_score << " loss)";
     }
+#ifndef SWMPITEST
     LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
               << mean_score << loss_msg_stream.str();
+#else
+    LOG(INFO) <<"Rank "<<Caffe::mpi_rank()
+      << "    Test net output #" << i << ": " << output_name << " = "
+      << mean_score << loss_msg_stream.str();
+#endif
   }
 }
 
