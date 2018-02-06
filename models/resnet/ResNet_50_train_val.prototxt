@@ -35,7 +35,7 @@ layer {
     }
     data_param {
         source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/test_val_lmdb"
-        batch_size: 16 
+        batch_size: 16
         backend: LMDB
     }
 }
@@ -2635,9 +2635,6 @@ layer {
     top: "acc/top-1"
     name: "acc/top-1"
     type: "Accuracy"
-    include {
-        phase: TEST
-    }
 }
 
 layer {
@@ -2646,9 +2643,6 @@ layer {
     top: "acc/top-5"
     name: "acc/top-5"
     type: "Accuracy"
-    include {
-        phase: TEST
-    }
     accuracy_param {
         top_k: 5
     }
