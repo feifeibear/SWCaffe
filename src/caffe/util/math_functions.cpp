@@ -133,93 +133,24 @@ template void caffe_copy<double>(const int N, const double* X, double* Y);
 
 template <>
 void caffe_scal<float>(const int N, const float alpha, float *X) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(N*sizeof(Dtype));
-      memcpy(p_data,X,sizeof(float)*N);
-      cblas_sscal(N, alpha, p_data, 1);
-#endif
-    if(N > MIN_SIZE)
-      sw_sscal_f(X,alpha, X,N);
-    else
-      cblas_sscal(N, alpha, X, 1);
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<N;i++){
-        if(fabs(X[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",X[i],p_data[i]);
-        }
-        dSum1 += X[i];
-        dSum2 += p_data[i];
-      }
-      printf("axpby dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
     cblas_sscal(N, alpha, X, 1);
-#endif
 }
 
 template <>
 void caffe_scal<double>(const int N, const double alpha, double *X) {
-#ifdef USE_SWBASE1
-    if(N > MIN_SIZE)
-      sw_sscal_d(X,alpha, X,N);
-    else
-      cblas_dscal(N, alpha, X, 1);
-      
-#else
     cblas_dscal(N, alpha, X, 1);
-#endif
 }
  
 template <>
 void caffe_cpu_axpby<float>(const int N, const float alpha, const float* X,
                             const float beta, float* Y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(N*sizeof(Dtype));
-      cblas_saxpby(N, alpha, X, 1, beta, p_data, 1);
-#endif
-    if(N > MIN_SIZE)
-      sw_axpby_f(alpha, X,beta, Y,N);
-    else
-      cblas_saxpby(N, alpha, X, 1, beta, Y, 1);
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<N;i++){
-        if(fabs(Y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",Y[i],p_data[i]);
-        }
-        dSum1 += Y[i];
-        dSum2 += p_data[i];
-      }
-      printf("axpby dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
     cblas_saxpby(N, alpha, X, 1, beta, Y, 1);
-#endif
 }
 
 template <>
 void caffe_cpu_axpby<double>(const int N, const double alpha, const double* X,
                              const double beta, double* Y) {
-#ifdef USE_SWBASE1
-    if(N > MIN_SIZE)
-      sw_axpby_d(alpha, X, beta, Y,N);
-    else
-      cblas_daxpby(N, alpha, X, 1, beta, Y, 1);
-      
-#else
     cblas_daxpby(N, alpha, X, 1, beta, Y, 1);
-#endif
 }
 
 template <>
@@ -235,53 +166,23 @@ void caffe_add<float>(const int n, const float* a, const float* b,
 template <>
 void caffe_add<double>(const int n, const double* a, const double* b,
     double* y) {
-    vdAdd(n, a, b, y);
+#ifdef USE_SWBASE 
+  sw_add_d(a,b,y,n);
+#else
+  vdAdd(n, a, b, y);
+#endif
 }
 
 template <>
 void caffe_sub<float>(const int n, const float* a, const float* b,
     float* y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(n*sizeof(Dtype));
-      vsSub(n, a, b, p_data);
-#endif
-    if(n > MIN_SIZE)
-      sw_sub_f(a,b,y,n);
-    else
-      vsSub(n, a, b, y);
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("sub dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
     vsSub(n, a, b, y);
-#endif
 }
 
 template <>
 void caffe_sub<double>(const int n, const double* a, const double* b,
     double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_sub_d(a,b,y,n);
-    else
-      vdSub(n, a, b, y);
-      
-#else
     vdSub(n, a, b, y);
-#endif
 }
 
 template <>
@@ -380,47 +281,13 @@ void caffe_div<double>(const int n, const double* a, const double* b,
 template <>
 void caffe_powx<float>(const int n, const float* a, const float b,
     float* y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      float * p_data = (float*)malloc(n*sizeof(float));
-      vsPowx(n, a, b, p_data);
-#endif
-    if(n > MIN_SIZE)
-      sw_pow_f(a,b,y,n);
-    else
-      vsPowx(n, a, b, y);
-      
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("powx dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-#else
     vsPowx(n, a, b, y);
-#endif
 }
 
 template <>
 void caffe_powx<double>(const int n, const double* a, const double b,
     double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_pow_d(a,b,y,n);
-    else
-      vdPowx(n, a, b, y);
-      
-#else
     vdPowx(n, a, b, y);
-#endif
 }
 
 template <>
@@ -515,134 +382,32 @@ void caffe_sqrt<double>(const int n, const double* a, double* y) {
 
 template <>
 void caffe_exp<float>(const int n, const float* a, float* y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(n*sizeof(Dtype));
-      vsExp(n, a, p_data);
-#endif
-    if(n > MIN_SIZE)
-      sw_exp_f(a,y,n);
-    else
-      vsExp(n, a, y);
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("exp dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
     vsExp(n, a, y);
-#endif
 }
 
 template <>
 void caffe_exp<double>(const int n, const double* a, double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_exp_d(a,y,n);
-    else
-      vdExp(n, a, y);
-      
-#else
     vdExp(n, a, y);
-#endif
 }
 
 template <>
 void caffe_log<float>(const int n, const float* a, float* y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(n*sizeof(Dtype));
-      vsLn(n, a, p_data);
-#endif
-    if(n > MIN_SIZE)
-      sw_log_f(a,y,n);
-    else
-      vsLn(n, a, y);
-#ifdef DEBUG_SWBASE
-      double dSum1=0,dSum2=0;
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("log dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
     vsLn(n, a, y);
-#endif
 }
 
 template <>
 void caffe_log<double>(const int n, const double* a, double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_log_d(a,y,n);
-    else
-      vdLn(n, a, y);
-      
-#else
     vdLn(n, a, y);
-#endif
 }
 
 template <>
 void caffe_abs<float>(const int n, const float* a, float* y) {
-#ifdef USE_SWBASE1
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(n*sizeof(Dtype));
-      vsLn(n, a, p_data);
-      vsAbs(n, a, p_data);
-#endif
-    if(n > MIN_SIZE)
-      sw_abs_f(a,y,n);
-    else
-      vsAbs(n, a, y);
-#ifdef DEBUG_SWBASE
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10)
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("abs dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-      
-#else
     vsAbs(n, a, y);
-#endif
 }
 
 template <>
 void caffe_abs<double>(const int n, const double* a, double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_abs_d(a,y,n);
-    else
-      vdAbs(n, a, y);
-      
-#else
     vdAbs(n, a, y);
-#endif
 }
 
 unsigned int caffe_rng_rand() {
@@ -780,51 +545,15 @@ double caffe_cpu_asum<double>(const int n, const double* x) {
 template <>
 void caffe_cpu_scale<float>(const int n, const float alpha, const float *x,
                             float* y) {
-#ifdef USE_SWBASE11
-#ifdef DEBUG_SWBASE
-      Dtype * p_data = (Dtype*)malloc(n*sizeof(Dtype));
-      cblas_scopy(n, x, 1, p_data, 1);
-      cblas_sscal(n, alpha, p_data, 1);
-#endif
-    if(n > MIN_SIZE)
-      sw_sscal_f(x,alpha,y,n);
-    else{
-      cblas_scopy(n, x, 1, y, 1);
-      cblas_sscal(n, alpha, y, 1);
-    }
-#ifdef DEBUG_SWBASE
-      int times = 0;
-      for(int i=0;i<n;i++){
-        if(fabs(y[i] - p_data[i])>1e-4){
-          if(times++ <10) 
-          printf(" %lf vs %lf \n",y[i],p_data[i]);
-        }
-        dSum1 += y[i];
-        dSum2 += p_data[i];
-      }
-      printf("scale dSum1 = %lf dSum2 =%lf\n",dSum1,dSum2);
-      free(p_data);
-#endif
-#else
   cblas_scopy(n, x, 1, y, 1);
   cblas_sscal(n, alpha, y, 1);
-#endif
 }
 
 template <>
 void caffe_cpu_scale<double>(const int n, const double alpha, const double *x,
                              double* y) {
-#ifdef USE_SWBASE1
-    if(n > MIN_SIZE)
-      sw_sscal_d(x,alpha,y,n);
-    else{
-      cblas_dcopy(n, x, 1, y, 1);
-      cblas_dscal(n, alpha, y, 1);
-    }
-#else
   cblas_dcopy(n, x, 1, y, 1);
   cblas_dscal(n, alpha, y, 1);
-#endif
 }
 
 }  // namespace caffe
