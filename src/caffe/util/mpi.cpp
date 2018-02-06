@@ -135,15 +135,14 @@ int caffe_mpi_reduce<float>( void *sendbuf, void *recvbuf, int count,
         source = (relrank | mask);
         if (source < comm_size) {
           source = (source + root) % comm_size;
-	        MPI_Irecv(tmp_buff,count,MPI_FLOAT,source,tag,comm,&recv_req);
-          MPI_Wait(&recv_req,&status);
+	        MPI_Recv(tmp_buff,count,MPI_FLOAT,source,tag,comm,MPI_STATUS_IGNORE);
           sw_add_f((float*)tmp_buff,(float*)recvbuf,(float*)recvbuf,count);
         }
       }
       else {
          //I've received all that I'm going to.  Send my result to my parent 
          source = ((relrank & (~ mask)) + root) % comm_size;
-	       MPI_Isend(recvbuf, count,MPI_FLOAT, source, tag,comm,&send_req);
+         MPI_Send(recvbuf, count,MPI_FLOAT, source, tag,comm);
          break;
       }
       mask = mask << 1;
