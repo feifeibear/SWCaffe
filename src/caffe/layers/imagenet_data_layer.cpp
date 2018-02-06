@@ -69,8 +69,7 @@ template <typename Dtype>
 void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top){
 #ifdef DATAPREFETCH
-  if (this->layer_param_.phase() == TRAIN){
-    CHECK(batchidx<nbatch);
+  if (this->layer_param_.phase() == TRAIN && !Caffe::mpi_root_solver()){
     // Reshape to loaded data.
     top[0]->ReshapeLike(fetch_ptr_[batchidx]->data_);
     top[0]->set_cpu_data(fetch_ptr_[batchidx]->data_.mutable_cpu_data());
@@ -153,17 +152,16 @@ void IMAGENETDataLayer<Dtype>::pre_load_batch(int num_batch) {
   int size = Caffe::mpi_count()-1;
   int rank = Caffe::mpi_rank()-1;
   if(rank == -1){
-    int total_samples = 0;
-    cursor_->SeekToFirst();
-    while(cursor_->valid()){
-      total_samples ++;
-      cursor_->Next();
-    }
-    DLOG(INFO) <<" MPIRoot : "<< " Total number of samples is "<<total_samples
-      <<". Number of workers is "<<size
-      <<". Number of prefetched batch is "<<total_samples/(batch_size*size)
-      <<". (Max at "<<num_batch<<").";
-
+    //int total_samples = 0;
+    //cursor_->SeekToFirst();
+    //while(cursor_->valid()){
+      //total_samples ++;
+      //cursor_->Next();
+    //}
+    //DLOG(INFO) <<" MPIRoot : "<< " Total number of samples is "<<total_samples
+      //<<". Number of workers is "<<size
+      //<<". Number of prefetched batch is "<<total_samples/(batch_size*size)
+      //<<". (Max at "<<num_batch<<").";
     return;
   }
   offset_ = 0;

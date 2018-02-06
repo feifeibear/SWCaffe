@@ -692,12 +692,13 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
 
 #ifdef DEBUG_VERBOSE_2
       gettimeofday(&te, NULL);
-      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+      double backward_time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
       //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
-      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
-        << i << "  " << layer_names_[i]
-        << " Backward cost time: " << time << "s";
+      //LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank " << Caffe::mpi_rank() << " : layer"
+        //<< i << "  " << layer_names_[i]
+        //<< " Backward cost time: " << time << "s";
 #endif
+
 
       std::string layer_type = layers_[i]->type();
       if ((layer_type == std::string("InnerProduct")) ||
@@ -731,6 +732,15 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
           //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
         }
       }
+#ifdef DEBUG_VERBOSE_2
+      gettimeofday(&te, NULL);
+      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
+      //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
+      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
+        << i << "  " << layer_names_[i]
+        << " Backward cost time: " << backward_time << "s"
+        << " Reduce cost time: " << time - backward_time << "s";
+#endif
     }
     else {
 #ifdef DEBUG_VERBOSE_2
