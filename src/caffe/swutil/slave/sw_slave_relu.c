@@ -114,8 +114,8 @@ void relu_slave_backward_d(ReluDiffData* param)
   int count, start, local_count;
   int id = athread_get_id(-1);
   count = param->count;
-  local_count = count/64 + (id<(count%64));
-  start = id*(count/64)+id*(id<(count%64));
+  local_count = count/SPNUM + (id<(count%SPNUM));
+  start = id*(count/SPNUM) + (id<(count%SPNUM)?id:(count%SPNUM));
   int local_inout_size = local_count/SIMDSIZE;
   SIMDType* local_input = (SIMDType*) ldm_malloc(sizeof(Type)*__RELU_BUFFSIZE_2);
   SIMDType* local_diff = (SIMDType*) ldm_malloc(sizeof(Type)*__RELU_BUFFSIZE_2);
@@ -219,8 +219,8 @@ void relu_slave_forward_f(ReluData* param)
   int count, start, local_count;
   int id = athread_get_id(-1);
   count = param->count;
-  local_count = count/64 + (id<(count%64));
-  start = id*(count/64)+id*(id<(count%64));
+  local_count = count/SPNUM + (id<(count%SPNUM));
+  start = id*(count/SPNUM) + (id<(count%SPNUM)?id:(count%SPNUM));
   int local_inout_size = local_count/SIMDSIZE;
   SIMDType* local_input = (SIMDType*) ldm_malloc(sizeof(Type)*__RELU_BUFFSIZE_1);
   SIMDType* local_output= (SIMDType*) ldm_malloc(sizeof(Type)*__RELU_BUFFSIZE_1);
@@ -296,8 +296,8 @@ void relu_slave_backward_f(ReluDiffData* param)
   int count, start, end, local_count;
   int id = athread_get_id(-1);
   count = param->count;
-  local_count = count/64 + (id<(count%64));
-  start = id*(count/64)+id*(id<(count%64));
+  local_count = count/SPNUM + (id<(count%SPNUM));
+  start = id*(count/SPNUM) + (id<(count%SPNUM)?id:(count%SPNUM));
   end = start+local_count;
   int local_inout_size = local_count/SIMDSIZE;
   SIMDType* local_input = (SIMDType*) ldm_malloc(sizeof(Type)*__RELU_BUFFSIZE_2);

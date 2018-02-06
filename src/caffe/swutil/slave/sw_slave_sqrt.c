@@ -95,7 +95,7 @@ void sw_slave_sqrt_f(SqrtPara *para) {
   int id = athread_get_id(-1);
   int count = para->count;
   int local_count = count/SPNUM + (id<(count%SPNUM));
-  int start = id*(count/SPNUM) + id*(id<(count%SPNUM));
+  int start = id*(count/SPNUM) + (id<(count%SPNUM)?id:(count%SPNUM));
   float * src_ptr = &(((float *)para->src)[start]);
   float * dst_ptr = &(((float *)para->dst)[start]);
   volatile int replyget=0, replyput=0;
