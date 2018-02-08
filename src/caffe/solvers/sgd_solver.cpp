@@ -130,13 +130,33 @@ void SGDSolver<Dtype>::ApplyUpdate() {
         << ", lr = " << rate;
   }
   ClipGradients();
-  for (int param_id = 0; param_id < this->net_->learnable_params().size();
-       ++param_id) {
 #ifdef DEBUG_VERBOSE_7
+  if(this->last_cpu_diff.size() != this->net_->learnable_params().size()){
+    this->last_cpu_diff.clear();
+    for (int param_id = 0; param_id < this->net_->learnable_params().size(); param_id++){
+      shared_ptr< Blob<Dtype> > blob_ptr(new Blob<Dtype>());
+      blob_ptr->CopyFrom(*this->net_->learnable_params()[param_id], true, true);
+      this->last_cpu_diff.push_back(blob_ptr);
+    }
+  }
+  
+
+  Dtype dv1=0;
+  Dtype dv2=0;
+  for (int param_id = 0; param_id < this->net_->learnable_params().size(); param_id++){
+    Dtype tdv1 = rate*caffe_cpu_dot(this->net_->learnable_params()[param_id]->count(), 
+                              this->net_->learnable_params()[param_id]->cpu_diff(),
+                              this->net_->learnable_params()[param_id]->cpu_diff());
+    Dtype tdv2 = rate*caffe_cpu_dot(this->net_->learnable_params()[param_id]->count(), 
+                              this->net_->learnable_params()[param_id]->cpu_diff(),
+                              last_cpu_diff[param_id]->cpu_diff());
+    dv1+=tdv1;
+    dv2+=tdv2;
     if((this->net_->learnable_params()[param_id])->count() > 4){
       LOG(INFO) << "MPIRoot: In ApplyUpdate param "<< param_id
         << " param size "<<(this->net_->learnable_params()[param_id])->count()
-        << " param examples: "
+        <<", dv1="<<tdv1
+        << ", param examples: "
         << ((this->net_->learnable_params()[param_id])->cpu_data())[0]<<" "
         << ((this->net_->learnable_params()[param_id])->cpu_data())[1]<<" "
         << ((this->net_->learnable_params()[param_id])->cpu_data())[2]<<" "
@@ -155,7 +175,13 @@ void SGDSolver<Dtype>::ApplyUpdate() {
         << " paramdiff examples: "
         << ((this->net_->learnable_params()[param_id])->cpu_diff())[0]<<" ";
     }
+    last_cpu_diff[param_id]->CopyFrom(*this->net_->learnable_params()[param_id], true, true);
+  }
+  LOG(INFO) << "MPIRoot: In ApplyUpdate " << " dv2="<< dv2 <<", dv1="<<dv1;
+
 #endif
+  for (int param_id = 0; param_id < this->net_->learnable_params().size();
+       ++param_id) {
     Normalize(param_id);
     Regularize(param_id);
     ComputeUpdateValue(param_id, rate);
@@ -164,13 +190,8 @@ void SGDSolver<Dtype>::ApplyUpdate() {
 #else
   Dtype rate = GetLearningRate();
   if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
-#ifdef SWMPI
-    LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Iteration " << this->iter_
-        << ", lr = " << rate;
-#else
     LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << this->iter_
         << ", lr = " << rate;
-#endif
   }
   ClipGradients();
   for (int param_id = 0; param_id < this->net_->learnable_params().size();

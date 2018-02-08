@@ -42,6 +42,11 @@ class SGDSolver : public Solver<Dtype> {
   //   of gradients/updates and is not needed in snapshots
   vector<shared_ptr<Blob<Dtype> > > history_, update_, temp_;
 
+  // for DEBUG_VERBOSE_7
+#ifdef DEBUG_VERBOSE_7
+  vector<shared_ptr<Blob<Dtype> > > last_cpu_diff;
+#endif
+
   DISABLE_COPY_AND_ASSIGN(SGDSolver);
 };
 

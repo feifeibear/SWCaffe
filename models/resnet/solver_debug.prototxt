@@ -7,8 +7,10 @@ display:  1
 
 max_iter: 1800
 
-lr_policy: "fixed"
-base_lr:  0.05
+lr_policy: "step"
+base_lr:  0.00001
+gamma:0.5
+stepsize: 20 
 momentum: 0.9
 weight_decay: 0
 

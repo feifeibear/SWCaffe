@@ -46,7 +46,7 @@ FLAGS += -DUSE_SWSOFTMAX
 #address and length of mpibuff
 #FLAGS += 	-DDEBUG_VERBOSE_6
 #in sgd solvers data value print
-#FLAGS +=  -DDEBUG_VERBOSE_7
+FLAGS +=  -DDEBUG_VERBOSE_7
 #debug SW4CG
 #FLAGS += -DDEBUG_VERBOSE_8
 #FLAGS += -DDEBUG_SYNC_4CG

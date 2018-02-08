@@ -60,7 +60,7 @@ void IMAGENETDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
   if (this->layer_param_.phase() == TRAIN && !Caffe::mpi_root_solver()){
     nbatch = 0;
     batchidx = 0;
-    pre_load_batch(20);
+    pre_load_batch(1);
   }
 #endif
 }
