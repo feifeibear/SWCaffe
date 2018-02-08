@@ -596,7 +596,7 @@ void Solver<Dtype>::Test(const int test_net_id) {
   LOG(INFO) << "Iteration " << iter_
             << ", Testing net (#" << test_net_id << ")";
 #else
-  LOG(INFO) << "Rank "<< Caffe::mpi_rank() 
+  LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank "<< Caffe::mpi_rank() 
     <<" : Iteration " << iter_
     << ", Testing net (#" << test_net_id << ")";
 #endif

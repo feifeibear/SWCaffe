@@ -27,12 +27,13 @@ FLAGS +=  -DSWMPITEST
 FLAGS += -DSW_TRANS
 #use sw based basic functions in src/caffe/util/math_functions.cpp
 FLAGS += -DUSE_SWBASE
-#FLAGS += -DDEBUG_SWBASE
 FLAGS += -DUSE_SWPOOL
 FLAGS += -DUSE_SWRELU
 FLAGS += -DUSE_SWIM2COL
 FLAGS += -DUSE_SWPRELU
 FLAGS += -DUSE_SWSOFTMAX
+
+#FLAGS += -DDEBUG_SWBASE
 #FLAGS += -DDEBUG_PRINT_TIME
 
 #debug flags

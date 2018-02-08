@@ -911,10 +911,14 @@ void Net<Dtype>::ShareTrainedLayersWith(const Net* other) {
       ++target_layer_id;
     }
     if (target_layer_id == layer_names_.size()) {
+#ifdef DEBUG_VERBOSE_2
       LOG(INFO) << "Ignoring source layer " << source_layer_name;
+#endif
       continue;
     }
+#ifdef DEBUG_VERBOSE_2
     DLOG(INFO) << "Copying source layer " << source_layer_name;
+#endif
     vector<shared_ptr<Blob<Dtype> > >& target_blobs =
         layers_[target_layer_id]->blobs();
     CHECK_EQ(target_blobs.size(), source_layer->blobs().size())
@@ -1329,10 +1333,14 @@ void Net<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
       ++target_layer_id;
     }
     if (target_layer_id == layer_names_.size()) {
+#ifdef DEBUG_VERBOSE_2
       LOG(INFO) << "Ignoring source layer " << source_layer_name;
+#endif
       continue;
     }
+#ifdef DEBUG_VERBOSE_2
     DLOG(INFO) << "Copying source layer " << source_layer_name;
+#endif
     vector<shared_ptr<Blob<Dtype> > >& target_blobs =
         layers_[target_layer_id]->blobs();
     CHECK_EQ(target_blobs.size(), source_layer.blobs_size())
