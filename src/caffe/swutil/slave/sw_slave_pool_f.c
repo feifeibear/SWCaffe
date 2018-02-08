@@ -22,7 +22,6 @@ typedef struct _tagSlavePoolingParam_f
 }SlavePoolingParam_f;
 
 
-
 __thread_local_fix  dma_desc pool_dmaget2,dmaputmask,pool_dmaput2;
 void poolingBackwardMax_f(SlavePoolingParam_f *pParam)
 {
@@ -541,7 +540,7 @@ void poolingBackwardAvg_f(SlavePoolingParam_f *pParam)
 	use_top_mask = pParam->use_top_mask;
 	
 	if(myid >= nMaxThreadsNum) return;	
-	dma_desc pool_dmaget2,pool_dmaput2;
+	//dma_desc pool_dmaget2,pool_dmaput2;
 	dma_set_op(&pool_dmaget2, DMA_GET);
 	dma_set_mode(&pool_dmaget2, PE_MODE);
 	dma_set_reply(&pool_dmaget2, &getreply);
@@ -1291,7 +1290,7 @@ void poolingForwardAvg_f(SlavePoolingParam_f *pParam)
 	use_top_mask = pParam->use_top_mask;
 	
 	if(myid >= nMaxThreadsNum) return;	
-	dma_desc pool_dmaget2,pool_dmaput2;
+	//dma_desc pool_dmaget2,pool_dmaput2;
 	dma_set_op(&pool_dmaget2, DMA_GET);
 	dma_set_mode(&pool_dmaget2, PE_MODE);
 	dma_set_reply(&pool_dmaget2, &getreply);
