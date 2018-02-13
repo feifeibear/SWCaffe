@@ -700,8 +700,86 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
       struct timeval ts, te;
       gettimeofday(&ts, NULL);
 #endif
+#ifdef DEBUG_VERBOSE_7
+      if(i==13 || i == 11 || i == 12){
+        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i 
+          <<" name: " << layers_[i]->type() 
+          << " Before backward "
+          << ", top data examples: "
+          << top_vecs_[i][0]->cpu_data()[0]<<" "
+          << top_vecs_[i][0]->cpu_data()[1]<<" "
+          << top_vecs_[i][0]->cpu_data()[2]<<" "
+          << top_vecs_[i][0]->cpu_data()[3]<<" "
+          << ", top diff examples: "
+          << top_vecs_[i][0]->cpu_diff()[0]<<" "
+          << top_vecs_[i][0]->cpu_diff()[1]<<" "
+          << top_vecs_[i][0]->cpu_diff()[2]<<" "
+          << top_vecs_[i][0]->cpu_diff()[3]<<" "
+          << ", bottom data examples: "
+          << bottom_vecs_[i][0]->cpu_data()[0]<<" "
+          << bottom_vecs_[i][0]->cpu_data()[1]<<" "
+          << bottom_vecs_[i][0]->cpu_data()[2]<<" "
+          << bottom_vecs_[i][0]->cpu_data()[3]<<" "
+          << ", bottom diff examples: "
+          << bottom_vecs_[i][0]->cpu_diff()[0]<<" "
+          << bottom_vecs_[i][0]->cpu_diff()[1]<<" "
+          << bottom_vecs_[i][0]->cpu_diff()[2]<<" "
+          << bottom_vecs_[i][0]->cpu_diff()[3]<<" "
+          << ", weight data examples: "
+          << layers_[i]->blobs()[0]->cpu_data()[0]<<" "
+          << layers_[i]->blobs()[0]->cpu_data()[1]<<" "
+          << layers_[i]->blobs()[0]->cpu_data()[2]<<" "
+          << layers_[i]->blobs()[0]->cpu_data()[3]<<" "
+          << ", weight diff examples: "
+          << layers_[i]->blobs()[0]->cpu_diff()[0]<<" "
+          << layers_[i]->blobs()[0]->cpu_diff()[1]<<" "
+          << layers_[i]->blobs()[0]->cpu_diff()[2]<<" "
+          << layers_[i]->blobs()[0]->cpu_diff()[3]<<" "
+          ;
+          
+      }
+#endif
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+#ifdef DEBUG_VERBOSE_7
+      if(i==13 || i == 11 || i == 12){
+        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i 
+          <<" name: " << layers_[i]->type() 
+          << " After backward "
+          << ", top data examples: "
+          << top_vecs_[i][0]->cpu_data()[0]<<" "
+          << top_vecs_[i][0]->cpu_data()[1]<<" "
+          << top_vecs_[i][0]->cpu_data()[2]<<" "
+          << top_vecs_[i][0]->cpu_data()[3]<<" "
+          << ", top diff examples: "
+          << top_vecs_[i][0]->cpu_diff()[0]<<" "
+          << top_vecs_[i][0]->cpu_diff()[1]<<" "
+          << top_vecs_[i][0]->cpu_diff()[2]<<" "
+          << top_vecs_[i][0]->cpu_diff()[3]<<" "
+          << ", bottom data examples: "
+          << bottom_vecs_[i][0]->cpu_data()[0]<<" "
+          << bottom_vecs_[i][0]->cpu_data()[1]<<" "
+          << bottom_vecs_[i][0]->cpu_data()[2]<<" "
+          << bottom_vecs_[i][0]->cpu_data()[3]<<" "
+          << ", bottom diff examples: "
+          << bottom_vecs_[i][0]->cpu_diff()[0]<<" "
+          << bottom_vecs_[i][0]->cpu_diff()[1]<<" "
+          << bottom_vecs_[i][0]->cpu_diff()[2]<<" "
+          << bottom_vecs_[i][0]->cpu_diff()[3]<<" "
+          << ", weight data examples: "
+          << layers_[i]->blobs()[0]->cpu_data()[0]<<" "
+          << layers_[i]->blobs()[0]->cpu_data()[1]<<" "
+          << layers_[i]->blobs()[0]->cpu_data()[2]<<" "
+          << layers_[i]->blobs()[0]->cpu_data()[3]<<" "
+          << ", weight diff examples: "
+          << layers_[i]->blobs()[0]->cpu_diff()[0]<<" "
+          << layers_[i]->blobs()[0]->cpu_diff()[1]<<" "
+          << layers_[i]->blobs()[0]->cpu_diff()[2]<<" "
+          << layers_[i]->blobs()[0]->cpu_diff()[3]<<" "
+          ;
+          
+      }
+#endif
       if (debug_info_) { BackwardDebugInfo(i);}
 
 #ifdef DEBUG_VERBOSE_2

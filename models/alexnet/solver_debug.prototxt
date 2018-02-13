@@ -1,7 +1,7 @@
 net: "models/alexnet/train_val_debug.prototxt"
 
 test_iter: 1 	
-test_interval: 8 
+test_interval: 100
 test_initialization: false
 
 display:  1
@@ -9,13 +9,13 @@ display:  1
 max_iter: 1600
 
 lr_policy: "step"
-gamma:0.1
-stepsize: 4
-base_lr:  0.001
-momentum: 0.9
-weight_decay: 0.0005
+stepsize: 50
+gamma:0.5
+base_lr:  0.1
+momentum: 0
+weight_decay: 0
 
-snapshot: 16 
+snapshot: 1600 
 snapshot_prefix: "models/alexnet/sw_alexnetbn_debug"
 snapshot_after_train: false
 

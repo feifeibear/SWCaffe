@@ -10,7 +10,7 @@ layer {
     transform_param {
        mean_file: "/home/export/online1/swyf/swdnn/imagenet_lmdb/imagenet_mean.binaryproto"
        mirror: true
-       crop_size: 227
+       crop_size: 224
        scale: 0.00390625
     }
     data_param {
@@ -30,7 +30,7 @@ layer {
     transform_param {
        mean_file: "/home/export/online1/swyf/swdnn/imagenet_lmdb/imagenet_mean.binaryproto"
        mirror: false
-       crop_size: 227
+       crop_size: 224
        scale: 0.00390625
     }
     data_param {

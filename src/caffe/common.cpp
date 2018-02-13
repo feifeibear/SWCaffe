@@ -27,9 +27,12 @@ int64_t cluster_seedgen(void) {
     fclose(f);
     return seed;
   }
+#ifdef SWMPI
 
+#else
   LOG(INFO) << "System entropy source not available, "
               "using fallback algorithm to generate seed instead.";
+#endif
   if (f)
     fclose(f);
 
