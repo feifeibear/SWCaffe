@@ -148,19 +148,25 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     // Initialize
     if (use_top_mask) {
       top_mask = top[1]->mutable_cpu_data();
+#ifndef USE_SWPOOL
       caffe_set(top_count, Dtype(-1), top_mask);  // ---!!
+#endif
     } else {
       mask = max_idx_.mutable_cpu_data();
+#ifndef USE_SWPOOL
       caffe_set(top_count, -1, mask);  // ---!!
+#endif
     }
+#ifndef USE_SWPOOL
     caffe_set(top_count, Dtype(-FLT_MAX), top_data);  // ---!!
+#endif
 		
     // The main loop
 #ifdef USE_SWPOOL
   if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0)				
 	{
     //printf("Enter Pool Forward_cpu\n");
-    if(sizeof(Dtype) == sizeof(double))
+    if(typeid(Dtype) == typeid(double))
 		   pooling_forward_max_d(bottom[0]->num(),channels_,(double*)top_data,(const double*)bottom_data,(int*)mask,(double*)top_mask,bottom[0]->offset(0, 1),
 				top[0]->offset(0, 1),top.size() - 1,pooled_height_, pooled_width_, stride_h_,
 				stride_w_, pad_h_, pad_w_, kernel_h_, kernel_w_, height_, width_);
@@ -264,7 +270,7 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 #ifdef USE_SWPOOL
   if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0)
 	{
-		if(sizeof(Dtype) == sizeof(double))	
+		if(typeid(Dtype) == typeid(double))	
 		    pooling_forward_avg_d(bottom[0]->num(),channels_,(double*)top_data,(const double*)bottom_data,bottom[0]->offset(0, 1),
 				top[0]->offset(0, 1),pooled_height_, pooled_width_, stride_h_,
 				stride_w_, pad_h_, pad_w_, kernel_h_, kernel_w_, height_, width_);
@@ -357,7 +363,9 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
   // Different pooling methods. We explicitly do the switch outside the for
   // loop to save time, although this results in more codes.
+#ifndef USE_SWPOOL
   caffe_set(bottom[0]->count(), Dtype(0), bottom_diff);  // ---!!
+#endif
   // We'll output the mask to top[1] if it's of size >1.
   const bool use_top_mask = top.size() > 1;
   const int* mask = NULL;  // suppress warnings about uninitialized variables
@@ -380,8 +388,8 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   if(pooling_judge_condition(top[0]->num(),channels_,pooled_height_, pooled_width_) >0 )
 	{
 		//printf("Enter Pool Backward_cpu\n");
-		if(	sizeof(Dtype) == sizeof(double))	
-		   pooling_backward_max_d(top[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,(const int*)mask,(const double*)top_mask,
+		if(	typeid(Dtype) == typeid(double))	
+		        pooling_backward_max_d(top[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,(const int*)mask,(const double*)top_mask,
 				bottom[0]->offset(0, 1),top[0]->offset(0, 1),top.size() - 1,pooled_height_, pooled_width_, stride_h_,
 				stride_w_, pad_h_, pad_w_, kernel_h_, kernel_w_, height_, width_);	 
         else
@@ -451,14 +459,14 @@ void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   case PoolingParameter_PoolMethod_AVE:
     // The main loop 
 #ifdef USE_SWPOOL
-  if(pooling_judge_condition(bottom[0]->num(),channels_,pooled_height_, pooled_width_) >0)				
+  if(pooling_judge_condition(top[0]->num(),channels_,pooled_height_, pooled_width_) >0)				
 	{
-		if(sizeof(Dtype) == sizeof(double))
-		    pooling_backward_avg_d(bottom[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,bottom[0]->offset(0, 1),
+		if(typeid(Dtype) == typeid(double))
+		  pooling_backward_avg_d(top[0]->num(),channels_,(const double*)top_diff,(double*)bottom_diff,bottom[0]->offset(0, 1),
 				top[0]->offset(0, 1),pooled_height_, pooled_width_, stride_h_,
 				stride_w_, pad_h_, pad_w_, kernel_h_, kernel_w_, height_, width_);
 		else
-			pooling_backward_avg_f(bottom[0]->num(),channels_,(const float*)top_diff,(float*)bottom_diff,bottom[0]->offset(0, 1),
+			pooling_backward_avg_f(top[0]->num(),channels_,(const float*)top_diff,(float*)bottom_diff,bottom[0]->offset(0, 1),
 				top[0]->offset(0, 1),pooled_height_, pooled_width_, stride_h_,
 				stride_w_, pad_h_, pad_w_, kernel_h_, kernel_w_, height_, width_);
 	}
