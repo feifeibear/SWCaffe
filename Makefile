@@ -12,10 +12,10 @@ FLAGS += 	-DCPU_ONLY
 FLAGS +=  -DUSE_OPENCV
 FLAGS +=  -DUSE_LMDB
 #swcaffe compile flags
-FLAGS += 	-DSWMPI
+#FLAGS += 	-DSWMPI
 #support prefetch data for SWMPI
-FLAGS +=  -DDATAPREFETCH
-FLAGS +=  -DSWMPITEST
+#FLAGS +=  -DDATAPREFETCH
+#FLAGS +=  -DSWMPITEST
 #4CG Support
 #only SW4CG mode: 1CG on 4CGs
 #FLAGS += -DSW4CG

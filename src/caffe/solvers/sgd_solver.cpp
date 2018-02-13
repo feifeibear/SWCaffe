@@ -54,6 +54,7 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
     rate = this->param_.base_lr() * (Dtype(1.) /
         (Dtype(1.) + exp(-this->param_.gamma() * (Dtype(this->iter_) -
           Dtype(this->param_.stepsize())))));
+#ifdef SWMPI
   } else if(lr_policy == "warmup") {
     int size = Caffe::mpi_count() - 1;
 #ifdef WARMUP_DEBUG
@@ -78,6 +79,7 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
     }
 #ifdef WARMUP_DEBUG
     LOG(INFO) << this->iter_ << " Iteration, Current Step is " << this->current_step_ <<"learning rate is " << rate;
+#endif
 #endif
   } else {
     LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
@@ -304,6 +306,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
   const vector<float>& net_params_lr = this->net_->params_lr();
   Dtype momentum = this->param_.momentum();
   const string& lr_policy = this->param_.lr_policy();
+#ifdef SWMPI
   if(lr_policy == "warmup" && this->iter_ > 0 && this->iter_ < this->param_.stepsize()) {
     int size = Caffe::mpi_count() - 1;
     Dtype increment = (this->param_.base_lr() * (Dtype)size - this->param_.base_lr()) / (this->param_.stepsize() - 1);
@@ -317,6 +320,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue(int param_id, Dtype rate) {
 #endif
     momentum = momentum * scale_param;
   }
+#endif
   Dtype local_rate = rate * net_params_lr[param_id];
   //Dtype local_rate = rate * GetLocalRate(param_id);
   // Compute the update to history, then copy it to the parameter diff.
