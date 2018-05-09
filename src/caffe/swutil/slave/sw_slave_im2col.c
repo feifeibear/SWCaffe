@@ -6,6 +6,11 @@
 
 __thread_local dma_desc dma_get_im, dma_put_col;
 
+inline void mb()
+{
+    asm volatile("":::"memory");
+    asm volatile("memb");
+}
 typedef struct Im2colPara_st {
   void* data_im;
   void* data_col;
@@ -45,7 +50,7 @@ void sw_im2col_large_stride_f(Im2colPara *para) {
                + (id< ((2*para->pad_h + para->height) * para->channels % 64));
   // start row index of <id> slave core.
   int row_start= -para->pad_h+
-                  id*((2*para->pad_h+para->height)*para->channels/64)
+                  /*id*((2*para->pad_h+para->height)*para->channels/64)*/
                + (id<((2*para->pad_h+para->height)*para->channels%64)?
                   id:((2*para->pad_h+para->height)*para->channels%64));
   int row_end = row_start+local_row_size; // row_start<= ir < row_end)
@@ -117,6 +122,7 @@ void sw_im2col_large_stride_f(Im2colPara *para) {
       // get data by dma
       dma(dma_get_im,(long)(input_ptr+input_row*width+inoff),(long)(local_buffer+pad_w));
       dma_wait(&input_replyget, 1); input_replyget = 0;
+      mb();
 #ifdef PRINT_DEBUGINFO
       if(id==0) printf("dma get end.\n");
 #endif
@@ -140,6 +146,7 @@ void sw_im2col_large_stride_f(Im2colPara *para) {
             (long)(output_ptr+output_row*(output_w*output_h)+output_col+outoff),
             (long)(local_outbuff));
         dma_wait(&replyput, 1); replyput = 0;
+        mb();
 #ifdef PRINT_DEBUGINFO
         if(id==0) printf("dma put end.\n");
 #endif
@@ -250,6 +257,7 @@ void sw_im2col_large_stride_d(Im2colPara *para) {
       // get data by dma
       dma(dma_get_im,(long)(input_ptr+input_row*width+inoff),(long)(local_buffer+pad_w));
       dma_wait(&input_replyget, 1); input_replyget = 0;
+      mb();
 #ifdef PRINT_DEBUGINFO
       if(id==0) printf("dma get end.\n");
 #endif
@@ -273,6 +281,7 @@ void sw_im2col_large_stride_d(Im2colPara *para) {
             (long)(output_ptr+output_row*(output_w*output_h)+output_col+outoff),
             (long)(local_outbuff));
         dma_wait(&replyput, 1); replyput = 0;
+        mb();
 #ifdef PRINT_DEBUGINFO
         if(id==0) printf("dma put end.\n");
 #endif
@@ -390,6 +399,7 @@ void sw_im2col_large_f(Im2colPara *para) {
       // get data by dma
       dma(dma_get_im,(long)(input_ptr+input_row*width+inoff),(long)(local_buffer+pad_w));
       dma_wait(&input_replyget, 1); input_replyget = 0;
+      mb();
 #ifdef PRINT_DEBUGINFO
       if(id==0) printf("dma get end.\n");
 #endif
@@ -414,6 +424,7 @@ void sw_im2col_large_f(Im2colPara *para) {
             (long)(output_ptr+output_row*(output_w*output_h)+output_col+outoff),
             (long)(local_buffer_begin));
         dma_wait(&replyput, 1); replyput = 0;
+        mb();
 #ifdef PRINT_DEBUGINFO
         if(id==0) printf("dma put end.\n");
 #endif
@@ -527,6 +538,7 @@ void sw_im2col_large_d(Im2colPara *para) {
       // get data by dma
       dma(dma_get_im,(long)(input_ptr+input_row*width+inoff),(long)(local_buffer+pad_w));
       dma_wait(&input_replyget, 1); input_replyget = 0;
+      mb();
     }
 
     // put data by dma
@@ -545,6 +557,7 @@ void sw_im2col_large_d(Im2colPara *para) {
             (long)(output_ptr+output_row*(output_w*output_h)+output_col+outoff),
             (long)(local_buffer_begin));
         dma_wait(&replyput, 1); replyput = 0;
+        mb();
       }
     }
 
@@ -664,6 +677,7 @@ void sw_col2im_large_f(Im2colPara *para) {
               (long)(input_ptr+output_row*(output_w*output_h)+output_col+inoff),
               (long)(local_buffer));
           dma_wait(&input_replyget, 1); input_replyget = 0;
+          mb();
           for(ib=0;ib<batch_size;++ib) {
             for(ik=0;ik<output_w;++ik) {
               iout = ik+ic-pad_w;
@@ -679,6 +693,7 @@ void sw_col2im_large_f(Im2colPara *para) {
     dma_set_size(&dma_put_im,batch_size*width*sizeof(Type));
     dma(dma_put_im,(long)(output_ptr+input_row*width+outoff),(long)(local_outbuff));
     dma_wait(&replyput, 1); replyput = 0;
+    mb();
     ir += batch_size;
   }
 
@@ -792,6 +807,7 @@ void sw_col2im_large_d(Im2colPara *para) {
               (long)(input_ptr+output_row*(output_w*output_h)+output_col+inoff),
               (long)(local_buffer));
           dma_wait(&input_replyget, 1); input_replyget = 0;
+          mb();
           for(ib=0;ib<batch_size;++ib) {
             for(ik=0;ik<output_w;++ik) {
               iout = ik+ic-pad_w;
@@ -807,6 +823,7 @@ void sw_col2im_large_d(Im2colPara *para) {
     dma_set_size(&dma_put_im,batch_size*width*sizeof(Type));
     dma(dma_put_im,(long)(output_ptr+input_row*width+outoff),(long)(local_outbuff));
     dma_wait(&replyput, 1); replyput = 0;
+    mb();
     ir += batch_size;
   }
 
@@ -923,6 +940,7 @@ void sw_col2im_large_stride_f(Im2colPara *para) {
               (long)(input_ptr+output_row*(output_w*output_h)+output_col+inoff),
               (long)(local_buffer));
           dma_wait(&input_replyget, 1); input_replyget = 0;
+          mb();
           for(ib=0;ib<batch_size;++ib) {
             for(ik=0;ik<output_w;++ik) {
               iout = ik*stride_w-pad_w+ic;
@@ -938,6 +956,7 @@ void sw_col2im_large_stride_f(Im2colPara *para) {
     dma_set_size(&dma_put_im,batch_size*width*sizeof(Type));
     dma(dma_put_im,(long)(output_ptr+input_row*width+outoff),(long)(local_outbuff));
     dma_wait(&replyput, 1); replyput = 0;
+    mb();
     ir += batch_size;
   }
 
