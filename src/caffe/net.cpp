@@ -592,7 +592,7 @@ Dtype Net<Dtype>::ForwardBackward(){
                 layers_[i]->blobs()[nblobs]->mutable_cpu_data(),
                 layers_[i]->blobs()[nblobs]->count(),
                 MPI_SUM, 0, MPI_COMM_WORLD);
-            caffe_scal<Dtype>(layers_[i]->blobs()[nblobs]->count(), Dtype(Caffe::mpi_count()-1), (Dtype*)layers_[i]->blobs()[nblobs]->mutable_cpu_data());
+            caffe_scal<Dtype>(layers_[i]->blobs()[nblobs]->count(), 1./Dtype(Caffe::mpi_count()-1), (Dtype*)layers_[i]->blobs()[nblobs]->mutable_cpu_data());
           }
           
           
