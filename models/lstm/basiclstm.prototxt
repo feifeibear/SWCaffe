@@ -1,0 +1,118 @@
+name: "BasicLstm"
+
+layer {
+  name: "data"
+  type: "Data"
+  top: "data" 
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  data_param {
+    source: "./examples/mnist/mnist_train_lmdb"
+    batch_size: 256
+    backend: LMDB
+  }
+}
+
+layer{
+  name:"reshape"
+  type:"Reshape"
+  bottom:"label"
+  top:"cont"
+  reshape_param{
+    shape{
+      dim:0
+      dim:-1
+    }
+  }
+
+}
+
+
+layer {
+  name: "lstm1"
+  type: "Lstm"
+  bottom: "data"
+  bottom: "cont"
+  top: "lstm1"
+  lstm_param{
+    num_output: 5
+    clipping_threshold: 0.1
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "lstm2"
+  type: "Lstm"
+  bottom: "lstm1" 
+  bottom: "cont"
+  top: "lstm2"
+  lstm_param{
+    num_output: 4
+    clipping_threshold: 0.1
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+
+layer {
+  name: "predict"
+  type: "InnerProduct"
+  bottom: "lstm2"
+  top: "predict"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 32
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+    axis: 2
+  }
+}
+
+
+
+layer {
+  name: "softmax_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "predict"
+  bottom: "label"
+  top: "loss"
+  loss_weight: 20
+  softmax_param {
+    axis: 2
+  }
+  loss_param {
+    ignore_label: -1
+  }
+}

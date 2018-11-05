@@ -118,6 +118,7 @@ show:
 	echo $(swslavesobjs)
 
 caffe: $(BIN_DIR)/caffe_sw
+lstm: $(BIN_DIR)/lstm_sequence
 convert_imageset: $(BIN_DIR)/convert_imageset_sw
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/caffe $(SWBUILD_DIR)/caffe/util $(SWBUILD_DIR)/caffe/layers \
@@ -133,6 +134,11 @@ $(SWBUILD_DIR)/convert_imageset_sw.o: ./tools/convert_imageset.cpp
 $(BIN_DIR)/caffe_sw:$(allobjs) $(SWBUILD_DIR)/caffe_sw.o
 	$(LINK) $^ $(LDFLAGS) -o $@ $(SWLIBOBJ)
 $(SWBUILD_DIR)/caffe_sw.o: ./tools/caffe.cpp
+	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+
+$(BIN_DIR)/lstm_sequence: $(allobjs) $(SWBUILD_DIR)/lstm_sequence.o
+	$(LINK) $^ $(LDFLAGS) -o $@ $(SWLIBOBJ)
+$(SWBUILD_DIR)/lstm_sequence.o: ./tools/lstm_sequence.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
 
