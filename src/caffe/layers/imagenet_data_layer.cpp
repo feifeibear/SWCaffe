@@ -57,7 +57,7 @@ void IMAGENETDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
     this->fetch_->label_.Reshape(label_shape);
   }
 #ifdef DATAPREFETCH
-  if (this->layer_param_.phase() == TRAIN && !Caffe::mpi_root_solver()){
+  if (this->layer_param_.phase() == TRAIN ){
     nbatch = 0;
     batchidx = 0;
     pre_load_batch(20);
@@ -68,32 +68,6 @@ void IMAGENETDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
 template <typename Dtype>
 void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top){
-#ifdef DATAPREFETCH
-  if (this->layer_param_.phase() == TRAIN && !Caffe::mpi_root_solver()){
-    // Reshape to loaded data.
-    top[0]->ReshapeLike(fetch_ptr_[batchidx]->data_);
-    top[0]->set_cpu_data(fetch_ptr_[batchidx]->data_.mutable_cpu_data());
-    if (this->output_labels_) {
-      // Reshape to loaded labels.
-      top[1]->ReshapeLike(fetch_ptr_[batchidx]->label_);
-      top[1]->set_cpu_data(fetch_ptr_[batchidx]->label_.mutable_cpu_data());
-    }
-    batchidx ++;
-    if(batchidx == nbatch){
-      batchidx=0; 
-    }
-  }else{
-    load_batch(fetch_.get());
-    // Reshape to loaded data.
-    top[0]->ReshapeLike(fetch_->data_);
-    top[0]->set_cpu_data(fetch_->data_.mutable_cpu_data());
-    if (this->output_labels_) {
-      // Reshape to loaded labels.
-      top[1]->ReshapeLike(fetch_->label_);
-      top[1]->set_cpu_data(fetch_->label_.mutable_cpu_data());
-    }
-  }
-#else
   load_batch(fetch_.get());
   // Reshape to loaded data.
   top[0]->ReshapeLike(fetch_->data_);
@@ -103,30 +77,23 @@ void IMAGENETDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     top[1]->ReshapeLike(fetch_->label_);
     top[1]->set_cpu_data(fetch_->label_.mutable_cpu_data());
   }
-#endif
 }
+
 template <typename Dtype>
 bool IMAGENETDataLayer<Dtype>::Skip() {
 #ifdef SWMPI
-  int size = Caffe::mpi_count()-1;
-  int rank = Caffe::mpi_rank()-1;
+  int size = Caffe::mpi_count();
+  int rank = Caffe::mpi_rank();
   bool keep = (offset_ % size) == rank ||
-#ifndef SWMPITEST
-              // In test mode, only rank 0 runs, so avoid skipping
-              this->layer_param_.phase() == TEST ||
-#endif
-              // For the train iteration after optimization in server
-              rank == -1;
-  return !keep;
-
+       this->layer_param_.phase() == TEST;
 #else
   int size = Caffe::solver_count();
   int rank = Caffe::solver_rank();
   bool keep = (offset_ % size) == rank ||
               // In test mode, only rank 0 runs, so avoid skipping
               this->layer_param_.phase() == TEST;
-  return !keep;
 #endif
+  return !keep;
 }
 
 template<typename Dtype>
@@ -144,15 +111,15 @@ void IMAGENETDataLayer<Dtype>::Next() {
 #ifdef DATAPREFETCH
 template<typename Dtype>
 void IMAGENETDataLayer<Dtype>::pre_load_batch(int num_batch) {
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " Entering pre load batch..";
   CPUTimer batch_timer;
   CPUTimer timer;
   const int batch_size = this->layer_param_.data_param().batch_size();
   CHECK(this->transformed_data_.count());
   CHECK(this->fetch_ptr_.size()==0);
 
-  int size = Caffe::mpi_count()-1;
-  int rank = Caffe::mpi_rank()-1;
+  int size = Caffe::mpi_count();
+  int rank = Caffe::mpi_rank();
+
   if(rank == -1){
     //int total_samples = 0;
     //cursor_->SeekToFirst();
@@ -266,13 +233,25 @@ void IMAGENETDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   CHECK(batch->data_.count());
   CHECK(this->transformed_data_.count());
   const int batch_size = this->layer_param_.data_param().batch_size();
-
+//#ifdef SWMPI
+  //LOG(INFO) << "rank " << Caffe::mpi_rank()
+            //<< "batch_size" << batch_size;
+  //int rank = Caffe::mpi_rank();
+  //int size = Caffe::mpi_count();
+  
+  //Datum datum;
+  //for (int item_id = 0; item_id < batch_size; ++item_id){
+    //if (item_id%size != rank)
+      //continue;
+//#else
   Datum datum;
   for (int item_id = 0; item_id < batch_size; ++item_id) {
+//#endif
     timer.Start();
     while (Skip()) {
       Next();
     }
+
     datum.ParseFromString(cursor_->value());
     read_time += timer.MicroSeconds();
 
@@ -303,15 +282,15 @@ void IMAGENETDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   }
   timer.Stop();
   batch_timer.Stop();
-#ifdef SWMPI
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Read time: " << read_time / 1000 << " ms.";
-  DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Transform time: " << trans_time / 1000 << " ms.";
-#else
-  DLOG(INFO) << "Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
-  DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
-  DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
-#endif
+//#ifdef SWMPI
+  //DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  //DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Read time: " << read_time / 1000 << " ms.";
+  //DLOG(INFO) <<" Rank "<< Caffe::mpi_rank()  << " : Transform time: " << trans_time / 1000 << " ms.";
+//#else
+  //DLOG(INFO) << "Fetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  //DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
+  //DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
+//#endif
 }
 
 INSTANTIATE_CLASS(IMAGENETDataLayer);

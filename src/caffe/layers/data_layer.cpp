@@ -58,12 +58,21 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 bool DataLayer<Dtype>::Skip() {
+#ifdef SWMPI
+  int size = Caffe::mpi_count();
+  int rank = Caffe::mpi_rank();
+  bool keep = (offset_ % size) == rank ||
+              // In test mode, only rank 0 runs, so avoid skipping
+              this->layer_param_.phase() == TEST;
+  return !keep;
+#else  
   int size = Caffe::solver_count();
   int rank = Caffe::solver_rank();
   bool keep = (offset_ % size) == rank ||
               // In test mode, only rank 0 runs, so avoid skipping
               this->layer_param_.phase() == TEST;
   return !keep;
+#endif
 }
 
 template<typename Dtype>
@@ -125,9 +134,9 @@ void DataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   }
   timer.Stop();
   batch_timer.Stop();
-  DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
-  DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
-  DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
+  //DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  //DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
+  //DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
 }
 
 INSTANTIATE_CLASS(DataLayer);

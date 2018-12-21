@@ -98,6 +98,34 @@ void Blob<Dtype>::set_cpu_data(Dtype* data) {
   data_->set_cpu_data(data);
 }
 
+// zhuchuanjia 
+template <>
+void Blob<float>::set_cpu_diff(float* diff) {
+  CHECK(diff);
+  // Make sure CPU and GPU sizes remain equal
+  //size_t size = count_ * sizeof(Dtype);
+  //if (data_->size() != size) {
+    //data_.reset(new SyncedMemory(size));
+    //diff_.reset(new SyncedMemory(size));
+  //}
+  //free(diff_->cpu_ptr_);
+  diff_->set_cpu_data(diff);
+}
+
+template <>
+void Blob<double>::set_cpu_diff(float* diff) {
+  CHECK(diff);
+  // Make sure CPU and GPU sizes remain equal
+  //size_t size = count_ * sizeof(Dtype);
+  //if (data_->size() != size) {
+    //data_.reset(new SyncedMemory(size));
+    //diff_.reset(new SyncedMemory(size));
+  //}
+  //free(diff_->cpu_ptr_);
+  diff_->set_cpu_data(diff);
+}
+
+
 template <typename Dtype>
 const Dtype* Blob<Dtype>::gpu_data() const {
   CHECK(data_);

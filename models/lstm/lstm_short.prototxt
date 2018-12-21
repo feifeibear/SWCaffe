@@ -11,7 +11,7 @@ layer {
   name: 'data'
   top: 'data'
   dummy_data_param {
-  shape: { dim: 320 dim: 1}
+  shape: { dim: 320 dim: 128}
   data_filler: { type: 'gaussian'  }
   }
   include { phase: TRAIN }
@@ -22,7 +22,7 @@ layer {
   name: 'clip'
   top: 'clip'
   dummy_data_param {
-  shape: { dim: 320 dim: 1}
+  shape: { dim: 320 dim: 128}
   data_filler: { type: 'gaussian'  }
   }
   include { phase: TRAIN }

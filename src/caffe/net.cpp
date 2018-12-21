@@ -50,14 +50,21 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   // the current NetState.
   NetParameter filtered_param;
   FilterNet(in_param, &filtered_param);
+#ifndef SWMPI
   LOG_IF(INFO, Caffe::root_solver())
       << "Initializing net from parameters: " << std::endl
       << filtered_param.DebugString();
+#else
+  LOG(INFO)
+      <<"rank " << Caffe::mpi_rank() << "Initializing net from parameters: " << std::endl
+      << filtered_param.DebugString();
+#endif
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
   InsertSplits(filtered_param, &param);
   // Basically, build all the layers and set up their connections.
   name_ = param.name();
+  LOG(INFO) << "zcj name_:" << param.name() << std::endl;
   map<string, int> blob_name_to_idx;
   set<string> available_blobs;
   memory_used_ = 0;
@@ -68,6 +75,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   param_id_vecs_.resize(param.layer_size());
   top_id_vecs_.resize(param.layer_size());
   bottom_need_backward_.resize(param.layer_size());
+  LOG(INFO) << "zcj layer_size" << param.layer_size() << std::endl;
 
   for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
     // Inherit phase from net if unset.
@@ -89,6 +97,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     bool need_backward = false;
 
     // Figure out this layer's input and output
+    LOG(INFO) << "zcj layer_param.bottom_size " << layer_param.bottom_size() << std::endl;
     for (int bottom_id = 0; bottom_id < layer_param.bottom_size();
          ++bottom_id) {
       const int blob_id = AppendBottom(param, layer_id, bottom_id,
@@ -97,6 +106,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       need_backward |= blob_need_backward_[blob_id];
     }
     int num_top = layer_param.top_size();
+    LOG(INFO) << "zcj layer_param.top_size " << layer_param.top_size() << std::endl;
     for (int top_id = 0; top_id < num_top; ++top_id) {
       AppendTop(param, layer_id, top_id, &available_blobs, &blob_name_to_idx);
       // Collect Input layer tops as Net inputs.
@@ -139,7 +149,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       //call for pre memory alloc
       top_vecs_[layer_id][top_id]->mutable_cpu_data();
       top_vecs_[layer_id][top_id]->mutable_cpu_diff();
-#endif 
+#endif
       memory_used_ += top_vecs_[layer_id][top_id]->count();
     }
     LOG_IF(INFO, Caffe::root_solver())
@@ -157,11 +167,12 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       layers_[layer_id]->set_param_propagate_down(param_id,
                                                   param_need_backward);
     }
-    if(layers_[layer_id]->type() != std::string("BatchNorm")){
+    // modified by zcj
+    //if(layers_[layer_id]->type() != std::string("BatchNorm")){
       for (int param_id = 0; param_id < num_param_blobs; ++param_id) {
         AppendParam(param, layer_id, param_id);
        }
-    }
+    //}
     // Finally, set the backward flag
     layer_need_backward_.push_back(need_backward);
     if (need_backward) {
@@ -262,14 +273,6 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   }
   ShareWeights();
   debug_info_ = param.debug_info();
-#ifdef SWMPI
-  int mpirsnum = learnable_params_.size() + 1;
-  Caffe::set_mpi_request(mpirsnum);
-  Caffe::set_mpi_status(mpirsnum);
-  Caffe::set_mpi_rs_num(mpirsnum);
-  LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: MPI_Re&Sta num: " << mpirsnum;
-  LOG_IF(INFO, Caffe::mpi_root_solver()) << "MPIRoot: Network initialization done.";
-#endif
   LOG_IF(INFO, Caffe::root_solver()) << "Network initialization done.";
 }
 
@@ -534,83 +537,8 @@ template <typename Dtype>
 Dtype Net<Dtype>::ForwardBackward(){
     Dtype loss = 0;
     Dtype tmploss = 0;
-#ifndef SWMPI
     Forward(&loss);
     Backward();
-#else
-    if (Caffe::mpi_root_solver()) {
-      //caffe_mpi_reduce<Dtype>(MPI_IN_PLACE, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
-      caffe_mpi_reduce<Dtype>(MPI_IN_PLACE, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD);
-//#ifdef DEBUG_VERBOSE_6
-      //LOG(INFO) << "MPIRoot: " <<
-        //" mpirequest[0] " << Caffe::mpi_request(0) <<
-        //" " << *Caffe::mpi_request(0);
-//#endif
-      //MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
-      int markformpi = 0;
-      for (int i = layers_.size() - 1; i >= 0; --i) {
-        std::string layer_type = layers_[i]->type();
-#ifdef DEBUG_VERBOSE_6
-      LOG(INFO) << "MPIRoot: before reduce " <<
-        " layer "<< i <<
-        " layer type "<<layer_type<<
-        " blobs num "<<layers_[i]->blobs().size();
-#endif
-        if ((layer_type == std::string("InnerProduct")) ||
-            layer_type == std::string("Convolution") ||
-            layer_type == std::string("Scale"))
-        {
-          for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
-            markformpi++;
-            //caffe_mpi_ireduce<Dtype>(
-                //MPI_IN_PLACE,
-                //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-                //layers_[i]->blobs()[nblobs]->count(),
-                //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-            caffe_mpi_reduce<Dtype>(
-                MPI_IN_PLACE,
-                layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-                layers_[i]->blobs()[nblobs]->count(),
-                MPI_SUM, 0, MPI_COMM_WORLD);
-#ifdef DEBUG_VERBOSE_6
-            LOG(INFO) << "MPIRoot: layer " << i <<
-              " name: " << layer_type <<
-              " diff "<< nblobs<< " addr " << layers_[i]->blobs()[nblobs]->mutable_cpu_diff() <<
-              " diff "<< nblobs<< " count " << layers_[i]->blobs()[nblobs]->count() <<
-              " mpirequest[" << markformpi <<
-              "] " << Caffe::mpi_request(markformpi) <<
-              " " << *Caffe::mpi_request(markformpi);
-#endif
-            //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
-          }
-        }else if(layer_type == std::string("BatchNorm")){
-          for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
-            caffe_set(layers_[i]->blobs()[nblobs]->count(), Dtype(0),layers_[i]->blobs()[nblobs]->mutable_cpu_data());
-            markformpi++;
-            caffe_mpi_reduce<Dtype>(
-                MPI_IN_PLACE,
-                layers_[i]->blobs()[nblobs]->mutable_cpu_data(),
-                layers_[i]->blobs()[nblobs]->count(),
-                MPI_SUM, 0, MPI_COMM_WORLD);
-            caffe_scal<Dtype>(layers_[i]->blobs()[nblobs]->count(), 1./Dtype(Caffe::mpi_count()-1), (Dtype*)layers_[i]->blobs()[nblobs]->mutable_cpu_data());
-          }
-          
-          
-        }
-      }
-    } else {
-      Forward(&loss);
-      //caffe_mpi_ireduce<Dtype>(&loss, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(0));
-      caffe_mpi_reduce<Dtype>(&loss, &loss, 1, MPI_SUM, 0, MPI_COMM_WORLD);
-#ifdef DEBUG_VERBOSE_6
-      LOG_IF(INFO, Caffe::mpi_rank() == 1) << "Rank 1: " <<
-        " mpirequest[0] " << Caffe::mpi_request(0) <<
-        " " << *(Caffe::mpi_request(0));
-#endif
-      //MPI_Wait(Caffe::mpi_request(0), Caffe::mpi_status(0));
-      Backward();
-    }
-#endif
     return loss;
 }
 
@@ -632,15 +560,9 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
 #ifdef DEBUG_VERBOSE_2
     gettimeofday(&te, NULL);
     double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
-#ifdef SWMPI
-    LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank " << Caffe::mpi_rank() << " : layer"
-      << i << "  " << layer_names_[i]
-      << " Forward cost time: " << time << "s";
-#else
     LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
       << i << "  " << layer_names_[i]
       << " Forward cost time: " << time << "s";
-#endif
 
 #endif
     loss += layer_loss;
@@ -689,187 +611,6 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
   CHECK_GE(end, 0);
   CHECK_LT(start, layers_.size());
 
-#ifdef SWMPI
-  int markformpi = 0;
-  for (int i = start; i >= end; --i) {
-    for (int c = 0; c < before_backward_.size(); ++c) {
-      before_backward_[c]->run(i);
-    }
-    if (layer_need_backward_[i]) {
-#ifdef DEBUG_VERBOSE_2
-      struct timeval ts, te;
-      gettimeofday(&ts, NULL);
-#endif
-#ifdef DEBUG_VERBOSE_7
-      if(i==13 || i == 11 || i == 12){
-        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i 
-          <<" name: " << layers_[i]->type() 
-          << " Before backward "
-          << ", top data examples: "
-          << top_vecs_[i][0]->cpu_data()[0]<<" "
-          << top_vecs_[i][0]->cpu_data()[1]<<" "
-          << top_vecs_[i][0]->cpu_data()[2]<<" "
-          << top_vecs_[i][0]->cpu_data()[3]<<" "
-          << ", top diff examples: "
-          << top_vecs_[i][0]->cpu_diff()[0]<<" "
-          << top_vecs_[i][0]->cpu_diff()[1]<<" "
-          << top_vecs_[i][0]->cpu_diff()[2]<<" "
-          << top_vecs_[i][0]->cpu_diff()[3]<<" "
-          << ", bottom data examples: "
-          << bottom_vecs_[i][0]->cpu_data()[0]<<" "
-          << bottom_vecs_[i][0]->cpu_data()[1]<<" "
-          << bottom_vecs_[i][0]->cpu_data()[2]<<" "
-          << bottom_vecs_[i][0]->cpu_data()[3]<<" "
-          << ", bottom diff examples: "
-          << bottom_vecs_[i][0]->cpu_diff()[0]<<" "
-          << bottom_vecs_[i][0]->cpu_diff()[1]<<" "
-          << bottom_vecs_[i][0]->cpu_diff()[2]<<" "
-          << bottom_vecs_[i][0]->cpu_diff()[3]<<" "
-          << ", weight data examples: "
-          << layers_[i]->blobs()[0]->cpu_data()[0]<<" "
-          << layers_[i]->blobs()[0]->cpu_data()[1]<<" "
-          << layers_[i]->blobs()[0]->cpu_data()[2]<<" "
-          << layers_[i]->blobs()[0]->cpu_data()[3]<<" "
-          << ", weight diff examples: "
-          << layers_[i]->blobs()[0]->cpu_diff()[0]<<" "
-          << layers_[i]->blobs()[0]->cpu_diff()[1]<<" "
-          << layers_[i]->blobs()[0]->cpu_diff()[2]<<" "
-          << layers_[i]->blobs()[0]->cpu_diff()[3]<<" "
-          ;
-          
-      }
-#endif
-      layers_[i]->Backward(
-          top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
-#ifdef DEBUG_VERBOSE_7
-      if(i==13 || i == 11 || i == 12){
-        LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i 
-          <<" name: " << layers_[i]->type() 
-          << " After backward "
-          << ", top data examples: "
-          << top_vecs_[i][0]->cpu_data()[0]<<" "
-          << top_vecs_[i][0]->cpu_data()[1]<<" "
-          << top_vecs_[i][0]->cpu_data()[2]<<" "
-          << top_vecs_[i][0]->cpu_data()[3]<<" "
-          << ", top diff examples: "
-          << top_vecs_[i][0]->cpu_diff()[0]<<" "
-          << top_vecs_[i][0]->cpu_diff()[1]<<" "
-          << top_vecs_[i][0]->cpu_diff()[2]<<" "
-          << top_vecs_[i][0]->cpu_diff()[3]<<" "
-          << ", bottom data examples: "
-          << bottom_vecs_[i][0]->cpu_data()[0]<<" "
-          << bottom_vecs_[i][0]->cpu_data()[1]<<" "
-          << bottom_vecs_[i][0]->cpu_data()[2]<<" "
-          << bottom_vecs_[i][0]->cpu_data()[3]<<" "
-          << ", bottom diff examples: "
-          << bottom_vecs_[i][0]->cpu_diff()[0]<<" "
-          << bottom_vecs_[i][0]->cpu_diff()[1]<<" "
-          << bottom_vecs_[i][0]->cpu_diff()[2]<<" "
-          << bottom_vecs_[i][0]->cpu_diff()[3]<<" "
-          << ", weight data examples: "
-          << layers_[i]->blobs()[0]->cpu_data()[0]<<" "
-          << layers_[i]->blobs()[0]->cpu_data()[1]<<" "
-          << layers_[i]->blobs()[0]->cpu_data()[2]<<" "
-          << layers_[i]->blobs()[0]->cpu_data()[3]<<" "
-          << ", weight diff examples: "
-          << layers_[i]->blobs()[0]->cpu_diff()[0]<<" "
-          << layers_[i]->blobs()[0]->cpu_diff()[1]<<" "
-          << layers_[i]->blobs()[0]->cpu_diff()[2]<<" "
-          << layers_[i]->blobs()[0]->cpu_diff()[3]<<" "
-          ;
-          
-      }
-#endif
-      if (debug_info_) { BackwardDebugInfo(i);}
-
-#ifdef DEBUG_VERBOSE_2
-      gettimeofday(&te, NULL);
-      double backward_time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
-      //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
-      //LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank " << Caffe::mpi_rank() << " : layer"
-        //<< i << "  " << layer_names_[i]
-        //<< " Backward cost time: " << time << "s";
-#endif
-
-
-      std::string layer_type = layers_[i]->type();
-      if ((layer_type == std::string("InnerProduct")) ||
-          layer_type == std::string("Convolution") ||
-          layer_type == std::string("Scale"))
-      {
-        for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
-          markformpi++;
-          //caffe_mpi_ireduce<Dtype>(
-              //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              //layers_[i]->blobs()[nblobs]->count(),
-              //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-          caffe_mpi_reduce<Dtype>(
-              layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              layers_[i]->blobs()[nblobs]->count(),
-              MPI_SUM, 0, MPI_COMM_WORLD);
-#ifdef DEBUG_VERBOSE_6
-          LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
-            " name: " << layer_type <<
-            " diff "<< nblobs <<" addr " <<
-            layers_[i]->blobs()[nblobs]->mutable_cpu_diff() <<
-            " diff "<< nblobs <<" count " <<
-            layers_[i]->blobs()[nblobs]->count() <<
-            " mpirequest[" << markformpi <<
-            "] " << Caffe::mpi_request(markformpi) <<
-            " " << *Caffe::mpi_request(markformpi);
-#endif
-          //MPI_Wait(Caffe::mpi_request(markformpi), Caffe::mpi_status(markformpi));
-        }
-      }else if (layer_type == std::string("BatchNorm")){
-        for(int nblobs = 0; nblobs < layers_[i]->blobs().size(); nblobs++){
-          markformpi++;
-          //caffe_mpi_ireduce<Dtype>(
-              //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              //layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              //layers_[i]->blobs()[nblobs]->count(),
-              //MPI_SUM, 0, MPI_COMM_WORLD, Caffe::mpi_request(markformpi));
-          caffe_mpi_reduce<Dtype>(
-              layers_[i]->blobs()[nblobs]->mutable_cpu_data(),
-              layers_[i]->blobs()[nblobs]->mutable_cpu_diff(),
-              layers_[i]->blobs()[nblobs]->count(),
-              MPI_SUM, 0, MPI_COMM_WORLD);
-#ifdef DEBUG_VERBOSE_6
-          LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1: layer " << i <<
-            " name: " << layer_type <<
-            " diff "<< nblobs <<" addr " <<
-            layers_[i]->blobs()[nblobs]->mutable_cpu_data() <<
-            " diff "<< nblobs <<" count " <<
-            layers_[i]->blobs()[nblobs]->count() <<
-            " mpirequest[" << markformpi <<
-            "] " << Caffe::mpi_request(markformpi) <<
-            " " << *Caffe::mpi_request(markformpi);
-#endif 
-        }
-      }
-#ifdef DEBUG_VERBOSE_2
-      gettimeofday(&te, NULL);
-      double time = (te.tv_sec - ts.tv_sec) + (te.tv_usec - ts.tv_usec) / 1000000.0;
-      //LOG_IF(INFO, Caffe::root_solver()) << "Root: layer"
-      LOG(INFO) << "Rank " << Caffe::mpi_rank() << " : layer"
-        << i << "  " << layer_names_[i]
-        << " Backward cost time: " << backward_time << "s"
-        << " Reduce cost time: " << time - backward_time << "s";
-#endif
-    }
-    else {
-#ifdef DEBUG_VERBOSE_2
-      LOG_IF(INFO, Caffe::mpi_rank()==1) << "Rank 1 : layer" << i <<
-        "  " << layer_names_[i] << " needn't Backward";
-#endif
-    }
-
-    for (int c = 0; c < after_backward_.size(); ++c) {
-      after_backward_[c]->run(i);
-    }
-  }
-#else
   for (int i = start; i >= end; --i) {
     for (int c = 0; c < before_backward_.size(); ++c) {
       before_backward_[c]->run(i);
@@ -895,7 +636,6 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
       }
     }
   }
-#endif
 }
 
 template <typename Dtype>
@@ -1627,6 +1367,7 @@ const shared_ptr<Blob<Dtype> > Net<Dtype>::blob_by_name(
     const string& blob_name) const {
   shared_ptr<Blob<Dtype> > blob_ptr;
   if (has_blob(blob_name)) {
+    printf("debug blob id %d\n",blob_names_index_.find(blob_name)->second);
     blob_ptr = blobs_[blob_names_index_.find(blob_name)->second];
   } else {
     blob_ptr.reset((Blob<Dtype>*)(NULL));

@@ -1,12 +1,12 @@
-net: "models/alexnet/train_val_debug.prototxt"
+net: "train_val_debug.prototxt"
 
-test_iter: 1 	
+test_iter: 100
 test_interval: 100
 test_initialization: false
 
-display:  1
+display:  100
 
-max_iter: 1600
+max_iter:40000 
 
 lr_policy: "step"
 stepsize: 50
@@ -15,8 +15,8 @@ base_lr:  0.1
 momentum: 0
 weight_decay: 0
 
-snapshot: 1600 
-snapshot_prefix: "models/alexnet/sw_alexnetbn_debug"
+snapshot:40000 
+snapshot_prefix: "sw_alexnetbn_debug"
 snapshot_after_train: false
 
 solver_mode: CPU

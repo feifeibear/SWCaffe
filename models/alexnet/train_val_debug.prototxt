@@ -6,7 +6,8 @@ name: "AlexNet_bn"
 
 layer {
   name: "data"
-  type: "IMAGENETData"
+#  type: "IMAGENETData"
+  type:"Data"
   top: "data"
   top: "label"
   transform_param {
@@ -16,8 +17,9 @@ layer {
     scale: 0.00390625
   }
   data_param {
-    source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/test_lmdb"
-    batch_size: 256 
+    source: "/home/export/online1/swyf/swdnn/imagenet_lmdb/train_lmdb"
+#    batch_size: 512 
+    batch_size:64
     backend: LMDB
     #cache:   true
     #shuffle: true 
@@ -26,7 +28,8 @@ layer {
 }
 layer {
   name: "data"
-  type: "IMAGENETData"
+#  type: "IMAGENETData"
+  type:"Data"
   top: "data"
   top: "label"
   transform_param {
@@ -378,7 +381,7 @@ layer {
   bottom: "label"
   top: "accuracy/top-1"
   accuracy_param { top_k: 1 }
-#  include { phase: TEST }
+  include { phase: TEST }
 }
 layer {
   name: "top-5"

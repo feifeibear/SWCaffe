@@ -38,8 +38,13 @@ void LMDB::Open(const string& source, Mode mode) {
     MDB_CHECK(rc);
   }
 #endif
+#ifndef SWMPI
   LOG_IF(INFO, Caffe::root_solver()) << "Opened lmdb " << source;
 }
+#else
+  LOG(INFO) << "rank " << Caffe::mpi_rank() << " Opened lmdb " << source;
+}
+#endif
 
 LMDBCursor* LMDB::NewCursor() {
   MDB_txn* mdb_txn;

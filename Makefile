@@ -1,12 +1,12 @@
 ####COMPILERS####
-LINK 	= 	mpiCC 
-CXX 	=  	mpiCC -host -CG:pjump_all 
+LINK 	= 	mpiCC
+CXX 	=  	mpiCC -host -CG:pjump_all
 SWHCXX = sw5cc.new -host -msimd
 SWSCXX = 	sw5cc.new -slave -CG:pjump_all -msimd
-	
+
 ####FLAGS####
 #basic compile flags
-FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0 
+FLAGS = 	-O2 -OPT:IEEE_arith=2 -OPT:Olimit=0
 #caffe compile flags
 FLAGS += 	-DCPU_ONLY
 FLAGS +=  -DUSE_OPENCV
@@ -32,6 +32,8 @@ FLAGS += -DUSE_SWRELU
 FLAGS += -DUSE_SWIM2COL
 FLAGS += -DUSE_SWPRELU
 FLAGS += -DUSE_SWSOFTMAX
+FLAGS += -DUSE_SWBATCHNORM
+FLAGS += -DUSE_BIAS
 
 #FLAGS += -DDEBUG_SWBASE
 #FLAGS += -DDEBUG_PRINT_TIME
@@ -40,7 +42,7 @@ FLAGS += -DUSE_SWSOFTMAX
 #alogrithm logic and forbackward time
 #FLAGS += 	-DDEBUG_VERBOSE_1
 #time of each layer
-#FLAGS += 	-DDEBUG_VERBOSE_2
+FLAGS += 	-DDEBUG_VERBOSE_2
 #print timer in sw_conv_layer_impl
 #FLAGS += 	-DDEBUG_VERBOSE_3
 #address and length of mpibuff
@@ -53,13 +55,15 @@ FLAGS += -DUSE_SWSOFTMAX
 #debug SWDNN
 #FLAGS += -DDEBUG_VERBOSE_9
 #FLAGS += -DDEBUG_VERBOSE_SWDNN
-FLAGS += -DWARMUP_DEBUG
 
 #basic load flags with sw5cc
 LDFLAGS = -lm_slave 
+# uncomment for 1CG
 LDFLAGS += -allshare
 #include flags
 SWINC_FLAGS=-I./include -I$(THIRD_PARTY_DIR)/include
+SWINC_FLAGS+=-I/home/export/online1/swyf/swdnn/fjr/2018-09/BLAS/include
+SWINC_FLAGS+=-I/home/export/online1/swyf/swdnn/zhaoyi/swDNN-zhaoyi/include
 
 ####DIRS####
 SRC = ./src
@@ -68,10 +72,10 @@ THIRD_PARTY_DIR=../thirdparty
 BIN_DIR=./bin
 
 ####SRC####
-caffesrc=$(wildcard ./src/caffe/*.cpp ./src/caffe/layers/*.cpp ./src/caffe/solvers/*.cpp ./src/caffe/util/*.cpp ./src/glog/*.cpp)
+caffesrc=$(wildcard ./src/caffe/*.cpp ./src/caffe/layers/*.cpp ./src/caffe/solvers/*.cpp ./src/caffe/util/*.cpp ./src/caffe/ringTreeAllreduce/*.cpp ./src/glog/*.cpp) 
 caffepbsrc = ./src/caffe/proto/caffe.pb.cc
-swhostsrc = $(wildcard ./src/caffe/swutil/*.c)
-swslavesrc = $(wildcard ./src/caffe/swutil/slave/*.c)
+swhostsrc = $(wildcard ./src/caffe/swutil/*.c ./src/caffe/ringTreeAllreduce/*.c)
+swslavesrc = $(wildcard ./src/caffe/swutil/slave/*.c ./src/caffe/ringTreeAllreduce/slave/*.c)
 swslavessrc = $(wildcard ./src/caffe/swutil/slave/*.S)
 
 ####OBJS####
@@ -102,6 +106,8 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libboost_atomic.a
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libgflags.a
 #######order matters
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/liblmdb.a
+#SWLIBOBJ+=/home/export/online1/swyf/swdnn/fjr/2018-09/BLAS/swDNNv2.0/build/libswdnnlib.a
+SWLIBOBJ+=/home/export/online1/swyf/swdnn/zhaoyi/swDNN-zhaoyi/build/libswdnnlib.a
 
 ####Rules####
 #debug makefile
@@ -120,11 +126,13 @@ show:
 caffe: $(BIN_DIR)/caffe_sw
 lstm: $(BIN_DIR)/lstm_sequence
 convert_imageset: $(BIN_DIR)/convert_imageset_sw
+ar: $(allobjs)
+	swar rcs ./lib/sw/swcaffe.a $^
 mk:
 	mkdir -p $(SWBUILD_DIR) $(SWBUILD_DIR)/caffe $(SWBUILD_DIR)/caffe/util $(SWBUILD_DIR)/caffe/layers \
 		$(SWBUILD_DIR)/caffe/swutil $(SWBUILD_DIR)/caffe/swutil/slave $(SWBUILD_DIR)/caffe/proto\
-		$(SWBUILD_DIR)/caffe/solvers $(SWBUILD_DIR)/glog  $(BIN_DIR)
-
+		$(SWBUILD_DIR)/caffe/solvers $(SWBUILD_DIR)/glog  $(BIN_DIR) ./lib/sw\
+		$(SWBUILD_DIR)/caffe/ringTreeAllreduce $(SWBUILD_DIR)/caffe/ringTreeAllreduce/slave
 #caffe tools
 $(BIN_DIR)/convert_imageset_sw: $(SWBUILD_DIR)/swobj/convert_imageset_sw.o $(allobjs)
 	$(LINK) $^ $(LDFLAGS)  -o $@ $(SWLIBOBJ)
@@ -141,7 +149,6 @@ $(BIN_DIR)/lstm_sequence: $(allobjs) $(SWBUILD_DIR)/lstm_sequence.o
 $(SWBUILD_DIR)/lstm_sequence.o: ./tools/lstm_sequence.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 
-
 $(SWBUILD_DIR)/caffe/swutil/slave/gemm_asm.o: ./src/caffe/swutil/slave/gemm.S
 	$(SWSCXX) $(FLAGS) $(SWINC_FLAGS) -c $< -o $@
 $(SWBUILD_DIR)/caffe/swutil/slave/gemm_float_asm.o: ./src/caffe/swutil/slave/gemm_float.S
@@ -150,6 +157,10 @@ $(SWBUILD_DIR)/caffe/swutil/slave/%.o: ./src/caffe/swutil/slave/%.c
 	$(SWSCXX) -c $< $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/caffe/swutil/%.o: ./src/caffe/swutil/%.c
 	$(SWHCXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+$(SWBUILD_DIR)/caffe/ringTreeAllreduce/%.o: ./src/caffe/ringTreeAllreduce/%.c
+	sw5cc.new -host -c -msimd -O2 $(SWINC_FLAGS) $^ -o $@
+$(SWBUILD_DIR)/caffe/ringTreeAllreduce/slave/sw_slave_add.o: ./src/caffe/ringTreeAllreduce/slave/sw_slave_add.c
+	sw5cc.new -slave -c -msimd -O2 ./src/caffe/ringTreeAllreduce/slave/sw_slave_add.c -o $(SWBUILD_DIR)/caffe/ringTreeAllreduce/slave/sw_slave_add.o
 
 $(SWBUILD_DIR)/caffe/%.o: ./src/caffe/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
@@ -163,6 +174,8 @@ $(SWBUILD_DIR)/glog/%.o: ./src/glog/%.cpp
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
 $(SWBUILD_DIR)/caffe/proto/%.o: ./src/caffe/proto/%.cc
 	$(CXX) -c $^ $(FLAGS) $(SWINC_FLAGS) -o $@
+$(SWBUILD_DIR)/caffe/ringTreeAllreduce/%.o: ./src/caffe/ringTreeAllreduce/%.cpp
+	$(CXX) -c -host -O2 -DSWMPI -I. $(SWINC_FLAGS) $^ -o $@
 
 clean:
 	rm -f $(allobjs) $(SWBUILD_DIR)/*.o core* $(BIN_DIR)/*

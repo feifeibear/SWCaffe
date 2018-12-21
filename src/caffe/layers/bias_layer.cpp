@@ -3,7 +3,9 @@
 #include "caffe/filler.hpp"
 #include "caffe/layers/bias_layer.hpp"
 #include "caffe/util/math_functions.hpp"
-
+extern "C"{
+    #include "swbias.h"
+}
 namespace caffe {
 
 template <typename Dtype>
@@ -74,6 +76,20 @@ void BiasLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* bias_data =
       ((bottom.size() > 1) ? bottom[1] : this->blobs_[0].get())->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
+
+#ifdef USE_SWBIAS
+  if(sizeof(Dtype) == sizeof(float))
+  {
+    sw_bias_impl_f((float *)bottom[0]->cpu_data(),
+                   (float *)top[0]->mutable_cpu_data(),
+                   (float *)bias_data,
+                   dim_,
+                   bias_dim_,
+                   inner_dim_,
+                   outer_dim_);
+  }
+  
+#else
   if (bottom[0] != top[0]) {
     const Dtype* bottom_data = bottom[0]->cpu_data();
     caffe_copy(bottom[0]->count(), bottom_data, top_data);
@@ -84,6 +100,8 @@ void BiasLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.cpu_data(), Dtype(1), top_data);
     top_data += dim_;
   }
+#endif
+  
 }
 
 template <typename Dtype>
@@ -102,12 +120,27 @@ void BiasLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     Dtype* bias_diff = (bias_param ? this->blobs_[0].get() : bottom[1])
         ->mutable_cpu_diff();
     bool accum = bias_param;
+
+#ifdef USE_SWBIAS
+    if(sizeof(Dtype) == sizeof(float))
+    {
+      sw_bias_backward_impl_f((float *)bias_diff,
+                              (float *)top_diff,
+                              (float)accum,
+                              dim_,
+                              bias_dim_,
+                              inner_dim_,
+                              outer_dim_);
+    }
+#else
     for (int n = 0; n < outer_dim_; ++n) {
       caffe_cpu_gemv(CblasNoTrans, bias_dim_, inner_dim_, Dtype(1),
           top_diff, bias_multiplier_.cpu_data(), Dtype(accum), bias_diff);
       top_diff += dim_;
       accum = true;
     }
+#endif
+    
   }
 }
 

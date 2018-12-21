@@ -4,7 +4,7 @@
 #include "caffe/layers/softmax_layer.hpp"
 #include "caffe/util/math_functions.hpp"
 extern "C" {
-  #include "caffe/swlayers/sw_softmax_layer_impl.h"
+  #include "swsoftmax.h"
 }
 namespace caffe {
 
@@ -162,27 +162,42 @@ void SoftmaxLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   int dim = top[0]->count() / outer_num_;
 
   //DLOG(INFO) << "fjrdebug : dim " << dim << " channels " << channels << " outer_num_ " <<  outer_num_;
+#ifdef USE_SWSOFTMAX
+  if(typeid(Dtype)==typeid(float))
+  {
+    sw_softmax_backward_impl_f(
+      (float*)top_diff,
+      (float*)top_data,
+      (float*)bottom_diff,
+      (float*)scale_data,
+      outer_num_,
+      channels,
+      inner_num_,
+      dim
+        );
+  }
+  else
+  {
+    printf("Not implemented\n");
+    exit(0);
+  }
 
+#else
   caffe_copy(top[0]->count(), top_diff, bottom_diff);
   for (int i = 0; i < outer_num_; ++i) {
-    // compute dot(top_diff, top_data) and subtract them from the bottom diff
     for (int k = 0; k < inner_num_; ++k) {
       scale_data[k] = caffe_cpu_strided_dot<Dtype>(channels,
           bottom_diff + i * dim + k, inner_num_,
           top_data + i * dim + k, inner_num_);
     }
-    // subtraction
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels, inner_num_, 1,
         -1., sum_multiplier_.cpu_data(), scale_data, 1., bottom_diff + i * dim);
   }
-  // elementwise multiplication
   caffe_mul(top[0]->count(), bottom_diff, top_data, bottom_diff);
 
-  //top[0]->fjr_print_data();
-  //top[0]->fjr_print_diff();
-  //bottom[0]->fjr_print_diff();
-}
 
+#endif
+}
 
 #ifdef CPU_ONLY
 STUB_GPU(SoftmaxLayer);
