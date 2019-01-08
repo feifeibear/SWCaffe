@@ -2,8 +2,8 @@
 A Parallel Deep Learning Framework for Sunway TaihuLight
 
 ## Features
-### Optimized MPIAllreduce, 20x faster than default MPI
-### Load computations to [swDNN](https://github.com/feifeibear/swDNNv1.0) and [swGEMM](https://github.com/feifeibear/swGEMM).
+Optimized MPIAllreduce, 20x faster than default MPI  
+Load computations to [swDNN](https://github.com/feifeibear/swDNNv1.0) and [swGEMM](https://github.com/feifeibear/swGEMM).  
 
 ## Author
 Jiarui Fang
