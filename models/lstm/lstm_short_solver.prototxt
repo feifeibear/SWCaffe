@@ -1,9 +1,0 @@
-net: "models/lstm/lstm_short.prototxt"
-base_lr: 0.0001
-momentum: 0.95
-lr_policy: "fixed"
-display: 200
-max_iter: 100000
-solver_mode: CPU
-average_loss: 200
-debug_info: true

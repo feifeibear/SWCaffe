@@ -62,8 +62,7 @@ LDFLAGS = -lm_slave
 LDFLAGS += -allshare
 #include flags
 SWINC_FLAGS=-I./include -I$(THIRD_PARTY_DIR)/include
-SWINC_FLAGS+=-I/home/export/online1/swyf/swdnn/fjr/2018-09/BLAS/include
-SWINC_FLAGS+=-I/home/export/online1/swyf/swdnn/zhaoyi/swDNN-zhaoyi/include
+SWINC_FLAGS+=-I./swdnn_release/include
 
 ####DIRS####
 SRC = ./src
@@ -107,7 +106,7 @@ SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/libgflags.a
 #######order matters
 SWLIBOBJ+=$(THIRD_PARTY_DIR)/lib/liblmdb.a
 #SWLIBOBJ+=/home/export/online1/swyf/swdnn/fjr/2018-09/BLAS/swDNNv2.0/build/libswdnnlib.a
-SWLIBOBJ+=/home/export/online1/swyf/swdnn/zhaoyi/swDNN-zhaoyi/build/libswdnnlib.a
+SWLIBOBJ+=./swdnn_release/libswdnnlib.a
 
 ####Rules####
 #debug makefile

@@ -1,3 +1,13 @@
+# swCaffe
+A Parallel Deep Learning Framework for Sunway TaihuLight
+
+## Features
+### Optimized MPIAllreduce, 20x faster than default MPI
+### Load computations to [swDNN](https://github.com/feifeibear/swDNNv1.0) and [swGEMM](https://github.com/feifeibear/swGEMM).
+
+## Author
+Jiarui Fang
+
 # Caffe
 
 [![Build Status](https://travis-ci.org/BVLC/caffe.svg?branch=master)](https://travis-ci.org/BVLC/caffe)
